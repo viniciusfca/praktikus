@@ -5,3 +5,6 @@ dist
 coverage
 *.log
 *.tsbuildinfo
+uploads/*
+!uploads/.gitkeep
+!uploads/logos/.gitkeep
