@@ -9,10 +9,13 @@ import {
   UseGuards,
   UseInterceptors,
   BadRequestException,
+  OnModuleInit,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
-import { extname, join } from 'path';
+import { memoryStorage } from 'multer';
+import { join } from 'path';
+import { mkdirSync, writeFileSync } from 'fs';
+import { fromBuffer } from 'file-type';
 import { JwtAuthGuard } from '../../core/auth/jwt-auth.guard';
 import { RolesGuard } from '../../core/auth/roles.guard';
 import { Roles } from '../../core/auth/roles.decorator';
@@ -25,10 +28,22 @@ interface RequestWithUser extends Request {
   user: AuthUser;
 }
 
+const ALLOWED_MIME_TYPES = new Set(['image/jpeg', 'image/png']);
+const EXTENSION_MAP: Record<string, string> = {
+  'image/jpeg': '.jpg',
+  'image/png': '.png',
+};
+const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
+const LOGOS_DIR = join(process.cwd(), 'uploads', 'logos');
+
 @Controller('workshop/company')
 @UseGuards(JwtAuthGuard, RolesGuard)
-export class CompaniesController {
+export class CompaniesController implements OnModuleInit {
   constructor(private readonly companiesService: CompaniesService) {}
+
+  onModuleInit(): void {
+    mkdirSync(LOGOS_DIR, { recursive: true });
+  }
 
   @Get()
   getProfile(@Request() req: RequestWithUser) {
@@ -45,30 +60,32 @@ export class CompaniesController {
   @Roles(UserRole.OWNER)
   @UseInterceptors(
     FileInterceptor('file', {
-      storage: diskStorage({
-        destination: (_req, _file, cb) => {
-          const dest = join(process.cwd(), 'uploads', 'logos');
-          cb(null, dest);
-        },
-        filename: (_req, file, cb) => {
-          const uniqueName = `${Date.now()}${extname(file.originalname)}`;
-          cb(null, uniqueName);
-        },
-      }),
-      fileFilter: (_req, file, cb) => {
-        if (!file.mimetype.match(/\/(jpg|jpeg|png)$/)) {
-          return cb(new BadRequestException('Apenas JPG e PNG são permitidos.'), false);
-        }
-        cb(null, true);
-      },
-      limits: { fileSize: 2 * 1024 * 1024 },
+      storage: memoryStorage(),
+      limits: { fileSize: MAX_FILE_SIZE },
     }),
   )
-  uploadLogo(@Request() req: RequestWithUser, @UploadedFile() file: Express.Multer.File) {
-    if (!file) {
+  async uploadLogo(
+    @Request() req: RequestWithUser,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    if (!file || !file.buffer) {
       throw new BadRequestException('Arquivo de logo não fornecido.');
     }
-    const logoUrl = `/uploads/logos/${file.filename}`;
+
+    // Magic-byte inspection — ignore client-supplied Content-Type
+    const type = await fromBuffer(file.buffer);
+    if (!type || !ALLOWED_MIME_TYPES.has(type.mime)) {
+      throw new BadRequestException('Apenas imagens JPG e PNG são permitidas.');
+    }
+
+    // Whitelist extension based on actual file type, not client input
+    const ext = EXTENSION_MAP[type.mime];
+    const filename = `${Date.now()}${ext}`;
+    const dest = join(LOGOS_DIR, filename);
+
+    writeFileSync(dest, file.buffer);
+
+    const logoUrl = `/uploads/logos/${filename}`;
     return this.companiesService.updateLogo(req.user.tenantId, logoUrl);
   }
 }
