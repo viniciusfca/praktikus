@@ -46,7 +46,7 @@ describe('VehiclesService', () => {
 
     service = module.get<VehiclesService>(VehiclesService);
     jest.clearAllMocks();
-    mockQueryRunner.manager.getRepository.mockReturnValue(mockVehicleRepo);
+    mockQueryRunner.manager.getRepository.mockImplementation(() => mockVehicleRepo);
     mockVehicleRepo.createQueryBuilder.mockReturnValue(mockQb);
     mockQb.where.mockReturnThis();
     mockQb.skip.mockReturnThis();
@@ -62,6 +62,9 @@ describe('VehiclesService', () => {
       const result = await service.list('tenant-1', 1, 20);
 
       expect(result).toEqual({ data: vehicles, total: 1, page: 1, limit: 20 });
+      expect(mockQueryRunner.query).toHaveBeenCalledWith(
+        expect.stringContaining('SET search_path'),
+      );
     });
 
     it('should apply search filter when provided', async () => {

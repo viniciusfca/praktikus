@@ -18,7 +18,7 @@ export class CreateVehicleDto {
 
   @IsInt()
   @Min(1900)
-  @Max(2100)
+  @Max(new Date().getFullYear() + 1)
   ano: number;
 
   @IsInt()
