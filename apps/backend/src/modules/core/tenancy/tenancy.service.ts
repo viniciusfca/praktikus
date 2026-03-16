@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource, EntityManager } from 'typeorm';
 import { TenantEntity, TenantStatus } from './tenant.entity';
+import { createTenantTablesSql } from '../../../database/tenant-migrations/create-tenant-tables';
 
 interface CreateTenantInput {
   cnpj: string;
@@ -98,6 +99,9 @@ export class TenancyService {
     await qr.connect();
     try {
       await qr.query(`CREATE SCHEMA IF NOT EXISTS "${schemaName}"`);
+      for (const sql of createTenantTablesSql(schemaName)) {
+        await qr.query(sql);
+      }
     } finally {
       await qr.release();
     }

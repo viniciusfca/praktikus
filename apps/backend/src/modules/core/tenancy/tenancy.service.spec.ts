@@ -105,6 +105,28 @@ describe('TenancyService', () => {
     });
   });
 
+  describe('provisionSchema', () => {
+    it('should create customers and vehicles tables after schema', async () => {
+      mockQueryRunner.query.mockResolvedValue(undefined);
+
+      await (service as any).provisionSchema('tenant_abc');
+
+      // schema criado primeiro
+      expect(mockQueryRunner.query).toHaveBeenNthCalledWith(
+        1,
+        expect.stringContaining('CREATE SCHEMA IF NOT EXISTS "tenant_abc"'),
+      );
+      // tabela customers
+      expect(mockQueryRunner.query).toHaveBeenCalledWith(
+        expect.stringContaining('customers'),
+      );
+      // tabela vehicles
+      expect(mockQueryRunner.query).toHaveBeenCalledWith(
+        expect.stringContaining('vehicles'),
+      );
+    });
+  });
+
   describe('provisionSchema security', () => {
     it('createTenant throws if generateSchemaName produces an invalid name', async () => {
       // Force generateSchemaName to return something invalid by mocking it
