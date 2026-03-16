@@ -4,12 +4,19 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
+import { CustomerEntity } from '../customers/customer.entity';
 
 @Entity({ name: 'vehicles' })
 export class VehicleEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
+
+  @ManyToOne(() => CustomerEntity, { onDelete: 'RESTRICT' })
+  @JoinColumn({ name: 'customer_id' })
+  customer: CustomerEntity;
 
   @Column({ name: 'customer_id', type: 'uuid' })
   customerId: string;
