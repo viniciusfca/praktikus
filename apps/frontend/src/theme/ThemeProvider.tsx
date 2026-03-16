@@ -16,8 +16,9 @@ const ThemeContext = createContext<ThemeContextType>({
 export const useThemeMode = () => useContext(ThemeContext);
 
 export function AppThemeProvider({ children }: { children: ReactNode }) {
-  const stored = localStorage.getItem('theme-mode') as PaletteMode | null;
-  const [mode, setMode] = useState<PaletteMode>(stored ?? 'dark');
+  const [mode, setMode] = useState<PaletteMode>(
+    () => (localStorage.getItem('theme-mode') as PaletteMode) ?? 'dark'
+  );
 
   const toggleTheme = () => {
     setMode((prev) => {

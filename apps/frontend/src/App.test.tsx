@@ -4,12 +4,12 @@ import App from './App';
 
 describe('App', () => {
   it('renders without crashing', () => {
-    render(
+    const { container } = render(
       <MemoryRouter>
         <App />
       </MemoryRouter>
     );
-    expect(document.body).toBeDefined();
+    expect(container.firstChild).not.toBeNull();
   });
 
   it('renders the landing page on root route', () => {

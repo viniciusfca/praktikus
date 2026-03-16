@@ -1,4 +1,4 @@
-import { Box, Typography, Button, Container, Grid, Card, CardContent, CardActions, Chip } from '@mui/material';
+import { Box, Typography, Button, Container, Card, CardContent, CardActions, Chip, Grid } from '@mui/material';
 import BuildIcon from '@mui/icons-material/Build';
 import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
 
@@ -57,7 +57,7 @@ export function LandingPage() {
         </Typography>
         <Grid container spacing={4} sx={{ mt: 2 }} justifyContent="center">
           {segments.map((seg) => (
-            <Grid item xs={12} sm={6} md={4} key={seg.title}>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }} key={seg.title}>
               <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column', position: 'relative' }}>
                 {!seg.available && (
                   <Chip
