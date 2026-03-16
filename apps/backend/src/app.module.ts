@@ -4,12 +4,14 @@ import { HealthController } from './health/health.controller';
 import { DatabaseModule } from './database/database.module';
 import { TenancyModule } from './modules/core/tenancy/tenancy.module';
 import { TenancyMiddleware } from './modules/core/tenancy/tenancy.middleware';
+import { AuthModule } from './modules/core/auth/auth.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true, envFilePath: '.env' }),
     DatabaseModule,
     TenancyModule,
+    AuthModule,
   ],
   controllers: [HealthController],
   providers: [],
