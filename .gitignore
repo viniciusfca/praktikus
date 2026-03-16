@@ -11,3 +11,4 @@ coverage/
 *.tsbuildinfo
 .pnpm-debug.log*
 Thumbs.db
+.worktrees/
