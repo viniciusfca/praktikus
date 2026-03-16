@@ -2,6 +2,7 @@
   "name": "practicus",
   "version": "1.0.0",
   "private": true,
+  "packageManager": "pnpm@8.15.4",
   "scripts": {
     "dev": "docker-compose up",
     "dev:backend": "pnpm --filter backend dev",

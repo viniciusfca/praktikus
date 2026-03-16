@@ -8,3 +8,6 @@ build/
 .DS_Store
 coverage/
 .pnpm-store/
+*.tsbuildinfo
+.pnpm-debug.log*
+Thumbs.db
