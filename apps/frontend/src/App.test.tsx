@@ -1,23 +1,14 @@
 import { render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
 import App from './App';
 
 describe('App', () => {
   it('renders without crashing', () => {
-    const { container } = render(
-      <MemoryRouter>
-        <App />
-      </MemoryRouter>
-    );
+    const { container } = render(<App />);
     expect(container.firstChild).not.toBeNull();
   });
 
   it('renders the landing page on root route', () => {
-    render(
-      <MemoryRouter initialEntries={['/']}>
-        <App />
-      </MemoryRouter>
-    );
+    render(<App />);
     expect(screen.getByText(/Practicus/i)).toBeInTheDocument();
   });
 });
