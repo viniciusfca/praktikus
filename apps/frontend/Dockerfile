@@ -1,5 +1,5 @@
 FROM node:20-alpine AS base
-RUN npm install -g pnpm
+RUN npm install -g pnpm@8.15.4
 
 FROM base AS deps
 WORKDIR /app
@@ -10,6 +10,7 @@ RUN pnpm install --frozen-lockfile
 
 FROM base AS builder
 WORKDIR /app
+ENV NODE_ENV=production
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/packages/shared/node_modules ./packages/shared/node_modules
 COPY --from=deps /app/apps/frontend/node_modules ./apps/frontend/node_modules
