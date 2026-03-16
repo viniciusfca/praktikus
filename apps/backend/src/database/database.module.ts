@@ -5,6 +5,8 @@ import { TenantEntity } from '../modules/core/tenancy/tenant.entity';
 import { UserEntity } from '../modules/core/auth/user.entity';
 import { RefreshTokenEntity } from '../modules/core/auth/refresh-token.entity';
 import { BillingEntity } from '../modules/core/billing/billing.entity';
+import { CustomerEntity } from '../modules/workshop/customers/customer.entity';
+import { VehicleEntity } from '../modules/workshop/vehicles/vehicle.entity';
 
 @Module({
   imports: [
@@ -18,7 +20,7 @@ import { BillingEntity } from '../modules/core/billing/billing.entity';
         username: config.get<string>('DB_USER'),
         password: config.get<string>('DB_PASS'),
         database: config.get<string>('DB_NAME'),
-        entities: [TenantEntity, UserEntity, RefreshTokenEntity, BillingEntity],
+        entities: [TenantEntity, UserEntity, RefreshTokenEntity, BillingEntity, CustomerEntity, VehicleEntity],
         synchronize: false,
         logging: config.get('NODE_ENV') === 'development',
         migrations: [__dirname + '/migrations/*.{ts,js}'],
