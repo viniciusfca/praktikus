@@ -4,7 +4,6 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
-  Index,
 } from 'typeorm';
 
 export enum TenantStatus {
@@ -28,14 +27,12 @@ export class TenantEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Index({ unique: true })
   @Column({ unique: true })
   slug: string;
 
   @Column({ name: 'schema_name', unique: true })
   schemaName: string;
 
-  @Index({ unique: true })
   @Column({ unique: true })
   cnpj: string;
 
@@ -49,10 +46,10 @@ export class TenantEntity {
   endereco: TenantAddress | null;
 
   @Column({ nullable: true })
-  telefone: string;
+  telefone: string | null;
 
   @Column({ name: 'logo_url', nullable: true })
-  logoUrl: string;
+  logoUrl: string | null;
 
   @Column({
     type: 'enum',
@@ -67,9 +64,9 @@ export class TenantEntity {
   @Column({ name: 'billing_anchor_date', type: 'date', nullable: true })
   billingAnchorDate: Date | null;
 
-  @CreateDateColumn({ name: 'created_at' })
+  @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;
 
-  @UpdateDateColumn({ name: 'updated_at' })
+  @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' })
   updatedAt: Date;
 }

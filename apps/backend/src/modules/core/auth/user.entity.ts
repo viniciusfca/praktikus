@@ -13,15 +13,15 @@ export enum UserRole {
 }
 
 @Entity({ name: 'users', schema: 'public' })
+@Index(['tenantId', 'email'], { unique: true })
 export class UserEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ name: 'tenant_id' })
+  @Column({ name: 'tenant_id', type: 'uuid' })
   tenantId: string;
 
-  @Index({ unique: true })
-  @Column({ unique: true })
+  @Column()
   email: string;
 
   @Column({ name: 'password_hash' })
@@ -37,9 +37,9 @@ export class UserEntity {
   })
   role: UserRole;
 
-  @CreateDateColumn({ name: 'created_at' })
+  @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;
 
-  @UpdateDateColumn({ name: 'updated_at' })
+  @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' })
   updatedAt: Date;
 }

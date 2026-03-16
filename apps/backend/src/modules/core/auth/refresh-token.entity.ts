@@ -11,7 +11,7 @@ export class RefreshTokenEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ name: 'user_id' })
+  @Column({ name: 'user_id', type: 'uuid' })
   @Index()
   userId: string;
 
@@ -24,6 +24,6 @@ export class RefreshTokenEntity {
   @Column({ default: false })
   revoked: boolean;
 
-  @CreateDateColumn({ name: 'created_at' })
+  @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;
 }
