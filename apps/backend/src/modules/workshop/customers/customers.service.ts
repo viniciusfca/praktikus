@@ -7,7 +7,6 @@ import { DataSource, EntityManager } from 'typeorm';
 import { CustomerEntity } from './customer.entity';
 import { VehicleEntity } from '../vehicles/vehicle.entity';
 import { CreateCustomerDto } from './dto/create-customer.dto';
-import { UpdateCustomerDto } from './dto/update-customer.dto';
 
 @Injectable()
 export class CustomersService {
@@ -32,7 +31,7 @@ export class CustomersService {
     }
   }
 
-  async list(tenantId: string, page: number, limit: number, search?: string) {
+  async list(tenantId: string, page: number, limit: number, search?: string): Promise<{ data: CustomerEntity[]; total: number; page: number; limit: number }> {
     return this.withSchema(tenantId, async (manager) => {
       const repo = manager.getRepository(CustomerEntity);
       const qb = repo.createQueryBuilder('c');
@@ -53,7 +52,7 @@ export class CustomersService {
   async getById(tenantId: string, id: string): Promise<CustomerEntity> {
     return this.withSchema(tenantId, async (manager) => {
       const repo = manager.getRepository(CustomerEntity);
-      const customer = await repo.findOne({ where: { id } });
+      const customer = await repo.findOne({ where: { id }, relations: ['vehicles'] });
       if (!customer) throw new NotFoundException('Cliente não encontrado.');
       return customer;
     });
@@ -72,17 +71,16 @@ export class CustomersService {
     });
   }
 
-  async update(tenantId: string, id: string, dto: UpdateCustomerDto): Promise<CustomerEntity> {
+  async update(tenantId: string, id: string, dto: Partial<CreateCustomerDto>): Promise<CustomerEntity> {
     return this.withSchema(tenantId, async (manager) => {
       const repo = manager.getRepository(CustomerEntity);
       const customer = await repo.findOne({ where: { id } });
       if (!customer) throw new NotFoundException('Cliente não encontrado.');
-      const patch = dto as Partial<CreateCustomerDto>;
       Object.assign(customer, {
-        ...(patch.nome !== undefined && { nome: patch.nome }),
-        ...(patch.cpfCnpj !== undefined && { cpfCnpj: patch.cpfCnpj }),
-        ...(patch.whatsapp !== undefined && { whatsapp: patch.whatsapp }),
-        ...(patch.email !== undefined && { email: patch.email }),
+        ...(dto.nome !== undefined && { nome: dto.nome }),
+        ...(dto.cpfCnpj !== undefined && { cpfCnpj: dto.cpfCnpj }),
+        ...(dto.whatsapp !== undefined && { whatsapp: dto.whatsapp }),
+        ...(dto.email !== undefined && { email: dto.email }),
       });
       return repo.save(customer);
     });

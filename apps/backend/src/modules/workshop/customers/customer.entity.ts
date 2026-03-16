@@ -4,7 +4,9 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  OneToMany,
 } from 'typeorm';
+import { VehicleEntity } from '../vehicles/vehicle.entity';
 
 @Entity({ name: 'customers' })
 export class CustomerEntity {
@@ -28,4 +30,7 @@ export class CustomerEntity {
 
   @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' })
   updatedAt: Date;
+
+  @OneToMany(() => VehicleEntity, (v) => v.customer, { eager: false })
+  vehicles: VehicleEntity[];
 }

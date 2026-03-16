@@ -92,12 +92,16 @@ describe('CustomersService', () => {
 
   describe('getById', () => {
     it('should return customer with vehicles', async () => {
-      const customer = { id: 'c1', nome: 'João' };
+      const customer = { id: 'c1', nome: 'João', vehicles: [] };
       mockCustomerRepo.findOne.mockResolvedValue(customer);
 
       const result = await service.getById('tenant-1', 'c1');
 
       expect(result).toEqual(customer);
+      expect(mockCustomerRepo.findOne).toHaveBeenCalledWith({
+        where: { id: 'c1' },
+        relations: ['vehicles'],
+      });
     });
 
     it('should throw NotFoundException when customer not found', async () => {
@@ -120,6 +124,27 @@ describe('CustomersService', () => {
 
       expect(result).toEqual(created);
       expect(mockCustomerRepo.save).toHaveBeenCalled();
+    });
+  });
+
+  describe('update', () => {
+    it('should update and return customer', async () => {
+      const customer = { id: 'c1', nome: 'João', cpfCnpj: '12345678901' };
+      mockCustomerRepo.findOne.mockResolvedValue(customer);
+      mockCustomerRepo.save.mockResolvedValue({ ...customer, nome: 'Maria' });
+
+      const result = await service.update('tenant-1', 'c1', { nome: 'Maria' } as any);
+
+      expect(mockCustomerRepo.save).toHaveBeenCalled();
+      expect(result.nome).toBe('Maria');
+    });
+
+    it('should throw NotFoundException when customer not found', async () => {
+      mockCustomerRepo.findOne.mockResolvedValue(null);
+
+      await expect(service.update('tenant-1', 'nonexistent', {} as any)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
