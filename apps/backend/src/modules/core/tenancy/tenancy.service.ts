@@ -60,6 +60,9 @@ export class TenancyService {
   }
 
   private async provisionSchema(schemaName: string): Promise<void> {
+    if (!/^[a-z0-9_]+$/.test(schemaName)) {
+      throw new Error(`Invalid schema name: ${schemaName}`);
+    }
     const qr = this.dataSource.createQueryRunner();
     await qr.connect();
     try {
