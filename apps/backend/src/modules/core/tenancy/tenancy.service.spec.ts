@@ -116,12 +116,14 @@ describe('TenancyService', () => {
         1,
         expect.stringContaining('CREATE SCHEMA IF NOT EXISTS "tenant_abc"'),
       );
-      // tabela customers
-      expect(mockQueryRunner.query).toHaveBeenCalledWith(
+      // tabela customers (deve vir antes de vehicles por causa da FK)
+      expect(mockQueryRunner.query).toHaveBeenNthCalledWith(
+        2,
         expect.stringContaining('customers'),
       );
       // tabela vehicles
-      expect(mockQueryRunner.query).toHaveBeenCalledWith(
+      expect(mockQueryRunner.query).toHaveBeenNthCalledWith(
+        3,
         expect.stringContaining('vehicles'),
       );
     });
