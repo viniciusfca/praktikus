@@ -53,7 +53,8 @@ export function RegisterPage() {
     if (!step1Data) return;
     setError(null);
     try {
-      const tokens = await authService.register({ ...step1Data, ...data });
+      const { confirmPassword: _discard, ...rest } = data;
+      const tokens = await authService.register({ ...step1Data, ...rest });
       setTokens(tokens);
       navigate('/workshop/dashboard');
     } catch (err: unknown) {

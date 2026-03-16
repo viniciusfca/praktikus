@@ -12,7 +12,7 @@ const mockUseAuthStore = useAuthStore as any;
 
 describe('PrivateRoute', () => {
   it('renders children when authenticated', () => {
-    mockUseAuthStore.mockImplementation((selector: any) => selector({ isAuthenticated: true }));
+    mockUseAuthStore.mockImplementation((selector: any) => selector({ isAuthenticated: true, isHydrated: true }));
     render(
       <MemoryRouter initialEntries={['/protected']}>
         <Routes>
@@ -25,7 +25,7 @@ describe('PrivateRoute', () => {
   });
 
   it('redirects to /login when not authenticated', () => {
-    mockUseAuthStore.mockImplementation((selector: any) => selector({ isAuthenticated: false }));
+    mockUseAuthStore.mockImplementation((selector: any) => selector({ isAuthenticated: false, isHydrated: true }));
     render(
       <MemoryRouter initialEntries={['/protected']}>
         <Routes>

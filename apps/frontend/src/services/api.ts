@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { useAuthStore } from '../store/auth.store';
 
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL ?? '/api',
@@ -26,8 +27,8 @@ api.interceptors.response.use(
             `${import.meta.env.VITE_API_URL ?? '/api'}/auth/refresh`,
             { refresh_token: refreshToken },
           );
-          localStorage.setItem('access_token', data.access_token);
-          localStorage.setItem('refresh_token', data.refresh_token);
+          // Update store (not just localStorage)
+          useAuthStore.getState().setTokens(data);
           original.headers.Authorization = `Bearer ${data.access_token}`;
           return api(original);
         } catch {
@@ -35,6 +36,9 @@ api.interceptors.response.use(
           localStorage.removeItem('refresh_token');
           window.location.href = '/login';
         }
+      } else {
+        // No refresh token — redirect to login
+        window.location.href = '/login';
       }
     }
     return Promise.reject(error);

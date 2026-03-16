@@ -12,6 +12,7 @@ interface JwtUser {
 interface AuthState {
   user: JwtUser | null;
   isAuthenticated: boolean;
+  isHydrated: boolean;
   setTokens: (tokens: { access_token: string; refresh_token: string }) => void;
   logout: () => Promise<void>;
   hydrate: () => void;
@@ -20,6 +21,7 @@ interface AuthState {
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   isAuthenticated: false,
+  isHydrated: false,
 
   setTokens(tokens) {
     authService.persistTokens(tokens);
@@ -42,17 +44,20 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   hydrate() {
     const token = authService.getAccessToken();
-    if (!token) return;
-    try {
-      const decoded = jwtDecode<JwtUser>(token);
-      const isExpired = decoded.exp ? decoded.exp * 1000 < Date.now() : false;
-      if (!isExpired) {
-        set({ user: decoded, isAuthenticated: true });
-      } else {
+    if (token) {
+      try {
+        const decoded = jwtDecode<JwtUser>(token);
+        const isExpired = decoded.exp ? decoded.exp * 1000 < Date.now() : false;
+        if (!isExpired) {
+          set({ user: decoded, isAuthenticated: true, isHydrated: true });
+          return;
+        } else {
+          authService.clearTokens();
+        }
+      } catch {
         authService.clearTokens();
       }
-    } catch {
-      authService.clearTokens();
     }
+    set({ isHydrated: true });
   },
 }));
