@@ -4,7 +4,8 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { InjectDataSource } from '@nestjs/typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
@@ -30,9 +31,11 @@ export class AuthService {
     private readonly tenancyService: TenancyService,
     private readonly billingService: BillingService,
     private readonly jwtService: JwtService,
+    @InjectDataSource() private readonly dataSource: DataSource,
   ) {}
 
   async register(dto: RegisterDto): Promise<AuthTokens> {
+    // Check uniqueness BEFORE starting transaction (avoids holding locks during slug generation)
     const existingTenant = await this.tenancyService.findByCnpj(dto.cnpj);
     if (existingTenant) {
       throw new ConflictException('CNPJ já cadastrado.');
@@ -43,27 +46,38 @@ export class AuthService {
       throw new ConflictException('E-mail já cadastrado.');
     }
 
-    const tenant = await this.tenancyService.createTenant({
-      cnpj: dto.cnpj,
-      razaoSocial: dto.razaoSocial,
-      nomeFantasia: dto.nomeFantasia,
-      telefone: dto.telefone,
-      endereco: dto.endereco,
+    // Transactional: create tenant + user atomically
+    const { tenant, user } = await this.dataSource.transaction(async (manager) => {
+      const tenant = await this.tenancyService.createTenantWithManager(
+        {
+          cnpj: dto.cnpj,
+          razaoSocial: dto.razaoSocial,
+          nomeFantasia: dto.nomeFantasia,
+          telefone: dto.telefone,
+          endereco: dto.endereco,
+        },
+        manager,
+      );
+
+      const passwordHash = await bcrypt.hash(dto.password, 10);
+      const user = manager.create(UserEntity, {
+        tenantId: tenant.id,
+        email: dto.email,
+        passwordHash,
+        name: dto.ownerName,
+        role: UserRole.OWNER,
+      });
+      const savedUser = await manager.save(user);
+
+      return { tenant, user: savedUser };
     });
 
-    const passwordHash = await bcrypt.hash(dto.password, 10);
-    const user = this.userRepo.create({
-      tenantId: tenant.id,
-      email: dto.email,
-      passwordHash,
-      name: dto.ownerName,
-      role: UserRole.OWNER,
-    });
-    const savedUser = await this.userRepo.save(user);
-
+    // Billing is OUTSIDE the transaction (external API, cannot roll back Asaas)
+    // If this fails, tenant + user exist but without billing. The user can still log in
+    // and billing can be retried via a separate flow.
     await this.billingService.setupTrial(tenant.id, dto.email, dto.nomeFantasia);
 
-    return this.generateTokens(savedUser);
+    return this.generateTokens(user);
   }
 
   async login(dto: LoginDto): Promise<AuthTokens> {

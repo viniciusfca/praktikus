@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConflictException, UnauthorizedException } from '@nestjs/common';
 import { getRepositoryToken } from '@nestjs/typeorm';
+import { DataSource } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 import { AuthService } from './auth.service';
 import { UserEntity, UserRole } from './user.entity';
@@ -25,7 +26,18 @@ const mockRefreshTokenRepo = {
 
 const mockTenancyService = {
   createTenant: jest.fn(),
+  createTenantWithManager: jest.fn().mockResolvedValue({ id: 'tenant-1', schemaName: 'tenant_1', status: TenantStatus.TRIAL }),
   findByCnpj: jest.fn(),
+};
+
+const mockDataSource = {
+  transaction: jest.fn().mockImplementation(async (cb: (manager: any) => any) => {
+    const mockManager = {
+      create: jest.fn((_entity: any, data: any) => data),
+      save: jest.fn().mockResolvedValue({ id: 'user-1', tenantId: 'tenant-1', role: UserRole.OWNER }),
+    };
+    return cb(mockManager);
+  }),
 };
 
 const mockBillingService = {
@@ -48,6 +60,7 @@ describe('AuthService', () => {
         { provide: TenancyService, useValue: mockTenancyService },
         { provide: BillingService, useValue: mockBillingService },
         { provide: JwtService, useValue: mockJwtService },
+        { provide: DataSource, useValue: mockDataSource },
       ],
     }).compile();
 
@@ -69,20 +82,15 @@ describe('AuthService', () => {
       mockTenancyService.findByCnpj.mockResolvedValue(null);
       mockUserRepo.findOne.mockResolvedValue(null);
 
-      const tenant = { id: 'tenant-1', schemaName: 'tenant_1', status: TenantStatus.TRIAL };
-      mockTenancyService.createTenant.mockResolvedValue(tenant);
-
-      const user = { id: 'user-1', tenantId: 'tenant-1', role: UserRole.OWNER, email: dto.email };
-      mockUserRepo.create.mockReturnValue(user);
-      mockUserRepo.save.mockResolvedValue(user);
       mockRefreshTokenRepo.create.mockReturnValue({});
       mockRefreshTokenRepo.save.mockResolvedValue({});
       mockBillingService.setupTrial.mockResolvedValue(undefined);
 
       const result = await service.register(dto);
 
-      expect(mockTenancyService.createTenant).toHaveBeenCalledWith(
+      expect(mockTenancyService.createTenantWithManager).toHaveBeenCalledWith(
         expect.objectContaining({ cnpj: dto.cnpj }),
+        expect.any(Object),
       );
       expect(result).toHaveProperty('access_token');
       expect(result).toHaveProperty('refresh_token');

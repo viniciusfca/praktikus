@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource } from 'typeorm';
+import { Repository, DataSource, EntityManager } from 'typeorm';
 import { TenantEntity, TenantStatus } from './tenant.entity';
 
 interface CreateTenantInput {
@@ -57,6 +57,37 @@ export class TenancyService {
     await this.provisionSchema(schemaName);
 
     return updated;
+  }
+
+  async createTenantWithManager(
+    input: CreateTenantInput,
+    manager: EntityManager,
+  ): Promise<TenantEntity> {
+    const trialEndsAt = new Date();
+    trialEndsAt.setDate(trialEndsAt.getDate() + 30);
+
+    const tenant = manager.create(TenantEntity, {
+      cnpj: input.cnpj,
+      razaoSocial: input.razaoSocial,
+      nomeFantasia: input.nomeFantasia,
+      telefone: input.telefone ?? null,
+      endereco: input.endereco ?? null,
+      slug: this.generateSlug(input.nomeFantasia),
+      schemaName: 'pending',
+      status: TenantStatus.TRIAL,
+      trialEndsAt,
+      billingAnchorDate: new Date(),
+    });
+
+    const saved = await manager.save(tenant);
+
+    const schemaName = this.generateSchemaName(saved.id);
+    saved.schemaName = schemaName;
+    await manager.save(saved);
+
+    await this.provisionSchema(schemaName);
+
+    return saved;
   }
 
   private async provisionSchema(schemaName: string): Promise<void> {
