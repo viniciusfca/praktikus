@@ -6,6 +6,7 @@ import { TenancyModule } from './modules/core/tenancy/tenancy.module';
 import { TenancyMiddleware } from './modules/core/tenancy/tenancy.middleware';
 import { AuthModule } from './modules/core/auth/auth.module';
 import { CompaniesModule } from './modules/workshop/companies/companies.module';
+import { CustomersModule } from './modules/workshop/customers/customers.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { CompaniesModule } from './modules/workshop/companies/companies.module';
     TenancyModule,
     AuthModule,
     CompaniesModule,
+    CustomersModule,
   ],
   controllers: [HealthController],
   providers: [],
