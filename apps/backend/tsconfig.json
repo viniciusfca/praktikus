@@ -10,7 +10,8 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "paths": {
-      "@practicus/shared": ["../../packages/shared/src"]
+      "@practicus/shared": ["../../packages/shared/src"],
+      "@practicus/shared/*": ["../../packages/shared/src/*"]
     }
   },
   "include": ["src/**/*"],
