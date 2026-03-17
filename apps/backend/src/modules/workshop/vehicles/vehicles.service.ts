@@ -9,6 +9,9 @@ export class VehiclesService {
   constructor(private readonly dataSource: DataSource) {}
 
   private getSchemaName(tenantId: string): string {
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(tenantId)) {
+      throw new Error('Invalid tenantId');
+    }
     return `tenant_${tenantId.replace(/-/g, '')}`;
   }
 

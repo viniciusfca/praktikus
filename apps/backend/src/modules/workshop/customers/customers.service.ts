@@ -13,6 +13,9 @@ export class CustomersService {
   constructor(private readonly dataSource: DataSource) {}
 
   private getSchemaName(tenantId: string): string {
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(tenantId)) {
+      throw new Error('Invalid tenantId');
+    }
     return `tenant_${tenantId.replace(/-/g, '')}`;
   }
 
@@ -36,7 +39,7 @@ export class CustomersService {
       const repo = manager.getRepository(CustomerEntity);
       const qb = repo.createQueryBuilder('c');
       if (search) {
-        qb.where('c.nome ILIKE :s OR c.cpf_cnpj ILIKE :s', {
+        qb.where('c.nome ILIKE :s OR c.cpfCnpj ILIKE :s', {
           s: `%${search}%`,
         });
       }

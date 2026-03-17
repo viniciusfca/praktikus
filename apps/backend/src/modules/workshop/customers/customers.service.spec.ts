@@ -70,7 +70,7 @@ describe('CustomersService', () => {
       const customers = [{ id: 'c1', nome: 'João' }];
       mockQb.getManyAndCount.mockResolvedValue([customers, 1]);
 
-      const result = await service.list('tenant-1', 1, 20);
+      const result = await service.list('00000000-0000-0000-0000-000000000001', 1, 20);
 
       expect(result).toEqual({ data: customers, total: 1, page: 1, limit: 20 });
       expect(mockQueryRunner.query).toHaveBeenCalledWith(
@@ -81,7 +81,7 @@ describe('CustomersService', () => {
     it('should apply search filter when provided', async () => {
       mockQb.getManyAndCount.mockResolvedValue([[], 0]);
 
-      await service.list('tenant-1', 1, 20, 'joao');
+      await service.list('00000000-0000-0000-0000-000000000001', 1, 20, 'joao');
 
       expect(mockQb.where).toHaveBeenCalledWith(
         expect.stringContaining('ILIKE'),
@@ -95,7 +95,7 @@ describe('CustomersService', () => {
       const customer = { id: 'c1', nome: 'João', vehicles: [] };
       mockCustomerRepo.findOne.mockResolvedValue(customer);
 
-      const result = await service.getById('tenant-1', 'c1');
+      const result = await service.getById('00000000-0000-0000-0000-000000000001', 'c1');
 
       expect(result).toEqual(customer);
       expect(mockCustomerRepo.findOne).toHaveBeenCalledWith({
@@ -107,7 +107,7 @@ describe('CustomersService', () => {
     it('should throw NotFoundException when customer not found', async () => {
       mockCustomerRepo.findOne.mockResolvedValue(null);
 
-      await expect(service.getById('tenant-1', 'nonexistent')).rejects.toThrow(
+      await expect(service.getById('00000000-0000-0000-0000-000000000001', 'nonexistent')).rejects.toThrow(
         NotFoundException,
       );
     });
@@ -120,7 +120,7 @@ describe('CustomersService', () => {
       mockCustomerRepo.create.mockReturnValue(created);
       mockCustomerRepo.save.mockResolvedValue(created);
 
-      const result = await service.create('tenant-1', dto as any);
+      const result = await service.create('00000000-0000-0000-0000-000000000001', dto as any);
 
       expect(result).toEqual(created);
       expect(mockCustomerRepo.save).toHaveBeenCalled();
@@ -133,7 +133,7 @@ describe('CustomersService', () => {
       mockCustomerRepo.findOne.mockResolvedValue(customer);
       mockCustomerRepo.save.mockResolvedValue({ ...customer, nome: 'Maria' });
 
-      const result = await service.update('tenant-1', 'c1', { nome: 'Maria' } as any);
+      const result = await service.update('00000000-0000-0000-0000-000000000001', 'c1', { nome: 'Maria' } as any);
 
       expect(mockCustomerRepo.save).toHaveBeenCalled();
       expect(result.nome).toBe('Maria');
@@ -142,7 +142,7 @@ describe('CustomersService', () => {
     it('should throw NotFoundException when customer not found', async () => {
       mockCustomerRepo.findOne.mockResolvedValue(null);
 
-      await expect(service.update('tenant-1', 'nonexistent', {} as any)).rejects.toThrow(
+      await expect(service.update('00000000-0000-0000-0000-000000000001', 'nonexistent', {} as any)).rejects.toThrow(
         NotFoundException,
       );
     });
@@ -154,7 +154,7 @@ describe('CustomersService', () => {
       mockCustomerRepo.findOne.mockResolvedValue(customer);
       mockVehicleRepo.count.mockResolvedValue(2);
 
-      await expect(service.delete('tenant-1', 'c1')).rejects.toThrow(
+      await expect(service.delete('00000000-0000-0000-0000-000000000001', 'c1')).rejects.toThrow(
         ConflictException,
       );
     });
@@ -167,7 +167,7 @@ describe('CustomersService', () => {
       const mockRemove = jest.fn().mockResolvedValue(undefined);
       mockCustomerRepo.remove = mockRemove;
 
-      await service.delete('tenant-1', 'c1');
+      await service.delete('00000000-0000-0000-0000-000000000001', 'c1');
 
       expect(mockRemove).toHaveBeenCalledWith(customer);
     });
