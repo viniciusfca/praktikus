@@ -9,6 +9,8 @@ import { DashboardPage } from './pages/workshop/DashboardPage';
 import { CustomersPage } from './pages/workshop/customers/CustomersPage';
 import { CustomerFormPage } from './pages/workshop/customers/CustomerFormPage';
 import { CustomerDetailPage } from './pages/workshop/customers/CustomerDetailPage';
+import { VehiclesPage } from './pages/workshop/vehicles/VehiclesPage';
+import { VehicleFormPage } from './pages/workshop/vehicles/VehicleFormPage';
 import { PrivateRoute } from './components/PrivateRoute';
 import { useAuthStore } from './store/auth.store';
 
@@ -40,6 +42,9 @@ function App() {
             <Route path="customers/new" element={<CustomerFormPage />} />
             <Route path="customers/:id" element={<CustomerDetailPage />} />
             <Route path="customers/:id/edit" element={<CustomerFormPage />} />
+            <Route path="vehicles" element={<VehiclesPage />} />
+            <Route path="vehicles/new" element={<VehicleFormPage />} />
+            <Route path="vehicles/:id/edit" element={<VehicleFormPage />} />
           </Route>
         </Routes>
       </BrowserRouter>

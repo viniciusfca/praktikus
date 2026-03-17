@@ -25,4 +25,10 @@ describe('vehiclesService', () => {
     expect(mockApi.post).toHaveBeenCalledWith('/workshop/vehicles', payload);
     expect(result.id).toBe('v1');
   });
+
+  it('should call DELETE /workshop/vehicles/:id on delete', async () => {
+    mockApi.delete.mockResolvedValue({});
+    await vehiclesService.delete('v1');
+    expect(mockApi.delete).toHaveBeenCalledWith('/workshop/vehicles/v1');
+  });
 });

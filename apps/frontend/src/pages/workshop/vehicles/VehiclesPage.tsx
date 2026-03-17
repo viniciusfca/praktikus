@@ -82,13 +82,14 @@ export function VehiclesPage() {
               <TableCell>Modelo</TableCell>
               <TableCell>Ano</TableCell>
               <TableCell>KM</TableCell>
+              <TableCell>Cliente</TableCell>
               <TableCell align="right">Ações</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={6} align="center"><CircularProgress size={24} /></TableCell>
+                <TableCell colSpan={7} align="center"><CircularProgress size={24} /></TableCell>
               </TableRow>
             ) : vehicles.map((v) => (
               <TableRow key={v.id}>
@@ -97,6 +98,14 @@ export function VehiclesPage() {
                 <TableCell>{v.modelo}</TableCell>
                 <TableCell>{v.ano}</TableCell>
                 <TableCell>{v.km.toLocaleString()} km</TableCell>
+                <TableCell>
+                  <Chip
+                    label={v.customerId.slice(0, 8) + '...'}
+                    size="small"
+                    onClick={() => navigate(`/workshop/customers/${v.customerId}`)}
+                    clickable
+                  />
+                </TableCell>
                 <TableCell align="right">
                   <IconButton size="small" onClick={() => navigate(`/workshop/vehicles/${v.id}/edit`)}>
                     <EditIcon fontSize="small" />
