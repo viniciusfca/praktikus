@@ -25,5 +25,21 @@ export function createTenantTablesSql(schemaName: string): string[] {
       created_at TIMESTAMPTZ DEFAULT NOW(),
       updated_at TIMESTAMPTZ DEFAULT NOW()
     )`,
+    `CREATE TABLE IF NOT EXISTS "${schemaName}".catalog_services (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      nome VARCHAR NOT NULL,
+      descricao VARCHAR,
+      preco_padrao NUMERIC(10,2) NOT NULL DEFAULT 0,
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      updated_at TIMESTAMPTZ DEFAULT NOW()
+    )`,
+    `CREATE TABLE IF NOT EXISTS "${schemaName}".catalog_parts (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      nome VARCHAR NOT NULL,
+      codigo VARCHAR,
+      preco_unitario NUMERIC(10,2) NOT NULL DEFAULT 0,
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      updated_at TIMESTAMPTZ DEFAULT NOW()
+    )`,
   ];
 }

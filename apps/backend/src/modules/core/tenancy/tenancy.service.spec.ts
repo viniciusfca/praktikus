@@ -126,6 +126,14 @@ describe('TenancyService', () => {
         3,
         expect.stringContaining('vehicles'),
       );
+      expect(mockQueryRunner.query).toHaveBeenNthCalledWith(
+        4,
+        expect.stringContaining('catalog_services'),
+      );
+      expect(mockQueryRunner.query).toHaveBeenNthCalledWith(
+        5,
+        expect.stringContaining('catalog_parts'),
+      );
     });
   });
 
