@@ -6,6 +6,9 @@ import { LoginPage } from './pages/auth/LoginPage';
 import { RegisterPage } from './pages/auth/RegisterPage';
 import { AppLayout } from './layouts/AppLayout';
 import { DashboardPage } from './pages/workshop/DashboardPage';
+import { CustomersPage } from './pages/workshop/customers/CustomersPage';
+import { CustomerFormPage } from './pages/workshop/customers/CustomerFormPage';
+import { CustomerDetailPage } from './pages/workshop/customers/CustomerDetailPage';
 import { PrivateRoute } from './components/PrivateRoute';
 import { useAuthStore } from './store/auth.store';
 
@@ -33,6 +36,10 @@ function App() {
           >
             <Route index element={<Navigate to="dashboard" replace />} />
             <Route path="dashboard" element={<DashboardPage />} />
+            <Route path="customers" element={<CustomersPage />} />
+            <Route path="customers/new" element={<CustomerFormPage />} />
+            <Route path="customers/:id" element={<CustomerDetailPage />} />
+            <Route path="customers/:id/edit" element={<CustomerFormPage />} />
           </Route>
         </Routes>
       </BrowserRouter>

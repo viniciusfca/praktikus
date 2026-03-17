@@ -22,10 +22,13 @@ export function CustomerDetailPage() {
     if (!id) return;
     Promise.all([
       customersService.getById(id),
-      vehiclesService.list({ search: undefined }),
+      vehiclesService.list({ page: 1, limit: 1000, search: undefined }),
     ]).then(([c, v]) => {
       setCustomer(c);
+      // TODO: replace with server-side customerId filter when backend supports it
       setVehicles(v.data.filter((veh) => veh.customerId === id));
+    }).catch(() => {
+      setCustomer(null);
     }).finally(() => setLoading(false));
   }, [id]);
 
