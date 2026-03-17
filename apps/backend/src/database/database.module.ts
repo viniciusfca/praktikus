@@ -7,6 +7,8 @@ import { RefreshTokenEntity } from '../modules/core/auth/refresh-token.entity';
 import { BillingEntity } from '../modules/core/billing/billing.entity';
 import { CustomerEntity } from '../modules/workshop/customers/customer.entity';
 import { VehicleEntity } from '../modules/workshop/vehicles/vehicle.entity';
+import { CatalogServiceEntity } from '../modules/workshop/catalog/catalog-service.entity';
+import { CatalogPartEntity } from '../modules/workshop/catalog/catalog-part.entity';
 
 @Module({
   imports: [
@@ -20,7 +22,7 @@ import { VehicleEntity } from '../modules/workshop/vehicles/vehicle.entity';
         username: config.get<string>('DB_USER'),
         password: config.get<string>('DB_PASS'),
         database: config.get<string>('DB_NAME'),
-        entities: [TenantEntity, UserEntity, RefreshTokenEntity, BillingEntity, CustomerEntity, VehicleEntity],
+        entities: [TenantEntity, UserEntity, RefreshTokenEntity, BillingEntity, CustomerEntity, VehicleEntity, CatalogServiceEntity, CatalogPartEntity],
         synchronize: false,
         logging: config.get('NODE_ENV') === 'development',
         migrations: [__dirname + '/migrations/*.{ts,js}'],
