@@ -9,6 +9,7 @@ import { CompaniesModule } from './modules/workshop/companies/companies.module';
 import { CustomersModule } from './modules/workshop/customers/customers.module';
 import { VehiclesModule } from './modules/workshop/vehicles/vehicles.module';
 import { CatalogModule } from './modules/workshop/catalog/catalog.module';
+import { AppointmentsModule } from './modules/workshop/appointments/appointments.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { CatalogModule } from './modules/workshop/catalog/catalog.module';
     CustomersModule,
     VehiclesModule,
     CatalogModule,
+    AppointmentsModule,
   ],
   controllers: [HealthController],
   providers: [],
