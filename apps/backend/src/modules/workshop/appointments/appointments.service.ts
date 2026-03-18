@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { DataSource, EntityManager, QueryRunner } from 'typeorm';
+import { DataSource, QueryRunner } from 'typeorm';
 import { AppointmentEntity } from './appointment.entity';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 
