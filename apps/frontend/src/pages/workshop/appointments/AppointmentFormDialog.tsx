@@ -63,7 +63,7 @@ export function AppointmentFormDialog({ open, editing, onClose, onSaved }: Props
     if (editing) {
       const d = new Date(editing.dataHora);
       const date = d.toISOString().slice(0, 10);
-      const time = d.toTimeString().slice(0, 5);
+      const time = d.toISOString().slice(11, 16);
       reset({
         clienteId: editing.clienteId,
         veiculoId: editing.veiculoId,
