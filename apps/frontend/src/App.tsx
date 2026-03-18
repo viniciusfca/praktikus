@@ -12,6 +12,7 @@ import { CustomerDetailPage } from './pages/workshop/customers/CustomerDetailPag
 import { VehiclesPage } from './pages/workshop/vehicles/VehiclesPage';
 import { VehicleFormPage } from './pages/workshop/vehicles/VehicleFormPage';
 import { CatalogPage } from './pages/workshop/catalog/CatalogPage';
+import { AppointmentsPage } from './pages/workshop/appointments/AppointmentsPage';
 import { PrivateRoute } from './components/PrivateRoute';
 import { useAuthStore } from './store/auth.store';
 
@@ -47,6 +48,7 @@ function App() {
             <Route path="vehicles/new" element={<VehicleFormPage />} />
             <Route path="vehicles/:id/edit" element={<VehicleFormPage />} />
             <Route path="catalog" element={<CatalogPage />} />
+            <Route path="appointments" element={<AppointmentsPage />} />
           </Route>
         </Routes>
       </BrowserRouter>
