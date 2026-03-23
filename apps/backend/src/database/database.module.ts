@@ -11,6 +11,9 @@ import { CatalogServiceEntity } from '../modules/workshop/catalog/catalog-servic
 import { CatalogPartEntity } from '../modules/workshop/catalog/catalog-part.entity';
 import { AppointmentEntity } from '../modules/workshop/appointments/appointment.entity';
 import { AppointmentCommentEntity } from '../modules/workshop/appointments/appointment-comment.entity';
+import { ServiceOrderEntity } from '../modules/workshop/service-orders/service-order.entity';
+import { SoItemServiceEntity } from '../modules/workshop/service-orders/so-item-service.entity';
+import { SoItemPartEntity } from '../modules/workshop/service-orders/so-item-part.entity';
 
 @Module({
   imports: [
@@ -24,7 +27,7 @@ import { AppointmentCommentEntity } from '../modules/workshop/appointments/appoi
         username: config.get<string>('DB_USER'),
         password: config.get<string>('DB_PASS'),
         database: config.get<string>('DB_NAME'),
-        entities: [TenantEntity, UserEntity, RefreshTokenEntity, BillingEntity, CustomerEntity, VehicleEntity, CatalogServiceEntity, CatalogPartEntity, AppointmentEntity, AppointmentCommentEntity],
+        entities: [TenantEntity, UserEntity, RefreshTokenEntity, BillingEntity, CustomerEntity, VehicleEntity, CatalogServiceEntity, CatalogPartEntity, AppointmentEntity, AppointmentCommentEntity, ServiceOrderEntity, SoItemServiceEntity, SoItemPartEntity],
         synchronize: false,
         logging: config.get('NODE_ENV') === 'development',
         migrations: [__dirname + '/migrations/*.{ts,js}'],
