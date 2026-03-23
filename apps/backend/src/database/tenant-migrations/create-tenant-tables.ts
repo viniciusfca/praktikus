@@ -78,7 +78,7 @@ export function createTenantTablesSql(schemaName: string): string[] {
     `CREATE TABLE IF NOT EXISTS "${schemaName}".so_items_services (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       so_id UUID NOT NULL REFERENCES "${schemaName}".service_orders(id) ON DELETE CASCADE,
-      catalog_service_id UUID NOT NULL,
+      catalog_service_id UUID NOT NULL REFERENCES "${schemaName}".catalog_services(id) ON DELETE RESTRICT,
       nome_servico VARCHAR NOT NULL,
       valor NUMERIC(10,2) NOT NULL,
       mecanico_id UUID,
@@ -87,7 +87,7 @@ export function createTenantTablesSql(schemaName: string): string[] {
     `CREATE TABLE IF NOT EXISTS "${schemaName}".so_items_parts (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       so_id UUID NOT NULL REFERENCES "${schemaName}".service_orders(id) ON DELETE CASCADE,
-      catalog_part_id UUID NOT NULL,
+      catalog_part_id UUID NOT NULL REFERENCES "${schemaName}".catalog_parts(id) ON DELETE RESTRICT,
       nome_peca VARCHAR NOT NULL,
       quantidade INT NOT NULL DEFAULT 1,
       valor_unitario NUMERIC(10,2) NOT NULL,
