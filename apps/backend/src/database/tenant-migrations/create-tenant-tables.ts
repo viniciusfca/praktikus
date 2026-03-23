@@ -60,5 +60,38 @@ export function createTenantTablesSql(schemaName: string): string[] {
       created_by_id UUID NOT NULL,
       created_at TIMESTAMPTZ DEFAULT NOW()
     )`,
+    `CREATE TABLE IF NOT EXISTS "${schemaName}".service_orders (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      appointment_id UUID,
+      cliente_id UUID NOT NULL,
+      veiculo_id UUID NOT NULL,
+      status VARCHAR NOT NULL DEFAULT 'ORCAMENTO',
+      status_pagamento VARCHAR NOT NULL DEFAULT 'PENDENTE',
+      km_entrada VARCHAR,
+      combustivel VARCHAR,
+      observacoes_entrada TEXT,
+      approval_token UUID,
+      approval_expires_at TIMESTAMPTZ,
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      updated_at TIMESTAMPTZ DEFAULT NOW()
+    )`,
+    `CREATE TABLE IF NOT EXISTS "${schemaName}".so_items_services (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      so_id UUID NOT NULL REFERENCES "${schemaName}".service_orders(id) ON DELETE CASCADE,
+      catalog_service_id UUID NOT NULL,
+      nome_servico VARCHAR NOT NULL,
+      valor NUMERIC(10,2) NOT NULL,
+      mecanico_id UUID,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    )`,
+    `CREATE TABLE IF NOT EXISTS "${schemaName}".so_items_parts (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      so_id UUID NOT NULL REFERENCES "${schemaName}".service_orders(id) ON DELETE CASCADE,
+      catalog_part_id UUID NOT NULL,
+      nome_peca VARCHAR NOT NULL,
+      quantidade INT NOT NULL DEFAULT 1,
+      valor_unitario NUMERIC(10,2) NOT NULL,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    )`,
   ];
 }
