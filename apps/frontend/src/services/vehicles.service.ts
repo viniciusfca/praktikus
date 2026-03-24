@@ -22,6 +22,33 @@ export interface CreateVehiclePayload {
   customerId: string;
 }
 
+export interface VehicleSoItemService {
+  id: string;
+  nomeServico: string;
+  valor: number;
+  mecanicoId: string | null;
+}
+
+export interface VehicleSoItemPart {
+  id: string;
+  nomePeca: string;
+  quantidade: number;
+  valorUnitario: number;
+}
+
+export interface VehicleServiceOrder {
+  id: string;
+  status: string;
+  statusPagamento: string;
+  kmEntrada: string | null;
+  combustivel: string | null;
+  observacoesEntrada: string | null;
+  createdAt: string;
+  itemsServices: VehicleSoItemService[];
+  itemsParts: VehicleSoItemPart[];
+  total: number;
+}
+
 export const vehiclesService = {
   async list(params?: {
     page?: number;
@@ -52,5 +79,12 @@ export const vehiclesService = {
 
   async delete(id: string): Promise<void> {
     await api.delete(`/workshop/vehicles/${id}`);
+  },
+
+  async getServiceOrders(id: string): Promise<VehicleServiceOrder[]> {
+    const { data } = await api.get<VehicleServiceOrder[]>(
+      `/workshop/vehicles/${id}/service-orders`,
+    );
+    return data;
   },
 };
