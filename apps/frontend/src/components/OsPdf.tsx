@@ -20,7 +20,7 @@ const s = StyleSheet.create({
   sectionHead: { fontSize: 11, fontWeight: 'bold', borderBottomWidth: 1, borderBottomColor: '#ccc', paddingBottom: 4, marginBottom: 6 },
   row:         { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 2 },
   tHead:       { flexDirection: 'row', backgroundColor: '#f0f0f0', padding: 4, marginBottom: 2 },
-  tRow:        { flexDirection: 'row', padding: '2 0', borderBottomWidth: 0.5, borderBottomColor: '#eee' },
+  tRow:        { flexDirection: 'row', paddingVertical: 2, borderBottomWidth: 0.5, borderBottomColor: '#eee' },
   c3:          { flex: 3 },
   c1r:         { flex: 1, textAlign: 'right' },
   signature:   { marginTop: 48, borderTopWidth: 1, borderTopColor: '#333', width: 220, paddingTop: 4, color: '#555' },
@@ -121,7 +121,7 @@ export function OsPdf({ so, empresa, cliente, veiculo }: OsPdfProps) {
                 <Text style={s.c3}>{item.nomePeca}</Text>
                 <Text style={s.c1r}>{item.quantidade}</Text>
                 <Text style={s.c1r}>{fmt(Number(item.valorUnitario))}</Text>
-                <Text style={s.c1r}>{fmt(Number(item.valorUnitario) * item.quantidade)}</Text>
+                <Text style={s.c1r}>{fmt(Number(item.valorUnitario) * Number(item.quantidade))}</Text>
               </View>
             ))}
           </View>
