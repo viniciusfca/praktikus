@@ -13,6 +13,9 @@ import { VehiclesPage } from './pages/workshop/vehicles/VehiclesPage';
 import { VehicleFormPage } from './pages/workshop/vehicles/VehicleFormPage';
 import { CatalogPage } from './pages/workshop/catalog/CatalogPage';
 import { AppointmentsPage } from './pages/workshop/appointments/AppointmentsPage';
+import { ServiceOrdersPage } from './pages/workshop/service-orders/ServiceOrdersPage';
+import { ServiceOrderDetailPage } from './pages/workshop/service-orders/ServiceOrderDetailPage';
+import { QuoteApprovalPage } from './pages/public/QuoteApprovalPage';
 import { PrivateRoute } from './components/PrivateRoute';
 import { useAuthStore } from './store/auth.store';
 
@@ -30,6 +33,7 @@ function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/quotes/:token" element={<QuoteApprovalPage />} />
           <Route
             path="/workshop"
             element={
@@ -49,6 +53,8 @@ function App() {
             <Route path="vehicles/:id/edit" element={<VehicleFormPage />} />
             <Route path="catalog" element={<CatalogPage />} />
             <Route path="appointments" element={<AppointmentsPage />} />
+            <Route path="service-orders" element={<ServiceOrdersPage />} />
+            <Route path="service-orders/:id" element={<ServiceOrderDetailPage />} />
           </Route>
         </Routes>
       </BrowserRouter>
