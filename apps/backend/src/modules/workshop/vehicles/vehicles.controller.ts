@@ -53,6 +53,14 @@ export class VehiclesController {
     return this.vehiclesService.getById(req.user.tenantId, id);
   }
 
+  @Get(':id/service-orders')
+  getServiceOrders(
+    @Request() req: RequestWithUser,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.vehiclesService.getServiceOrders(req.user.tenantId, id);
+  }
+
   @Post()
   create(@Request() req: RequestWithUser, @Body() dto: CreateVehicleDto) {
     return this.vehiclesService.create(req.user.tenantId, dto);

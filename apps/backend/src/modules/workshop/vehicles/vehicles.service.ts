@@ -106,4 +106,59 @@ export class VehiclesService {
       await repo.remove(vehicle);
     });
   }
+
+  async getServiceOrders(tenantId: string, vehicleId: string) {
+    return this.withSchema(tenantId, async (manager) => {
+      const orders = await manager.query<any[]>(
+        `SELECT id,
+                status,
+                status_pagamento    AS "statusPagamento",
+                km_entrada          AS "kmEntrada",
+                combustivel,
+                observacoes_entrada AS "observacoesEntrada",
+                created_at          AS "createdAt"
+         FROM   service_orders
+         WHERE  veiculo_id = $1
+         ORDER  BY created_at DESC`,
+        [vehicleId],
+      );
+
+      if (orders.length === 0) return [];
+
+      const soIds = orders.map((o) => o.id);
+
+      const services = await manager.query<any[]>(
+        `SELECT so_id         AS "soId",
+                id,
+                nome_servico  AS "nomeServico",
+                valor,
+                mecanico_id   AS "mecanicoId"
+         FROM   so_items_services
+         WHERE  so_id = ANY($1)`,
+        [soIds],
+      );
+
+      const parts = await manager.query<any[]>(
+        `SELECT so_id          AS "soId",
+                id,
+                nome_peca      AS "nomePeca",
+                quantidade,
+                valor_unitario AS "valorUnitario"
+         FROM   so_items_parts
+         WHERE  so_id = ANY($1)`,
+        [soIds],
+      );
+
+      return orders.map((o) => {
+        const itemsServices = services.filter((s) => s.soId === o.id);
+        const itemsParts = parts.filter((p) => p.soId === o.id);
+        const totalServices = itemsServices.reduce((acc, s) => acc + Number(s.valor), 0);
+        const totalParts = itemsParts.reduce(
+          (acc, p) => acc + Number(p.valorUnitario) * Number(p.quantidade),
+          0,
+        );
+        return { ...o, itemsServices, itemsParts, total: totalServices + totalParts };
+      });
+    });
+  }
 }

@@ -25,6 +25,7 @@ const mockQueryRunner = {
   query: jest.fn().mockResolvedValue(undefined),
   manager: {
     getRepository: jest.fn().mockReturnValue(mockVehicleRepo),
+    query: jest.fn(),
   },
   release: jest.fn().mockResolvedValue(undefined),
 };
@@ -47,6 +48,7 @@ describe('VehiclesService', () => {
     service = module.get<VehiclesService>(VehiclesService);
     jest.clearAllMocks();
     mockQueryRunner.manager.getRepository.mockImplementation(() => mockVehicleRepo);
+    mockQueryRunner.manager.query.mockReset();
     mockVehicleRepo.createQueryBuilder.mockReturnValue(mockQb);
     mockQb.where.mockReturnThis();
     mockQb.skip.mockReturnThis();
@@ -149,6 +151,57 @@ describe('VehiclesService', () => {
       await expect(service.delete('00000000-0000-0000-0000-000000000001', 'nonexistent')).rejects.toThrow(
         NotFoundException,
       );
+    });
+  });
+
+  describe('getServiceOrders', () => {
+    const TENANT = '00000000-0000-0000-0000-000000000001';
+    const VEHICLE_ID = '00000000-0000-0000-0000-000000000002';
+
+    beforeEach(() => {
+      mockQueryRunner.manager.query.mockReset();
+    });
+
+    it('should return empty array when vehicle has no service orders', async () => {
+      mockQueryRunner.manager.query.mockResolvedValueOnce([]);
+
+      const result = await service.getServiceOrders(TENANT, VEHICLE_ID);
+
+      expect(result).toEqual([]);
+      expect(mockQueryRunner.manager.query).toHaveBeenCalledTimes(1);
+    });
+
+    it('should return orders with items and computed total', async () => {
+      const orders = [
+        {
+          id: 'so1',
+          status: 'ENTREGUE',
+          statusPagamento: 'PAGO',
+          kmEntrada: '45000',
+          combustivel: 'cheio',
+          observacoesEntrada: null,
+          createdAt: '2024-01-01T00:00:00Z',
+        },
+      ];
+      const services = [
+        { soId: 'so1', id: 'si1', nomeServico: 'Troca de óleo', valor: '150.00', mecanicoId: null },
+      ];
+      const parts = [
+        { soId: 'so1', id: 'pi1', nomePeca: 'Filtro', quantidade: 1, valorUnitario: '50.00' },
+      ];
+
+      mockQueryRunner.manager.query
+        .mockResolvedValueOnce(orders)
+        .mockResolvedValueOnce(services)
+        .mockResolvedValueOnce(parts);
+
+      const result = await service.getServiceOrders(TENANT, VEHICLE_ID);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].total).toBe(200);
+      expect(result[0].itemsServices).toHaveLength(1);
+      expect(result[0].itemsParts).toHaveLength(1);
+      expect(mockQueryRunner.manager.query).toHaveBeenCalledTimes(3);
     });
   });
 });
