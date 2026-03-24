@@ -5,7 +5,6 @@ import { ServiceOrderEntity } from './service-order.entity';
 import { SoItemServiceEntity } from './so-item-service.entity';
 import { SoItemPartEntity } from './so-item-part.entity';
 import { CreateServiceOrderDto } from './dto/create-service-order.dto';
-import { UpdateServiceOrderDto } from './dto/update-service-order.dto';
 import { CreateSoItemServiceDto } from './dto/create-so-item-service.dto';
 import { CreateSoItemPartDto } from './dto/create-so-item-part.dto';
 
@@ -85,7 +84,7 @@ export class ServiceOrdersService {
     });
   }
 
-  async update(tenantId: string, id: string, dto: UpdateServiceOrderDto): Promise<ServiceOrderEntity> {
+  async update(tenantId: string, id: string, dto: Partial<CreateServiceOrderDto>): Promise<ServiceOrderEntity> {
     return this.withSchema(tenantId, async (qr) => {
       const repo = this.getSoRepo(qr);
       const so = await repo.findOne({ where: { id } });
