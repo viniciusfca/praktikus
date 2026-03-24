@@ -12,12 +12,13 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@practicus/shared": "workspace:*",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@hookform/resolvers": "^5.2.2",
     "@mui/icons-material": "^7.3.9",
     "@mui/material": "^7.3.9",
+    "@practicus/shared": "workspace:*",
+    "@react-pdf/renderer": "^4.3.2",
     "axios": "^1.13.6",
     "jwt-decode": "^4.0.0",
     "react": "^19.2.4",
