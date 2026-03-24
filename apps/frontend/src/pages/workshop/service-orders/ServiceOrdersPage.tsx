@@ -7,7 +7,6 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import { serviceOrdersApi, type ServiceOrder, type SoStatus } from '../../../services/service-orders.service';
-import { useAuthStore } from '../../../store/auth.store';
 import { CreateServiceOrderDialog } from './CreateServiceOrderDialog';
 
 const STATUS_LABEL: Record<SoStatus, string> = {
@@ -32,8 +31,6 @@ export function ServiceOrdersPage() {
   const [orders, setOrders] = useState<ServiceOrder[]>([]);
   const [createOpen, setCreateOpen] = useState(false);
   const navigate = useNavigate();
-  const user = useAuthStore((s) => s.user);
-  const isOwner = user?.role === 'OWNER';
 
   const load = useCallback(async () => {
     const data = await serviceOrdersApi.list();
