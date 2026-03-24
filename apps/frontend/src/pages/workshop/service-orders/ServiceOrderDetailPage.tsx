@@ -16,6 +16,9 @@ import { useAuthStore } from '../../../store/auth.store';
 import { customersService, type Customer } from '../../../services/customers.service';
 import { vehiclesService, type Vehicle } from '../../../services/vehicles.service';
 import { catalogServicesApi, catalogPartsApi, type CatalogService, type CatalogPart } from '../../../services/catalog.service';
+import { pdf } from '@react-pdf/renderer';
+import { OsPdf } from '../../../components/OsPdf';
+import { companiesService, type CompanyProfile } from '../../../services/companies.service';
 
 // ---------- helpers ----------
 const STATUS_LABEL: Record<SoStatus, string> = {
@@ -194,6 +197,7 @@ export function ServiceOrderDetailPage() {
   const [so, setSo] = useState<ServiceOrderDetail | null>(null);
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
+  const [empresa, setEmpresa] = useState<CompanyProfile | null>(null);
   const [catalogServices, setCatalogServices] = useState<CatalogService[]>([]);
   const [catalogParts, setCatalogParts] = useState<CatalogPart[]>([]);
   const [loading, setLoading] = useState(true);
@@ -214,6 +218,11 @@ export function ServiceOrderDetailPage() {
   const [combustivel, setCombustivel] = useState('');
   const [observacoes, setObservacoes] = useState('');
   const [savingChecklist, setSavingChecklist] = useState(false);
+
+  // Fetch company profile once on mount — non-critical for PDF generation.
+  useEffect(() => {
+    companiesService.getProfile().then(setEmpresa).catch(() => null);
+  }, []);
 
   // Fetch catalog data once on mount — it doesn't change with SO mutations.
   useEffect(() => {
@@ -304,6 +313,30 @@ export function ServiceOrderDetailPage() {
     copyTimeoutRef.current = setTimeout(() => setCopied(false), 2000);
   };
 
+  const handleDownloadPdf = async () => {
+    if (!so || !empresa || !customer || !vehicle) return;
+    try {
+      const blob = await pdf(
+        <OsPdf
+          so={so}
+          empresa={{ nomeFantasia: empresa.nomeFantasia }}
+          cliente={{ nome: customer.nome, cpfCnpj: customer.cpfCnpj }}
+          veiculo={{ placa: vehicle.placa, marca: vehicle.marca, modelo: vehicle.modelo, ano: vehicle.ano }}
+        />,
+      ).toBlob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `OS-${so.id.slice(0, 8).toUpperCase()}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch {
+      setError('Erro ao gerar PDF.');
+    }
+  };
+
   const handleRemoveService = async (itemId: string) => {
     if (!id) return;
     try {
@@ -365,6 +398,14 @@ export function ServiceOrderDetailPage() {
             {so.approvalToken ? 'Gerar novo link' : 'Gerar link de aprovação'}
           </Button>
         )}
+        <Button
+          size="small"
+          variant="outlined"
+          onClick={handleDownloadPdf}
+          disabled={!empresa}
+        >
+          Baixar PDF
+        </Button>
       </Box>
 
       {/* Dados */}
