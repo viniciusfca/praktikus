@@ -251,9 +251,8 @@ export function ServiceOrderDetailPage() {
     await load();
   };
 
-  const handleCopy = () => {
-    if (!approvalLink) return;
-    navigator.clipboard.writeText(approvalLink);
+  const handleCopy = (link: string) => {
+    navigator.clipboard.writeText(link);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -297,17 +296,17 @@ export function ServiceOrderDetailPage() {
           onClick={isOwner ? handleTogglePayment : undefined}
           sx={{ cursor: isOwner ? 'pointer' : 'default' }}
         />
+        {nextStatuses.map((s) => (
+          <Button key={s} variant="outlined" size="small" onClick={() => handleTransition(s)}>
+            → {STATUS_LABEL[s]}
+          </Button>
+        ))}
+        {so.status === 'ORCAMENTO' && (
+          <Button variant="contained" size="small" onClick={handleGenerateLink}>
+            {so.approvalToken ? 'Gerar novo link' : 'Gerar link de aprovação'}
+          </Button>
+        )}
       </Box>
-
-      {nextStatuses.length > 0 && (
-        <Stack direction="row" spacing={1} sx={{ mb: 2 }}>
-          {nextStatuses.map((s) => (
-            <Button key={s} variant="outlined" onClick={() => handleTransition(s)}>
-              → {STATUS_LABEL[s]}
-            </Button>
-          ))}
-        </Stack>
-      )}
 
       {/* Dados */}
       <Card sx={{ mb: 2 }}>
@@ -442,34 +441,31 @@ export function ServiceOrderDetailPage() {
         </CardContent>
       </Card>
 
-      {/* Aprovação */}
-      {so.status === 'ORCAMENTO' && (
-        <Card sx={{ mb: 2 }}>
-          <CardContent>
-            <Typography variant="subtitle1" fontWeight="bold" gutterBottom>Link de Aprovação</Typography>
-            {so.approvalToken && so.approvalExpiresAt && !approvalLink && (
-              <Alert severity="info" sx={{ mb: 1 }}>
-                Token ativo até {new Date(so.approvalExpiresAt).toLocaleString('pt-BR')}
-              </Alert>
-            )}
-            <Stack direction="row" spacing={1} alignItems="center">
-              <Button variant="outlined" onClick={handleGenerateLink}>
-                {so.approvalToken ? 'Gerar novo link' : 'Gerar link de aprovação'}
-              </Button>
-              {approvalLink && (
-                <Tooltip title={copied ? 'Copiado!' : 'Copiar link'}>
-                  <IconButton onClick={handleCopy}><ContentCopyIcon /></IconButton>
-                </Tooltip>
+      {/* Aprovação — only visible when ORCAMENTO and a token already exists */}
+      {so.status === 'ORCAMENTO' && so.approvalToken && (() => {
+        const displayLink = approvalLink ?? `${window.location.origin}/quotes/${so.approvalToken}`;
+        return (
+          <Card sx={{ mb: 2 }}>
+            <CardContent>
+              <Typography variant="subtitle1" fontWeight="bold" gutterBottom>Link de Aprovação</Typography>
+              {so.approvalExpiresAt && (
+                <Alert severity="info" sx={{ mb: 1 }}>
+                  Token ativo até {new Date(so.approvalExpiresAt).toLocaleString('pt-BR')}
+                </Alert>
               )}
-            </Stack>
-            {approvalLink && (
+              <Stack direction="row" spacing={1} alignItems="center">
+                <Button variant="outlined" size="small" onClick={handleGenerateLink}>Gerar novo link</Button>
+                <Tooltip title={copied ? 'Copiado!' : 'Copiar link'}>
+                  <IconButton onClick={() => handleCopy(displayLink)}><ContentCopyIcon /></IconButton>
+                </Tooltip>
+              </Stack>
               <Typography variant="body2" sx={{ mt: 1, wordBreak: 'break-all', color: 'text.secondary' }}>
-                {approvalLink}
+                {displayLink}
               </Typography>
-            )}
-          </CardContent>
-        </Card>
-      )}
+            </CardContent>
+          </Card>
+        );
+      })()}
 
       <AddServiceDialog
         open={addServiceOpen}
