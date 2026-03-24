@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Alert, Box, Button, Card, CardContent, Chip, CircularProgress,
@@ -49,6 +49,15 @@ function AddServiceDialog({ open, soId, services, onClose, onSaved }: AddService
   const [valor, setValor] = useState('');
   const [mecanicoId, setMecanicoId] = useState('');
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setServiceId('');
+      setNome('');
+      setValor('');
+      setMecanicoId('');
+    }
+  }, [open]);
 
   const handleSave = async () => {
     if (!serviceId || !nome || !valor) return;
@@ -115,6 +124,15 @@ function AddPartDialog({ open, soId, parts, onClose, onSaved }: AddPartDialogPro
   const [quantidade, setQuantidade] = useState('1');
   const [valorUnitario, setValorUnitario] = useState('');
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setPartId('');
+      setNome('');
+      setQuantidade('1');
+      setValorUnitario('');
+    }
+  }, [open]);
 
   const handleSave = async () => {
     if (!partId || !nome || !valorUnitario) return;
@@ -184,11 +202,31 @@ export function ServiceOrderDetailPage() {
   const [addPartOpen, setAddPartOpen] = useState(false);
   const [approvalLink, setApprovalLink] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (copyTimeoutRef.current !== null) clearTimeout(copyTimeoutRef.current);
+    };
+  }, []);
 
   const [km, setKm] = useState('');
   const [combustivel, setCombustivel] = useState('');
   const [observacoes, setObservacoes] = useState('');
   const [savingChecklist, setSavingChecklist] = useState(false);
+
+  // Fetch catalog data once on mount — it doesn't change with SO mutations.
+  useEffect(() => {
+    Promise.all([
+      catalogServicesApi.list({ limit: 200 }),
+      catalogPartsApi.list({ limit: 200 }),
+    ]).then(([svcs, prts]) => {
+      setCatalogServices(svcs.data);
+      setCatalogParts(prts.data);
+    }).catch(() => {
+      // catalog fetch failure is non-critical; leave lists empty
+    });
+  }, []);
 
   const load = useCallback(async () => {
     if (!id) return;
@@ -200,16 +238,12 @@ export function ServiceOrderDetailPage() {
       setKm(data.kmEntrada ?? '');
       setCombustivel(data.combustivel ?? '');
       setObservacoes(data.observacoesEntrada ?? '');
-      const [cust, veh, svcs, prts] = await Promise.all([
+      const [cust, veh] = await Promise.all([
         customersService.getById(data.clienteId).catch(() => null),
         vehiclesService.getById(data.veiculoId).catch(() => null),
-        catalogServicesApi.list({ limit: 200 }),
-        catalogPartsApi.list({ limit: 200 }),
       ]);
       setCustomer(cust);
       setVehicle(veh);
-      setCatalogServices(svcs.data);
-      setCatalogParts(prts.data);
     } catch {
       setError('Erro ao carregar OS.');
     } finally {
@@ -221,15 +255,23 @@ export function ServiceOrderDetailPage() {
 
   const handleTransition = async (newStatus: SoStatus) => {
     if (!id) return;
-    await serviceOrdersApi.patchStatus(id, newStatus);
-    await load();
+    try {
+      await serviceOrdersApi.patchStatus(id, newStatus);
+      await load();
+    } catch {
+      setError('Erro ao atualizar status da OS.');
+    }
   };
 
   const handleTogglePayment = async () => {
     if (!id || !so) return;
     const next = so.statusPagamento === 'PAGO' ? 'PENDENTE' : 'PAGO';
-    await serviceOrdersApi.patchPaymentStatus(id, next);
-    await load();
+    try {
+      await serviceOrdersApi.patchPaymentStatus(id, next);
+      await load();
+    } catch {
+      setError('Erro ao atualizar status de pagamento.');
+    }
   };
 
   const handleSaveChecklist = async () => {
@@ -245,28 +287,41 @@ export function ServiceOrderDetailPage() {
 
   const handleGenerateLink = async () => {
     if (!id) return;
-    const { token } = await serviceOrdersApi.generateApprovalToken(id);
-    const link = `${window.location.origin}/quotes/${token}`;
-    setApprovalLink(link);
-    await load();
+    try {
+      const { token } = await serviceOrdersApi.generateApprovalToken(id);
+      const link = `${window.location.origin}/quotes/${token}`;
+      setApprovalLink(link);
+      await load();
+    } catch {
+      setError('Erro ao gerar link de aprovação.');
+    }
   };
 
   const handleCopy = (link: string) => {
     navigator.clipboard.writeText(link);
     setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    if (copyTimeoutRef.current !== null) clearTimeout(copyTimeoutRef.current);
+    copyTimeoutRef.current = setTimeout(() => setCopied(false), 2000);
   };
 
   const handleRemoveService = async (itemId: string) => {
     if (!id) return;
-    await soItemsServicesApi.delete(id, itemId);
-    await load();
+    try {
+      await soItemsServicesApi.delete(id, itemId);
+      await load();
+    } catch {
+      setError('Erro ao remover serviço.');
+    }
   };
 
   const handleRemovePart = async (itemId: string) => {
     if (!id) return;
-    await soItemsPartsApi.delete(id, itemId);
-    await load();
+    try {
+      await soItemsPartsApi.delete(id, itemId);
+      await load();
+    } catch {
+      setError('Erro ao remover peça.');
+    }
   };
 
   if (loading) return (
@@ -281,6 +336,10 @@ export function ServiceOrderDetailPage() {
   const total = totalServices + totalParts;
   const nextStatuses = NEXT_STATUSES[so.status] ?? [];
   const isFinal = so.status === 'ENTREGUE';
+  const approvalDisplayLink =
+    so.status === 'ORCAMENTO' && so.approvalToken
+      ? approvalLink ?? `${window.location.origin}/quotes/${so.approvalToken}`
+      : null;
 
   return (
     <Box>
@@ -442,30 +501,27 @@ export function ServiceOrderDetailPage() {
       </Card>
 
       {/* Aprovação — only visible when ORCAMENTO and a token already exists */}
-      {so.status === 'ORCAMENTO' && so.approvalToken && (() => {
-        const displayLink = approvalLink ?? `${window.location.origin}/quotes/${so.approvalToken}`;
-        return (
-          <Card sx={{ mb: 2 }}>
-            <CardContent>
-              <Typography variant="subtitle1" fontWeight="bold" gutterBottom>Link de Aprovação</Typography>
-              {so.approvalExpiresAt && (
-                <Alert severity="info" sx={{ mb: 1 }}>
-                  Token ativo até {new Date(so.approvalExpiresAt).toLocaleString('pt-BR')}
-                </Alert>
-              )}
-              <Stack direction="row" spacing={1} alignItems="center">
-                <Button variant="outlined" size="small" onClick={handleGenerateLink}>Gerar novo link</Button>
-                <Tooltip title={copied ? 'Copiado!' : 'Copiar link'}>
-                  <IconButton onClick={() => handleCopy(displayLink)}><ContentCopyIcon /></IconButton>
-                </Tooltip>
-              </Stack>
-              <Typography variant="body2" sx={{ mt: 1, wordBreak: 'break-all', color: 'text.secondary' }}>
-                {displayLink}
-              </Typography>
-            </CardContent>
-          </Card>
-        );
-      })()}
+      {approvalDisplayLink && (
+        <Card sx={{ mb: 2 }}>
+          <CardContent>
+            <Typography variant="subtitle1" fontWeight="bold" gutterBottom>Link de Aprovação</Typography>
+            {so.approvalExpiresAt && (
+              <Alert severity="info" sx={{ mb: 1 }}>
+                Token ativo até {new Date(so.approvalExpiresAt).toLocaleString('pt-BR')}
+              </Alert>
+            )}
+            <Stack direction="row" spacing={1} alignItems="center">
+              <Button variant="outlined" size="small" onClick={handleGenerateLink}>Gerar novo link</Button>
+              <Tooltip title={copied ? 'Copiado!' : 'Copiar link'}>
+                <IconButton onClick={() => handleCopy(approvalDisplayLink)}><ContentCopyIcon /></IconButton>
+              </Tooltip>
+            </Stack>
+            <Typography variant="body2" sx={{ mt: 1, wordBreak: 'break-all', color: 'text.secondary' }}>
+              {approvalDisplayLink}
+            </Typography>
+          </CardContent>
+        </Card>
+      )}
 
       <AddServiceDialog
         open={addServiceOpen}
