@@ -109,6 +109,9 @@ export class VehiclesService {
 
   async getServiceOrders(tenantId: string, vehicleId: string) {
     return this.withSchema(tenantId, async (manager) => {
+      const vehicle = await manager.getRepository(VehicleEntity).findOne({ where: { id: vehicleId } });
+      if (!vehicle) throw new NotFoundException('Veículo não encontrado.');
+
       const orders = await manager.query<any[]>(
         `SELECT id,
                 status,
@@ -157,7 +160,7 @@ export class VehiclesService {
           (acc, p) => acc + Number(p.valorUnitario) * Number(p.quantidade),
           0,
         );
-        return { ...o, itemsServices, itemsParts, total: totalServices + totalParts };
+        return { ...o, itemsServices, itemsParts, total: Math.round((totalServices + totalParts) * 100) / 100 };
       });
     });
   }

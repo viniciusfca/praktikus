@@ -163,6 +163,7 @@ describe('VehiclesService', () => {
     });
 
     it('should return empty array when vehicle has no service orders', async () => {
+      mockVehicleRepo.findOne.mockResolvedValueOnce({ id: VEHICLE_ID });
       mockQueryRunner.manager.query.mockResolvedValueOnce([]);
 
       const result = await service.getServiceOrders(TENANT, VEHICLE_ID);
@@ -190,6 +191,7 @@ describe('VehiclesService', () => {
         { soId: 'so1', id: 'pi1', nomePeca: 'Filtro', quantidade: 1, valorUnitario: '50.00' },
       ];
 
+      mockVehicleRepo.findOne.mockResolvedValueOnce({ id: VEHICLE_ID });
       mockQueryRunner.manager.query
         .mockResolvedValueOnce(orders)
         .mockResolvedValueOnce(services)
@@ -202,6 +204,13 @@ describe('VehiclesService', () => {
       expect(result[0].itemsServices).toHaveLength(1);
       expect(result[0].itemsParts).toHaveLength(1);
       expect(mockQueryRunner.manager.query).toHaveBeenCalledTimes(3);
+    });
+
+    it('should throw NotFoundException when vehicle does not exist', async () => {
+      mockVehicleRepo.findOne.mockResolvedValueOnce(null);
+
+      await expect(service.getServiceOrders(TENANT, VEHICLE_ID)).rejects.toThrow(NotFoundException);
+      expect(mockQueryRunner.manager.query).not.toHaveBeenCalled();
     });
   });
 });
