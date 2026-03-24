@@ -28,7 +28,17 @@ type PageState =
   | { kind: 'already_used'; status: string }
   | { kind: 'success'; data: QuoteData }
   | { kind: 'approved' }
-  | { kind: 'rejected' };
+  | { kind: 'rejected' }
+  | { kind: 'action_error'; message: string };
+
+const STATUS_LABELS: Record<string, string> = {
+  ORCAMENTO: 'Orçamento',
+  APROVADO: 'Aprovado',
+  EM_EXECUCAO: 'Em Execução',
+  AGUARDANDO_PECA: 'Aguardando Peça',
+  FINALIZADA: 'Finalizada',
+  ENTREGUE: 'Entregue',
+};
 
 function formatCurrency(value: number): string {
   return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -67,22 +77,52 @@ export function QuoteApprovalPage() {
   }, [token]);
 
   const handleApprove = async () => {
+    if (submitting) return;
     if (!token) return;
     setSubmitting(true);
     try {
       await publicQuotesApi.approve(token);
       setState({ kind: 'approved' });
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        const status = err.response?.status;
+        if (status === 410) {
+          setState({ kind: 'expired' });
+        } else if (status === 409) {
+          const soStatus: string = err.response?.data?.status ?? 'APROVADO';
+          setState({ kind: 'already_used', status: soStatus });
+        } else {
+          setState({ kind: 'action_error', message: 'Erro ao processar. Tente novamente.' });
+        }
+      } else {
+        setState({ kind: 'action_error', message: 'Erro ao processar. Tente novamente.' });
+      }
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleReject = async () => {
+    if (submitting) return;
     if (!token) return;
     setSubmitting(true);
     try {
       await publicQuotesApi.reject(token);
       setState({ kind: 'rejected' });
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        const status = err.response?.status;
+        if (status === 410) {
+          setState({ kind: 'expired' });
+        } else if (status === 409) {
+          const soStatus: string = err.response?.data?.status ?? 'APROVADO';
+          setState({ kind: 'already_used', status: soStatus });
+        } else {
+          setState({ kind: 'action_error', message: 'Erro ao processar. Tente novamente.' });
+        }
+      } else {
+        setState({ kind: 'action_error', message: 'Erro ao processar. Tente novamente.' });
+      }
     } finally {
       setSubmitting(false);
     }
@@ -139,8 +179,20 @@ export function QuoteApprovalPage() {
                 Orçamento já respondido
               </Typography>
               <Typography color="text.secondary">
-                Orçamento já respondido. Status atual: {state.status}
+                Orçamento já respondido. Status atual:{' '}
+                {STATUS_LABELS[state.status] ?? state.status}
               </Typography>
+            </CardContent>
+          </Card>
+        )}
+
+        {state.kind === 'action_error' && (
+          <Card sx={{ mt: 6, textAlign: 'center' }}>
+            <CardContent sx={{ p: 4 }}>
+              <Typography variant="h5" fontWeight="bold" gutterBottom>
+                Erro
+              </Typography>
+              <Typography color="error">{state.message}</Typography>
             </CardContent>
           </Card>
         )}
