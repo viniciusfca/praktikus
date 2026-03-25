@@ -19,7 +19,7 @@ import {
 } from '@mui/material';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
-import { publicQuotesApi, QuoteData } from '../../services/service-orders.service';
+import { publicQuotesApi, type QuoteData } from '../../services/service-orders.service';
 
 type PageState =
   | { kind: 'loading' }

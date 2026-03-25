@@ -9,7 +9,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   Legend, PieChart, Pie, Cell, ResponsiveContainer,
 } from 'recharts';
-import type { ValueType } from 'recharts/types/component/DefaultTooltipContent';
+import type { ValueType, NameType } from 'recharts/types/component/DefaultTooltipContent';
 import axios from 'axios';
 import { useAuthStore } from '../../../store/auth.store';
 import { reportsApi, type ReportData } from '../../../services/reports.service';
@@ -177,8 +177,8 @@ export function ReportsPage() {
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="mes" />
                       <YAxis tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} />
-                      <Tooltip formatter={(v: ValueType) => {
-                        if (typeof v !== 'number') return String(v);
+                      <Tooltip formatter={(v: ValueType | undefined) => {
+                        if (typeof v !== 'number') return String(v ?? '');
                         return fmt(v);
                       }} />
                       <Legend />
@@ -203,15 +203,16 @@ export function ReportsPage() {
                         cx="50%"
                         cy="50%"
                         outerRadius={90}
-                        label={({ status, count }) => `${STATUS_LABEL[status] ?? status}: ${count}`}
+                        label={(props: Record<string, unknown>) => `${STATUS_LABEL[props.status as string] ?? props.status}: ${props.count}`}
                       >
                         {data.osPorStatus.map((entry, index) => (
                           <Cell key={entry.status} fill={PIE_COLORS[index % PIE_COLORS.length]} />
                         ))}
                       </Pie>
-                      <Tooltip formatter={(v: ValueType, name: string) => {
-                        if (typeof v !== 'number') return [String(v), STATUS_LABEL[name] ?? name];
-                        return [v, STATUS_LABEL[name] ?? name];
+                      <Tooltip formatter={(v: ValueType | undefined, name: NameType) => {
+                        const label = STATUS_LABEL[String(name)] ?? String(name);
+                        if (typeof v !== 'number') return [String(v ?? ''), label];
+                        return [v, label];
                       }} />
                       <Legend formatter={(value: string) => STATUS_LABEL[value] ?? value} />
                     </PieChart>

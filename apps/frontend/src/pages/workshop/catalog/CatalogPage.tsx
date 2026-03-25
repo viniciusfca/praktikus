@@ -8,7 +8,7 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { useForm } from 'react-hook-form';
+import { useForm, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
@@ -44,7 +44,7 @@ function ServicesTab() {
   const [editing, setEditing] = useState<CatalogService | null>(null);
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<ServiceForm>({
-    resolver: zodResolver(serviceSchema),
+    resolver: zodResolver(serviceSchema) as Resolver<ServiceForm>,
   });
 
   const load = useCallback(async () => {
@@ -200,7 +200,7 @@ function PartsTab() {
   const [editing, setEditing] = useState<CatalogPart | null>(null);
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<PartForm>({
-    resolver: zodResolver(partSchema),
+    resolver: zodResolver(partSchema) as Resolver<PartForm>,
   });
 
   const load = useCallback(async () => {

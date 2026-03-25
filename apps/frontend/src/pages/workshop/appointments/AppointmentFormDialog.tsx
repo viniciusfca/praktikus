@@ -4,7 +4,7 @@ import {
   DialogContent, DialogTitle, FormControl, InputLabel,
   MenuItem, Select, TextField,
 } from '@mui/material';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, Controller, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { appointmentsApi, type Appointment, type AppointmentStatus } from '../../../services/appointments.service';
@@ -38,7 +38,7 @@ export function AppointmentFormDialog({ open, editing, onClose, onSaved }: Props
   const [error, setError] = useState<string | null>(null);
 
   const { control, register, handleSubmit, watch, reset, formState: { errors } } = useForm<FormData>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(schema) as Resolver<FormData>,
     defaultValues: { duracaoMin: 60, status: 'PENDENTE' },
   });
 
