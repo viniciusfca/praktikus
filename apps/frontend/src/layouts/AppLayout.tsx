@@ -19,20 +19,21 @@ import { useThemeMode } from '../theme/ThemeProvider';
 const DRAWER_WIDTH = 240;
 
 const navItems = [
-  { label: 'Dashboard', icon: <DashboardIcon />, path: '/workshop/dashboard' },
-  { label: 'Agendamentos', icon: <EventIcon />, path: '/workshop/appointments' },
-  { label: 'Ordens de Serviço', icon: <AssignmentIcon />, path: '/workshop/service-orders' },
-  { label: 'Clientes', icon: <PeopleIcon />, path: '/workshop/customers' },
-  { label: 'Veículos', icon: <DirectionsCarIcon />, path: '/workshop/vehicles' },
-  { label: 'Catálogo', icon: <InventoryIcon />, path: '/workshop/catalog' },
-  { label: 'Relatórios', icon: <BarChartIcon />, path: '/workshop/reports' },
-  { label: 'Configurações', icon: <SettingsIcon />, path: '/workshop/settings' },
+  { label: 'Dashboard', icon: <DashboardIcon />, path: '/workshop/dashboard', ownerOnly: false },
+  { label: 'Agendamentos', icon: <EventIcon />, path: '/workshop/appointments', ownerOnly: false },
+  { label: 'Ordens de Serviço', icon: <AssignmentIcon />, path: '/workshop/service-orders', ownerOnly: false },
+  { label: 'Clientes', icon: <PeopleIcon />, path: '/workshop/customers', ownerOnly: false },
+  { label: 'Veículos', icon: <DirectionsCarIcon />, path: '/workshop/vehicles', ownerOnly: false },
+  { label: 'Catálogo', icon: <InventoryIcon />, path: '/workshop/catalog', ownerOnly: false },
+  { label: 'Relatórios', icon: <BarChartIcon />, path: '/workshop/reports', ownerOnly: true },
+  { label: 'Configurações', icon: <SettingsIcon />, path: '/workshop/settings', ownerOnly: false },
 ];
 
 export function AppLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const logout = useAuthStore((s) => s.logout);
+  const user = useAuthStore((s) => s.user);
   const { toggleTheme } = useThemeMode();
 
   const handleLogout = async () => {
@@ -69,7 +70,7 @@ export function AppLayout() {
         <Toolbar />
         <Box sx={{ overflow: 'auto' }}>
           <List>
-            {navItems.map((item) => (
+            {navItems.filter((item) => !item.ownerOnly || user?.role === 'OWNER').map((item) => (
               <ListItem key={item.label} disablePadding>
                 <ListItemButton
                   component={Link}

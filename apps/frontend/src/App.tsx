@@ -16,6 +16,7 @@ import { CatalogPage } from './pages/workshop/catalog/CatalogPage';
 import { AppointmentsPage } from './pages/workshop/appointments/AppointmentsPage';
 import { ServiceOrdersPage } from './pages/workshop/service-orders/ServiceOrdersPage';
 import { ServiceOrderDetailPage } from './pages/workshop/service-orders/ServiceOrderDetailPage';
+import { ReportsPage } from './pages/workshop/reports/ReportsPage';
 import { QuoteApprovalPage } from './pages/public/QuoteApprovalPage';
 import { PrivateRoute } from './components/PrivateRoute';
 import { useAuthStore } from './store/auth.store';
@@ -57,6 +58,7 @@ function App() {
             <Route path="appointments" element={<AppointmentsPage />} />
             <Route path="service-orders" element={<ServiceOrdersPage />} />
             <Route path="service-orders/:id" element={<ServiceOrderDetailPage />} />
+            <Route path="reports" element={<ReportsPage />} />
           </Route>
         </Routes>
       </BrowserRouter>
