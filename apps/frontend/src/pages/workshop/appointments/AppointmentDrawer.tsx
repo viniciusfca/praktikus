@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   Alert, Box, Button, Chip, CircularProgress, Divider,
   Drawer, IconButton, TextField, Typography,
@@ -36,7 +36,7 @@ export function AppointmentDrawer({ appointmentId, onClose, onEdit, onDeleted, i
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const loadData = async (id: string) => {
+  const loadData = useCallback(async (id: string) => {
     setLoading(true);
     setError(null);
     try {
@@ -53,16 +53,17 @@ export function AppointmentDrawer({ appointmentId, onClose, onEdit, onDeleted, i
       setCustomer(cust);
       setVehicle(veh);
     } catch {
+      setAppt(null);
       setError('Erro ao carregar agendamento.');
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (appointmentId) loadData(appointmentId);
-    else { setAppt(null); setCustomer(null); setVehicle(null); setComments([]); }
-  }, [appointmentId]);
+    else { setAppt(null); setCustomer(null); setVehicle(null); setComments([]); setError(null); }
+  }, [appointmentId, loadData]);
 
   const handleAddComment = async () => {
     if (!newComment.trim() || !appointmentId) return;
