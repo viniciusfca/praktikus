@@ -1,10 +1,11 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
   Box, Button, Card, CardContent, TextField, Typography, Alert, CircularProgress,
+  Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions,
 } from '@mui/material';
 import { customersService } from '../../../services/customers.service';
 
@@ -32,6 +33,8 @@ export function CustomerFormPage() {
     setError,
   } = useForm<FormData>({ resolver: zodResolver(schema) });
 
+  const [savedCustomer, setSavedCustomer] = useState<{ id: string; nome: string } | null>(null);
+
   useEffect(() => {
     if (isEdit && id) {
       customersService.getById(id).then((customer) => {
@@ -55,10 +58,11 @@ export function CustomerFormPage() {
     try {
       if (isEdit && id) {
         await customersService.update(id, payload);
+        navigate('/workshop/customers');
       } else {
-        await customersService.create(payload);
+        const created = await customersService.create(payload);
+        setSavedCustomer({ id: created.id, nome: created.nome });
       }
-      navigate('/workshop/customers');
     } catch (err: any) {
       setError('root', {
         message: err?.response?.data?.message ?? 'Erro ao salvar cliente.',
@@ -120,6 +124,26 @@ export function CustomerFormPage() {
           </Box>
         </CardContent>
       </Card>
+
+      <Dialog open={Boolean(savedCustomer)}>
+        <DialogTitle>Cadastrar veículo?</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Deseja cadastrar um veículo para <strong>{savedCustomer?.nome}</strong>?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => navigate('/workshop/customers')}>
+            Não
+          </Button>
+          <Button
+            variant="contained"
+            onClick={() => navigate(`/workshop/vehicles/new?customerId=${savedCustomer?.id}`)}
+          >
+            Sim
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
