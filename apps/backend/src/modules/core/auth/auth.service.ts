@@ -128,6 +128,9 @@ export class AuthService {
   }
 
   private async generateTokens(user: UserEntity): Promise<AuthTokens> {
+    // name and email are included for UI display only.
+    // Backend guards must never rely on these JWT claims as authoritative —
+    // always re-fetch from the database for any security-sensitive operation.
     const payload = {
       sub: user.id,
       tenant_id: user.tenantId,

@@ -2,7 +2,10 @@ import { create } from 'zustand';
 import { jwtDecode } from 'jwt-decode';
 import { authService } from '../services/auth.service';
 
-interface JwtUser {
+// Fields decoded from the access token via jwtDecode (no signature verification).
+// name and email are DISPLAY-ONLY — treat as untrusted strings; never use for
+// server-side identity or access decisions.
+export interface JwtUser {
   sub: string;
   tenant_id: string;
   role: 'OWNER' | 'EMPLOYEE';
@@ -49,7 +52,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     if (token) {
       try {
         const decoded = jwtDecode<JwtUser>(token);
-        const isExpired = decoded.exp ? decoded.exp * 1000 < Date.now() : false;
+        const isExpired = decoded.exp * 1000 < Date.now();
         if (!isExpired) {
           set({ user: decoded, isAuthenticated: true, isHydrated: true });
           return;
