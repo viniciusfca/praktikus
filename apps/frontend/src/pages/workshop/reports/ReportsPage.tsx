@@ -203,14 +203,15 @@ export function ReportsPage() {
                         cx="50%"
                         cy="50%"
                         outerRadius={90}
-                        label={(props: Record<string, unknown>) => `${STATUS_LABEL[props.status as string] ?? props.status}: ${props.count}`}
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        label={(props: any) => `${STATUS_LABEL[props.status] ?? props.status}: ${props.count}`}
                       >
                         {data.osPorStatus.map((entry, index) => (
                           <Cell key={entry.status} fill={PIE_COLORS[index % PIE_COLORS.length]} />
                         ))}
                       </Pie>
-                      <Tooltip formatter={(v: ValueType | undefined, name: NameType) => {
-                        const label = STATUS_LABEL[String(name)] ?? String(name);
+                      <Tooltip formatter={(v: ValueType | undefined, name: NameType | undefined) => {
+                        const label = STATUS_LABEL[String(name ?? '')] ?? String(name ?? '');
                         if (typeof v !== 'number') return [String(v ?? ''), label];
                         return [v, label];
                       }} />
