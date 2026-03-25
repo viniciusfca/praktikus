@@ -19,7 +19,7 @@ export class CatalogServiceEntity {
   @Column()
   nome: string;
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   descricao: string | null;
 
   @Column({

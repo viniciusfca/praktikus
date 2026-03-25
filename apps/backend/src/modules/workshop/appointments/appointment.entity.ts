@@ -17,7 +17,7 @@ export class AppointmentEntity {
   @Column({ name: 'duracao_min', default: 60 })
   duracaoMin: number;
 
-  @Column({ name: 'tipo_servico', nullable: true })
+  @Column({ name: 'tipo_servico', type: 'varchar', nullable: true })
   tipoServico: string | null;
 
   @Column({ default: 'PENDENTE' })

@@ -19,10 +19,10 @@ export class CustomerEntity {
   @Column({ name: 'cpf_cnpj', length: 14, unique: true })
   cpfCnpj: string;
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   whatsapp: string | null;
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   email: string | null;
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })

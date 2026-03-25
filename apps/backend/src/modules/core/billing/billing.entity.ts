@@ -14,10 +14,10 @@ export class BillingEntity {
   @Column({ name: 'tenant_id', unique: true, type: 'uuid' })
   tenantId: string;
 
-  @Column({ name: 'asaas_customer_id', nullable: true })
+  @Column({ name: 'asaas_customer_id', type: 'varchar', nullable: true })
   asaasCustomerId: string | null;
 
-  @Column({ name: 'asaas_subscription_id', nullable: true })
+  @Column({ name: 'asaas_subscription_id', type: 'varchar', nullable: true })
   asaasSubscriptionId: string | null;
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })

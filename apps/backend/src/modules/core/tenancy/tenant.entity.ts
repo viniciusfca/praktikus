@@ -45,10 +45,10 @@ export class TenantEntity {
   @Column({ type: 'jsonb', nullable: true })
   endereco: TenantAddress | null;
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   telefone: string | null;
 
-  @Column({ name: 'logo_url', nullable: true })
+  @Column({ name: 'logo_url', type: 'varchar', nullable: true })
   logoUrl: string | null;
 
   @Column({

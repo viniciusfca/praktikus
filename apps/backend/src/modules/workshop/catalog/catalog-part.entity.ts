@@ -19,7 +19,7 @@ export class CatalogPartEntity {
   @Column()
   nome: string;
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   codigo: string | null;
 
   @Column({
