@@ -132,6 +132,8 @@ export class AuthService {
       sub: user.id,
       tenant_id: user.tenantId,
       role: user.role,
+      name: user.name,
+      email: user.email,
     };
 
     const accessToken = this.jwtService.sign(payload, { expiresIn: '15m' });
