@@ -6,6 +6,8 @@ interface JwtUser {
   sub: string;
   tenant_id: string;
   role: 'OWNER' | 'EMPLOYEE';
+  name?: string;
+  email?: string;
   exp?: number;
 }
 
