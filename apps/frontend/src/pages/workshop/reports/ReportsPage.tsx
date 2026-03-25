@@ -30,7 +30,7 @@ function getMonthChips() {
   const now = new Date();
   for (let i = 0; i < 6; i++) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    const label = d.toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' });
+    const label = d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
     const year = d.getFullYear();
     const month = String(d.getMonth() + 1).padStart(2, '0');
     const lastDay = new Date(year, d.getMonth() + 1, 0).getDate();
@@ -190,6 +190,7 @@ export function ReportsPage() {
                         ))}
                       </Pie>
                       <Tooltip formatter={(v: number, name: string) => [v, STATUS_LABEL[name] ?? name]} />
+                      <Legend formatter={(value: string) => STATUS_LABEL[value] ?? value} />
                     </PieChart>
                   </ResponsiveContainer>
                 </CardContent>
