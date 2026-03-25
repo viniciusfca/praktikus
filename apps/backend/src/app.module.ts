@@ -11,6 +11,7 @@ import { VehiclesModule } from './modules/workshop/vehicles/vehicles.module';
 import { CatalogModule } from './modules/workshop/catalog/catalog.module';
 import { AppointmentsModule } from './modules/workshop/appointments/appointments.module';
 import { ServiceOrdersModule } from './modules/workshop/service-orders/service-orders.module';
+import { ReportsModule } from './modules/workshop/reports/reports.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { ServiceOrdersModule } from './modules/workshop/service-orders/service-o
     CatalogModule,
     AppointmentsModule,
     ServiceOrdersModule,
+    ReportsModule,
   ],
   controllers: [HealthController],
   providers: [],
