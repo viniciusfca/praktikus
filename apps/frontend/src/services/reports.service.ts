@@ -31,9 +31,10 @@ export interface ReportData {
 }
 
 export const reportsApi = {
-  async get(dateStart: string, dateEnd: string): Promise<ReportData> {
+  async get(dateStart: string, dateEnd: string, signal?: AbortSignal): Promise<ReportData> {
     const { data } = await api.get<ReportData>('/workshop/reports', {
       params: { date_start: dateStart, date_end: dateEnd },
+      signal,
     });
     return data;
   },

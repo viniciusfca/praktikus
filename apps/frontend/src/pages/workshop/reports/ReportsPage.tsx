@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import {
   Alert, Box, Button, Card, CardContent, Chip,
@@ -9,6 +9,8 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   Legend, PieChart, Pie, Cell, ResponsiveContainer,
 } from 'recharts';
+import type { ValueType } from 'recharts/types/component/DefaultTooltipContent';
+import axios from 'axios';
 import { useAuthStore } from '../../../store/auth.store';
 import { reportsApi, type ReportData } from '../../../services/reports.service';
 
@@ -25,7 +27,8 @@ const STATUS_LABEL: Record<string, string> = {
 const fmt = (n: number) =>
   n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-function getMonthChips() {
+// Computed once at module load — acceptable for a page that doesn't survive midnight.
+const monthChips = (() => {
   const chips = [];
   const now = new Date();
   for (let i = 0; i < 6; i++) {
@@ -41,16 +44,12 @@ function getMonthChips() {
     });
   }
   return chips;
-}
+})();
 
 export function ReportsPage() {
   const user = useAuthStore((s) => s.user);
 
-  if (user?.role !== 'OWNER') {
-    return <Navigate to="/workshop/dashboard" replace />;
-  }
-
-  const monthChips = getMonthChips();
+  // All hooks must be declared before any conditional return.
   const [dateStart, setDateStart] = useState(monthChips[0].dateStart);
   const [dateEnd, setDateEnd] = useState(monthChips[0].dateEnd);
   const [activeChip, setActiveChip] = useState(0);
@@ -58,18 +57,36 @@ export function ReportsPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSearch = async (start = dateStart, end = dateEnd) => {
+  // Ref to cancel any in-flight request before starting a new one.
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  const handleSearch = useCallback(async (start = dateStart, end = dateEnd) => {
+    // Cancel the previous request if still in-flight.
+    abortControllerRef.current?.abort();
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
     setLoading(true);
     setError(null);
     try {
-      const result = await reportsApi.get(start, end);
+      const result = await reportsApi.get(start, end, controller.signal);
       setData(result);
-    } catch {
+    } catch (err) {
+      if (axios.isCancel(err)) {
+        // A newer request is already in flight — let it manage loading/error state.
+        return;
+      }
       setError('Erro ao carregar relatório.');
     } finally {
-      setLoading(false);
+      if (!controller.signal.aborted) {
+        setLoading(false);
+      }
     }
-  };
+  }, [dateStart, dateEnd]);
+
+  if (user?.role !== 'OWNER') {
+    return <Navigate to="/workshop/dashboard" replace />;
+  }
 
   const handleChipClick = (index: number, chip: typeof monthChips[0]) => {
     setActiveChip(index);
@@ -160,7 +177,10 @@ export function ReportsPage() {
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="mes" />
                       <YAxis tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} />
-                      <Tooltip formatter={(v: number) => fmt(v)} />
+                      <Tooltip formatter={(v: ValueType) => {
+                        if (typeof v !== 'number') return String(v);
+                        return fmt(v);
+                      }} />
                       <Legend />
                       <Bar dataKey="servicos" name="Serviços" stackId="a" fill="#1976d2" />
                       <Bar dataKey="pecas" name="Peças" stackId="a" fill="#9c27b0" />
@@ -189,7 +209,10 @@ export function ReportsPage() {
                           <Cell key={entry.status} fill={PIE_COLORS[index % PIE_COLORS.length]} />
                         ))}
                       </Pie>
-                      <Tooltip formatter={(v: number, name: string) => [v, STATUS_LABEL[name] ?? name]} />
+                      <Tooltip formatter={(v: ValueType, name: string) => {
+                        if (typeof v !== 'number') return [String(v), STATUS_LABEL[name] ?? name];
+                        return [v, STATUS_LABEL[name] ?? name];
+                      }} />
                       <Legend formatter={(value: string) => STATUS_LABEL[value] ?? value} />
                     </PieChart>
                   </ResponsiveContainer>
@@ -217,7 +240,7 @@ export function ReportsPage() {
                     </TableHead>
                     <TableBody>
                       {data.topServicos.map((s, i) => (
-                        <TableRow key={s.nomeServico}>
+                        <TableRow key={i}>
                           <TableCell>{i + 1}</TableCell>
                           <TableCell>{s.nomeServico}</TableCell>
                           <TableCell align="right">{s.quantidade}</TableCell>
