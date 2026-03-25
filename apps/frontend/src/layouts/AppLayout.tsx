@@ -19,6 +19,7 @@ import LightModeIcon from '@mui/icons-material/LightMode';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import { useAuthStore } from '../store/auth.store';
 import { useThemeMode } from '../theme/ThemeProvider';
+import { useSessionCountdown } from '../hooks/useSessionCountdown';
 
 const DRAWER_WIDTH = 240;
 const DRAWER_MINI = 64;
@@ -74,6 +75,8 @@ export function AppLayout() {
       return next;
     });
   }, []);
+
+  const { minutes, seconds, isWarning } = useSessionCountdown(user?.exp);
 
   const handleLogout = useCallback(async () => {
     setAnchorEl(null);
@@ -195,6 +198,20 @@ export function AppLayout() {
             </IconButton>
           )}
           <Box sx={{ flexGrow: 1 }} />
+
+          {/* Session countdown */}
+          {user && (
+            <Typography
+              variant="caption"
+              sx={{
+                color: isWarning ? 'warning.main' : 'text.disabled',
+                fontVariantNumeric: 'tabular-nums',
+                mr: 0.5,
+              }}
+            >
+              {`${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`}
+            </Typography>
+          )}
 
           {/* Theme toggle */}
           <IconButton onClick={toggleTheme} size="small" aria-label={mode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
