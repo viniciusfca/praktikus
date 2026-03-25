@@ -51,7 +51,7 @@ export function VehicleFormPage() {
 
   const handleCpfSearch = async () => {
     const cpf = cpfInput.trim();
-    if (!cpf) return;
+    if (!cpf || searching) return;
     setSearching(true);
     setCpfError(null);
     setCustomerName(null);
