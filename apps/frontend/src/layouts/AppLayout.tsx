@@ -205,6 +205,7 @@ export function AppLayout() {
           <IconButton
             onClick={(e) => setAnchorEl(e.currentTarget)}
             size="small"
+            aria-label="Open user menu"
             sx={{ ml: 0.5 }}
           >
             <Avatar
