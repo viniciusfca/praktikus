@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import { AppThemeProvider } from './theme/ThemeProvider';
 import { LandingPage } from './pages/LandingPage';
@@ -30,7 +30,6 @@ function App() {
 
   return (
     <AppThemeProvider>
-      <BrowserRouter>
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
@@ -61,7 +60,6 @@ function App() {
             <Route path="reports" element={<ReportsPage />} />
           </Route>
         </Routes>
-      </BrowserRouter>
     </AppThemeProvider>
   );
 }
