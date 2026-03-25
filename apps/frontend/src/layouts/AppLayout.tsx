@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Box, Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText,
@@ -75,15 +75,15 @@ export function AppLayout() {
     });
   }, []);
 
-  const handleLogout = async () => {
+  const handleLogout = useCallback(async () => {
     setAnchorEl(null);
     await logout();
     navigate('/login');
-  };
+  }, [logout, navigate]);
 
   const drawerWidth = isMobile ? DRAWER_WIDTH : sidebarOpen ? DRAWER_WIDTH : DRAWER_MINI;
 
-  const drawerContent = (
+  const drawerContent = useMemo(() => (
     <>
       <Toolbar
         sx={{
@@ -100,7 +100,7 @@ export function AppLayout() {
           </Typography>
         )}
         {!isMobile && (
-          <IconButton onClick={handleToggleSidebar} size="small">
+          <IconButton onClick={handleToggleSidebar} size="small" aria-label={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}>
             <ChevronLeftIcon
               sx={{
                 transition: 'transform 0.2s',
@@ -159,7 +159,7 @@ export function AppLayout() {
           })}
       </List>
     </>
-  );
+  ), [sidebarOpen, isMobile, location.pathname, user?.role, handleToggleSidebar]);
 
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh' }}>
@@ -178,7 +178,9 @@ export function AppLayout() {
           transition: (t) =>
             t.transitions.create(['width', 'margin'], {
               easing: t.transitions.easing.sharp,
-              duration: t.transitions.duration.leavingScreen,
+              duration: sidebarOpen
+                ? t.transitions.duration.enteringScreen
+                : t.transitions.duration.leavingScreen,
             }),
         }}
       >
@@ -195,7 +197,7 @@ export function AppLayout() {
           <Box sx={{ flexGrow: 1 }} />
 
           {/* Theme toggle */}
-          <IconButton onClick={toggleTheme} size="small">
+          <IconButton onClick={toggleTheme} size="small" aria-label={mode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
             {mode === 'dark' ? <LightModeIcon fontSize="small" /> : <DarkModeIcon fontSize="small" />}
           </IconButton>
 
@@ -296,7 +298,9 @@ export function AppLayout() {
           transition: (t) =>
             t.transitions.create(['width', 'margin'], {
               easing: t.transitions.easing.sharp,
-              duration: t.transitions.duration.leavingScreen,
+              duration: sidebarOpen
+                ? t.transitions.duration.enteringScreen
+                : t.transitions.duration.leavingScreen,
             }),
         }}
       >
