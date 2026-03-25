@@ -78,20 +78,20 @@ export function VehicleHistoryPage() {
         Veículos
       </Button>
 
-      {vehicle && (
-        <Box sx={{ mb: 3 }}>
-          <Typography variant="h5" fontWeight="bold">
-            {vehicle.placa} — {vehicle.marca} {vehicle.modelo} {vehicle.ano}
-          </Typography>
-          <Typography variant="subtitle1" color="text.secondary">
-            Prontuário do Veículo
-          </Typography>
-        </Box>
-      )}
+      <Box sx={{ mb: 3 }}>
+        <Typography variant="h5" fontWeight="bold">
+          {vehicle
+            ? `${vehicle.placa} — ${vehicle.marca} ${vehicle.modelo} ${vehicle.ano}`
+            : 'Veículo'}
+        </Typography>
+        <Typography variant="subtitle1" color="text.secondary">
+          Prontuário do Veículo
+        </Typography>
+      </Box>
 
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
-      {!loading && orders.length === 0 && !error && (
+      {orders.length === 0 && !error && (
         <Typography color="text.secondary">
           Nenhuma ordem de serviço registrada para este veículo.
         </Typography>
