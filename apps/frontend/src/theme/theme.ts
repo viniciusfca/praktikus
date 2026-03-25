@@ -44,7 +44,6 @@ export const getTheme = (mode: PaletteMode) =>
     },
     components: {
       MuiCard: {
-        defaultProps: { variant: 'outlined' },
         styleOverrides: {
           root: ({ theme }) => ({
             boxShadow: 'none',
@@ -62,9 +61,9 @@ export const getTheme = (mode: PaletteMode) =>
       },
       MuiChip: {
         styleOverrides: {
-          root: {
-            borderRadius: 6,
-          },
+          root: ({ theme }) => ({
+            borderRadius: (theme.shape.borderRadius as number) / 2,
+          }),
         },
       },
       MuiTableHead: {
