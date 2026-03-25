@@ -11,6 +11,7 @@ import { CustomerFormPage } from './pages/workshop/customers/CustomerFormPage';
 import { CustomerDetailPage } from './pages/workshop/customers/CustomerDetailPage';
 import { VehiclesPage } from './pages/workshop/vehicles/VehiclesPage';
 import { VehicleFormPage } from './pages/workshop/vehicles/VehicleFormPage';
+import { VehicleHistoryPage } from './pages/workshop/vehicles/VehicleHistoryPage';
 import { CatalogPage } from './pages/workshop/catalog/CatalogPage';
 import { AppointmentsPage } from './pages/workshop/appointments/AppointmentsPage';
 import { ServiceOrdersPage } from './pages/workshop/service-orders/ServiceOrdersPage';
@@ -50,6 +51,7 @@ function App() {
             <Route path="customers/:id/edit" element={<CustomerFormPage />} />
             <Route path="vehicles" element={<VehiclesPage />} />
             <Route path="vehicles/new" element={<VehicleFormPage />} />
+            <Route path="vehicles/:id/history" element={<VehicleHistoryPage />} />
             <Route path="vehicles/:id/edit" element={<VehicleFormPage />} />
             <Route path="catalog" element={<CatalogPage />} />
             <Route path="appointments" element={<AppointmentsPage />} />

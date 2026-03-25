@@ -8,6 +8,7 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import HistoryIcon from '@mui/icons-material/History';
 import { vehiclesService, type Vehicle } from '../../../services/vehicles.service';
 
 export function VehiclesPage() {
@@ -107,6 +108,13 @@ export function VehiclesPage() {
                   />
                 </TableCell>
                 <TableCell align="right">
+                  <IconButton
+                    size="small"
+                    title="Prontuário"
+                    onClick={() => navigate(`/workshop/vehicles/${v.id}/history`)}
+                  >
+                    <HistoryIcon fontSize="small" />
+                  </IconButton>
                   <IconButton size="small" onClick={() => navigate(`/workshop/vehicles/${v.id}/edit`)}>
                     <EditIcon fontSize="small" />
                   </IconButton>
