@@ -9,12 +9,12 @@ interface SessionCountdown {
 
 export function useSessionCountdown(exp: number | undefined): SessionCountdown {
   const [remaining, setRemaining] = useState(() => {
-    if (!exp) return 0;
+    if (exp === undefined) return 0;
     return Math.max(0, exp * 1000 - Date.now());
   });
 
   useEffect(() => {
-    if (!exp) return;
+    if (exp === undefined) return;
     const tick = () => setRemaining(Math.max(0, exp * 1000 - Date.now()));
     tick();
     const id = setInterval(tick, 1000);
@@ -28,6 +28,7 @@ export function useSessionCountdown(exp: number | undefined): SessionCountdown {
     minutes,
     seconds,
     isWarning: remaining > 0 && remaining < 3 * 60_000,
-    expired: remaining === 0,
+    // expired is only true when exp is known AND time has run out
+    expired: exp !== undefined && remaining === 0,
   };
 }

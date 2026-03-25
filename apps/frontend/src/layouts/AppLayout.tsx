@@ -76,6 +76,7 @@ export function AppLayout() {
     });
   }, []);
 
+  // expired is intentionally unused — token refresh happens silently via axios interceptors
   const { minutes, seconds, isWarning } = useSessionCountdown(user?.exp);
 
   const handleLogout = useCallback(async () => {
@@ -203,6 +204,8 @@ export function AppLayout() {
           {user && (
             <Typography
               variant="caption"
+              aria-label="Session time remaining"
+              aria-live="off"
               sx={{
                 color: isWarning ? 'warning.main' : 'text.disabled',
                 fontVariantNumeric: 'tabular-nums',
