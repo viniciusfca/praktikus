@@ -1,16 +1,20 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
-  Alert, Box, Button, Chip, CircularProgress, IconButton,
-  Paper, Table, TableBody, TableCell, TableContainer,
-  TableHead, TableRow, ToggleButton, ToggleButtonGroup, Typography,
-} from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
-import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
-import ChevronRightIcon from '@mui/icons-material/ChevronRight';
-import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
-import ListIcon from '@mui/icons-material/List';
+  CAlert,
+  CBadge,
+  CButton,
+  CButtonGroup,
+  CCard,
+  CSpinner,
+  CTable,
+  CTableBody,
+  CTableDataCell,
+  CTableHead,
+  CTableHeaderCell,
+  CTableRow,
+} from '@coreui/react';
+import CIcon from '@coreui/icons-react';
+import { cilPlus, cilChevronLeft, cilChevronRight, cilCalendar, cilList, cilPen, cilTrash } from '@coreui/icons';
 import {
   appointmentsApi, type Appointment,
 } from '../../../services/appointments.service';
@@ -18,17 +22,24 @@ import { AppointmentFormDialog } from './AppointmentFormDialog';
 import { AppointmentDrawer } from './AppointmentDrawer';
 import { useAuthStore } from '../../../store/auth.store';
 
-const STATUS_COLORS: Record<string, 'warning' | 'info' | 'success' | 'default'> = {
+const STATUS_COLORS: Record<string, string> = {
   PENDENTE: 'warning',
   CONFIRMADO: 'info',
   CONCLUIDO: 'success',
-  CANCELADO: 'default',
+  CANCELADO: 'secondary',
+};
+
+const CALENDAR_BG: Record<string, string> = {
+  PENDENTE: '#f9b115',
+  CONFIRMADO: '#39f',
+  CONCLUIDO: '#1b9e3e',
+  CANCELADO: '#aab3c5',
 };
 
 const DAY_LABELS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
 function getWeekDates(referenceDate: Date): Date[] {
-  const day = referenceDate.getDay(); // 0=Sun
+  const day = referenceDate.getDay();
   const monday = new Date(referenceDate);
   monday.setDate(referenceDate.getDate() - day + (day === 0 ? -6 : 1));
   monday.setHours(0, 0, 0, 0);
@@ -99,135 +110,159 @@ export function AppointmentsPage() {
   const weekLabel = `${weekDates[0].toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })} – ${weekDates[6].toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}`;
 
   return (
-    <Box>
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-        <Typography variant="h5" fontWeight="bold">Agendamentos</Typography>
-        <Button variant="contained" startIcon={<AddIcon />} onClick={openNew}>
+    <>
+      <div className="d-flex align-items-center justify-content-between mb-3">
+        <h5 className="fw-bold mb-0">Agendamentos</h5>
+        <CButton color="primary" size="sm" onClick={openNew}>
+          <CIcon icon={cilPlus} className="me-1" />
           Novo Agendamento
-        </Button>
-      </Box>
+        </CButton>
+      </div>
 
-      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+      {error && <CAlert color="danger" className="mb-3">{error}</CAlert>}
 
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <IconButton onClick={prevWeek}><ChevronLeftIcon /></IconButton>
-          <Typography>{weekLabel}</Typography>
-          <IconButton onClick={nextWeek}><ChevronRightIcon /></IconButton>
-        </Box>
-        <ToggleButtonGroup value={view} exclusive onChange={(_, v) => v && setView(v)} size="small">
-          <ToggleButton value="calendar"><CalendarMonthIcon fontSize="small" /></ToggleButton>
-          <ToggleButton value="list"><ListIcon fontSize="small" /></ToggleButton>
-        </ToggleButtonGroup>
-      </Box>
+      <div className="d-flex align-items-center justify-content-between mb-3">
+        <div className="d-flex align-items-center gap-2">
+          <CButton color="secondary" variant="ghost" size="sm" onClick={prevWeek}>
+            <CIcon icon={cilChevronLeft} />
+          </CButton>
+          <span>{weekLabel}</span>
+          <CButton color="secondary" variant="ghost" size="sm" onClick={nextWeek}>
+            <CIcon icon={cilChevronRight} />
+          </CButton>
+        </div>
+        <CButtonGroup size="sm">
+          <CButton
+            color="secondary"
+            variant={view === 'calendar' ? undefined : 'outline'}
+            onClick={() => setView('calendar')}
+          >
+            <CIcon icon={cilCalendar} />
+          </CButton>
+          <CButton
+            color="secondary"
+            variant={view === 'list' ? undefined : 'outline'}
+            onClick={() => setView('list')}
+          >
+            <CIcon icon={cilList} />
+          </CButton>
+        </CButtonGroup>
+      </div>
 
-      {loading && <CircularProgress sx={{ display: 'block', mx: 'auto', my: 4 }} />}
+      {loading && <div className="text-center py-4"><CSpinner color="primary" /></div>}
 
       {!loading && view === 'calendar' && (
-        <Paper>
-          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', borderBottom: 1, borderColor: 'divider' }}>
+        <CCard>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', borderBottom: '1px solid var(--cui-border-color)' }}>
             {weekDates.map((d, i) => (
-              <Box key={i} sx={{ p: 1, textAlign: 'center', borderRight: i < 6 ? 1 : 0, borderColor: 'divider' }}>
-                <Typography variant="caption" color="text.secondary">{DAY_LABELS[d.getDay()]}</Typography>
-                <Typography variant="body2" fontWeight={isSameDay(d, new Date()) ? 'bold' : 'normal'}>
+              <div
+                key={i}
+                style={{
+                  padding: '8px',
+                  textAlign: 'center',
+                  borderRight: i < 6 ? '1px solid var(--cui-border-color)' : 'none',
+                }}
+              >
+                <div style={{ fontSize: '0.75rem', color: 'var(--cui-secondary-color)' }}>{DAY_LABELS[d.getDay()]}</div>
+                <div style={{ fontWeight: isSameDay(d, new Date()) ? 'bold' : 'normal', fontSize: '0.875rem' }}>
                   {d.getDate()}
-                </Typography>
-              </Box>
+                </div>
+              </div>
             ))}
-          </Box>
-          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', minHeight: 400 }}>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', minHeight: 400 }}>
             {weekDates.map((d, i) => {
               const dayAppts = appointments
                 .filter((a) => isSameDay(new Date(a.dataHora), d))
                 .sort((a, b) => a.dataHora.localeCompare(b.dataHora));
               return (
-                <Box
+                <div
                   key={i}
-                  sx={{
-                    p: 0.5,
-                    borderRight: i < 6 ? 1 : 0,
-                    borderColor: 'divider',
+                  style={{
+                    padding: '4px',
+                    borderRight: i < 6 ? '1px solid var(--cui-border-color)' : 'none',
                     minHeight: 200,
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: 0.5,
+                    gap: 4,
                   }}
                 >
                   {dayAppts.map((a) => (
-                    <Box
+                    <div
                       key={a.id}
                       onClick={() => setSelectedId(a.id)}
-                      sx={{
-                        p: 0.75,
-                        borderRadius: 1,
+                      style={{
+                        padding: '6px',
+                        borderRadius: 4,
                         cursor: 'pointer',
                         fontSize: '0.75rem',
-                        bgcolor:
-                          a.status === 'PENDENTE' ? 'warning.dark' :
-                          a.status === 'CONFIRMADO' ? 'info.dark' :
-                          a.status === 'CONCLUIDO' ? 'success.dark' : 'action.disabledBackground',
-                        '&:hover': { opacity: 0.85 },
+                        backgroundColor: CALENDAR_BG[a.status] ?? '#aab3c5',
+                        color: '#fff',
+                        opacity: 1,
                       }}
                     >
-                      <Typography variant="caption" display="block" fontWeight="bold">
+                      <div style={{ fontWeight: 'bold' }}>
                         {new Date(a.dataHora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                      </Typography>
-                      <Typography variant="caption" display="block" noWrap>
+                      </div>
+                      <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {a.tipoServico ?? '—'}
-                      </Typography>
-                    </Box>
+                      </div>
+                    </div>
                   ))}
-                </Box>
+                </div>
               );
             })}
-          </Box>
-        </Paper>
+          </div>
+        </CCard>
       )}
 
       {!loading && view === 'list' && (
-        <TableContainer component={Paper}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Data/Hora</TableCell>
-                <TableCell>Tipo de Serviço</TableCell>
-                <TableCell>Duração</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell align="right">Ações</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
+        <CCard>
+          <CTable hover responsive>
+            <CTableHead>
+              <CTableRow>
+                <CTableHeaderCell>Data/Hora</CTableHeaderCell>
+                <CTableHeaderCell>Tipo de Serviço</CTableHeaderCell>
+                <CTableHeaderCell>Duração</CTableHeaderCell>
+                <CTableHeaderCell>Status</CTableHeaderCell>
+                <CTableHeaderCell className="text-end">Ações</CTableHeaderCell>
+              </CTableRow>
+            </CTableHead>
+            <CTableBody>
               {appointments.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={5} align="center">Nenhum agendamento nesta semana.</TableCell>
-                </TableRow>
+                <CTableRow>
+                  <CTableDataCell colSpan={5} className="text-center text-secondary">
+                    Nenhum agendamento nesta semana.
+                  </CTableDataCell>
+                </CTableRow>
               )}
               {appointments.map((a) => (
-                <TableRow
+                <CTableRow
                   key={a.id}
-                  hover
                   onClick={() => setSelectedId(a.id)}
-                  sx={{ cursor: 'pointer' }}
+                  style={{ cursor: 'pointer' }}
                 >
-                  <TableCell>{new Date(a.dataHora).toLocaleString('pt-BR')}</TableCell>
-                  <TableCell>{a.tipoServico ?? '—'}</TableCell>
-                  <TableCell>{a.duracaoMin} min</TableCell>
-                  <TableCell>
-                    <Chip label={a.status} color={STATUS_COLORS[a.status]} size="small" />
-                  </TableCell>
-                  <TableCell align="right" onClick={(e) => e.stopPropagation()}>
-                    <IconButton size="small" onClick={() => openEdit(a)}><EditIcon fontSize="small" /></IconButton>
+                  <CTableDataCell>{new Date(a.dataHora).toLocaleString('pt-BR')}</CTableDataCell>
+                  <CTableDataCell>{a.tipoServico ?? '—'}</CTableDataCell>
+                  <CTableDataCell>{a.duracaoMin} min</CTableDataCell>
+                  <CTableDataCell>
+                    <CBadge color={STATUS_COLORS[a.status] ?? 'secondary'}>{a.status}</CBadge>
+                  </CTableDataCell>
+                  <CTableDataCell className="text-end" onClick={(e) => e.stopPropagation()}>
+                    <CButton color="secondary" variant="ghost" size="sm" onClick={() => openEdit(a)}>
+                      <CIcon icon={cilPen} />
+                    </CButton>
                     {isOwner && (
-                      <IconButton size="small" color="error" onClick={() => handleDelete(a.id)}>
-                        <DeleteIcon fontSize="small" />
-                      </IconButton>
+                      <CButton color="danger" variant="ghost" size="sm" onClick={() => handleDelete(a.id)}>
+                        <CIcon icon={cilTrash} />
+                      </CButton>
                     )}
-                  </TableCell>
-                </TableRow>
+                  </CTableDataCell>
+                </CTableRow>
               ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+            </CTableBody>
+          </CTable>
+        </CCard>
       )}
 
       <AppointmentFormDialog
@@ -244,6 +279,6 @@ export function AppointmentsPage() {
         onDeleted={() => load()}
         isOwner={isOwner}
       />
-    </Box>
+    </>
   );
 }

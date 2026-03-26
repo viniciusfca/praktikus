@@ -1,8 +1,18 @@
 import { useEffect, useState } from 'react';
 import {
-  Autocomplete, Box, Button, Dialog, DialogActions,
-  DialogContent, DialogTitle, TextField,
-} from '@mui/material';
+  CButton,
+  CFormFeedback,
+  CFormInput,
+  CFormLabel,
+  CFormSelect,
+  CFormTextarea,
+  CModal,
+  CModalBody,
+  CModalFooter,
+  CModalHeader,
+  CModalTitle,
+  CSpinner,
+} from '@coreui/react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -81,73 +91,86 @@ export function CreateServiceOrderDialog({ open, onClose, onSaved }: Props) {
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>Nova Ordem de Serviço</DialogTitle>
-      <DialogContent>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
-          <Controller
-            name="clienteId"
-            control={control}
-            render={({ field }) => (
-              <Autocomplete
-                options={customers}
-                getOptionLabel={(c) => `${c.nome} — ${c.cpfCnpj}`}
-                value={customers.find((c) => c.id === field.value) ?? null}
-                onChange={(_, v) => field.onChange(v?.id ?? '')}
-                renderInput={(params) => (
-                  <TextField {...params} label="Cliente" error={!!errors.clienteId} helperText={errors.clienteId?.message} />
-                )}
-              />
-            )}
-          />
-          <Controller
-            name="veiculoId"
-            control={control}
-            render={({ field }) => (
-              <Autocomplete
-                options={vehicles}
-                getOptionLabel={(v) => `${v.placa} — ${v.modelo}`}
-                value={vehicles.find((v) => v.id === field.value) ?? null}
-                onChange={(_, v) => field.onChange(v?.id ?? '')}
-                disabled={!selectedClienteId}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label="Veículo"
-                    error={!!errors.veiculoId}
-                    helperText={errors.veiculoId?.message ?? (!selectedClienteId ? 'Selecione o cliente primeiro' : '')}
-                  />
-                )}
-              />
-            )}
-          />
-          <Controller
-            name="appointmentId"
-            control={control}
-            render={({ field }) => (
-              <Autocomplete
-                options={appointments}
-                getOptionLabel={(a) => `${new Date(a.dataHora).toLocaleString('pt-BR')} — ${a.tipoServico ?? 'Sem tipo'}`}
-                value={appointments.find((a) => a.id === field.value) ?? null}
-                onChange={(_, v) => field.onChange(v?.id ?? '')}
-                disabled={!selectedClienteId}
-                renderInput={(params) => (
-                  <TextField {...params} label="Agendamento (opcional)" />
-                )}
-              />
-            )}
-          />
-          <TextField label="KM de Entrada" {...register('kmEntrada')} />
-          <TextField label="Combustível" {...register('combustivel')} placeholder="ex: 1/2, Cheio..." />
-          <TextField label="Observações de Entrada" {...register('observacoesEntrada')} multiline rows={3} />
-        </Box>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>Cancelar</Button>
-        <Button variant="contained" onClick={handleSubmit(onSubmit)} disabled={saving}>
-          {saving ? 'Criando...' : 'Criar OS'}
-        </Button>
-      </DialogActions>
-    </Dialog>
+    <CModal visible={open} onClose={onClose} size="lg">
+      <CModalHeader>
+        <CModalTitle>Nova Ordem de Serviço</CModalTitle>
+      </CModalHeader>
+      <CModalBody>
+        <div className="d-flex flex-column gap-3">
+          <div>
+            <CFormLabel>Cliente</CFormLabel>
+            <Controller
+              name="clienteId"
+              control={control}
+              render={({ field }) => (
+                <CFormSelect {...field} invalid={!!errors.clienteId}>
+                  <option value="">Selecione um cliente</option>
+                  {customers.map((c) => (
+                    <option key={c.id} value={c.id}>{c.nome} — {c.cpfCnpj}</option>
+                  ))}
+                </CFormSelect>
+              )}
+            />
+            {errors.clienteId && <CFormFeedback invalid>{errors.clienteId.message}</CFormFeedback>}
+          </div>
+
+          <div>
+            <CFormLabel>Veículo</CFormLabel>
+            <Controller
+              name="veiculoId"
+              control={control}
+              render={({ field }) => (
+                <CFormSelect {...field} disabled={!selectedClienteId} invalid={!!errors.veiculoId}>
+                  <option value="">{!selectedClienteId ? 'Selecione o cliente primeiro' : 'Selecione um veículo'}</option>
+                  {vehicles.map((v) => (
+                    <option key={v.id} value={v.id}>{v.placa} — {v.modelo}</option>
+                  ))}
+                </CFormSelect>
+              )}
+            />
+            {errors.veiculoId && <CFormFeedback invalid>{errors.veiculoId.message}</CFormFeedback>}
+          </div>
+
+          <div>
+            <CFormLabel>Agendamento (opcional)</CFormLabel>
+            <Controller
+              name="appointmentId"
+              control={control}
+              render={({ field }) => (
+                <CFormSelect {...field} disabled={!selectedClienteId}>
+                  <option value="">Nenhum</option>
+                  {appointments.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {new Date(a.dataHora).toLocaleString('pt-BR')} — {a.tipoServico ?? 'Sem tipo'}
+                    </option>
+                  ))}
+                </CFormSelect>
+              )}
+            />
+          </div>
+
+          <div>
+            <CFormLabel>KM de Entrada</CFormLabel>
+            <CFormInput {...register('kmEntrada')} />
+          </div>
+
+          <div>
+            <CFormLabel>Combustível</CFormLabel>
+            <CFormInput {...register('combustivel')} placeholder="ex: 1/2, Cheio..." />
+          </div>
+
+          <div>
+            <CFormLabel>Observações de Entrada</CFormLabel>
+            <CFormTextarea {...register('observacoesEntrada')} rows={3} />
+          </div>
+        </div>
+      </CModalBody>
+      <CModalFooter>
+        <CButton color="secondary" onClick={onClose}>Cancelar</CButton>
+        <CButton color="primary" onClick={handleSubmit(onSubmit)} disabled={saving}>
+          {saving ? <CSpinner size="sm" /> : 'Criar OS'}
+        </CButton>
+      </CModalFooter>
+    </CModal>
   );
 }

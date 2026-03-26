@@ -1,13 +1,31 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  Alert, Box, Button, Card, CardContent, Chip, CircularProgress,
-  Dialog, DialogActions, DialogContent, DialogTitle, Divider,
-  IconButton, Stack, Table, TableBody, TableCell, TableHead,
-  TableRow, TextField, Tooltip, Typography,
-} from '@mui/material';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+  CAlert,
+  CBadge,
+  CButton,
+  CCard,
+  CCardBody,
+  CFormInput,
+  CFormLabel,
+  CFormSelect,
+  CFormTextarea,
+  CModal,
+  CModalBody,
+  CModalFooter,
+  CModalHeader,
+  CModalTitle,
+  CSpinner,
+  CTable,
+  CTableBody,
+  CTableDataCell,
+  CTableHead,
+  CTableHeaderCell,
+  CTableRow,
+  CTooltip,
+} from '@coreui/react';
+import CIcon from '@coreui/icons-react';
+import { cilArrowLeft, cilCopy } from '@coreui/icons';
 import {
   serviceOrdersApi, soItemsServicesApi, soItemsPartsApi,
   type ServiceOrderDetail, type SoStatus,
@@ -25,8 +43,8 @@ const STATUS_LABEL: Record<SoStatus, string> = {
   ORCAMENTO: 'Orçamento', APROVADO: 'Aprovado', EM_EXECUCAO: 'Em Execução',
   AGUARDANDO_PECA: 'Aguard. Peça', FINALIZADA: 'Finalizada', ENTREGUE: 'Entregue',
 };
-const STATUS_COLOR: Record<SoStatus, 'default' | 'warning' | 'info' | 'primary' | 'secondary' | 'success' | 'error'> = {
-  ORCAMENTO: 'default', APROVADO: 'info', EM_EXECUCAO: 'primary',
+const STATUS_COLOR: Record<SoStatus, string> = {
+  ORCAMENTO: 'secondary', APROVADO: 'info', EM_EXECUCAO: 'primary',
   AGUARDANDO_PECA: 'warning', FINALIZADA: 'secondary', ENTREGUE: 'success',
 };
 const NEXT_STATUSES: Partial<Record<SoStatus, SoStatus[]>> = {
@@ -36,6 +54,7 @@ const NEXT_STATUSES: Partial<Record<SoStatus, SoStatus[]>> = {
   AGUARDANDO_PECA: ['EM_EXECUCAO'],
   FINALIZADA: ['ENTREGUE'],
 };
+const fmt = (n: number) => `R$ ${Number(n).toFixed(2)}`;
 
 // ---------- AddServiceDialog ----------
 interface AddServiceDialogProps {
@@ -54,12 +73,7 @@ function AddServiceDialog({ open, soId, services, onClose, onSaved }: AddService
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (open) {
-      setServiceId('');
-      setNome('');
-      setValor('');
-      setMecanicoId('');
-    }
+    if (open) { setServiceId(''); setNome(''); setValor(''); setMecanicoId(''); }
   }, [open]);
 
   const handleSave = async () => {
@@ -80,35 +94,44 @@ function AddServiceDialog({ open, soId, services, onClose, onSaved }: AddService
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
-      <DialogTitle>Adicionar Serviço</DialogTitle>
-      <DialogContent>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
-          <TextField
-            select
-            label="Serviço"
-            value={serviceId}
-            onChange={(e) => {
-              const s = services.find((x) => x.id === e.target.value);
-              setServiceId(e.target.value);
-              setNome(s?.nome ?? '');
-              setValor(String(s?.precoPadrao ?? ''));
-            }}
-            SelectProps={{ native: true }}
-          >
-            <option value="" />
-            {services.map((s) => <option key={s.id} value={s.id}>{s.nome}</option>)}
-          </TextField>
-          <TextField label="Nome do Serviço" value={nome} onChange={(e) => setNome(e.target.value)} />
-          <TextField label="Valor (R$)" type="number" value={valor} onChange={(e) => setValor(e.target.value)} />
-          <TextField label="ID do Mecânico (opcional)" value={mecanicoId} onChange={(e) => setMecanicoId(e.target.value)} />
-        </Box>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>Cancelar</Button>
-        <Button variant="contained" onClick={handleSave} disabled={saving}>Adicionar</Button>
-      </DialogActions>
-    </Dialog>
+    <CModal visible={open} onClose={onClose} size="sm">
+      <CModalHeader><CModalTitle>Adicionar Serviço</CModalTitle></CModalHeader>
+      <CModalBody>
+        <div className="d-flex flex-column gap-3">
+          <div>
+            <CFormLabel>Serviço</CFormLabel>
+            <CFormSelect
+              value={serviceId}
+              onChange={(e) => {
+                const s = services.find((x) => x.id === e.target.value);
+                setServiceId(e.target.value);
+                setNome(s?.nome ?? '');
+                setValor(String(s?.precoPadrao ?? ''));
+              }}
+            >
+              <option value="" />
+              {services.map((s) => <option key={s.id} value={s.id}>{s.nome}</option>)}
+            </CFormSelect>
+          </div>
+          <div>
+            <CFormLabel>Nome do Serviço</CFormLabel>
+            <CFormInput value={nome} onChange={(e) => setNome(e.target.value)} />
+          </div>
+          <div>
+            <CFormLabel>Valor (R$)</CFormLabel>
+            <CFormInput type="number" value={valor} onChange={(e) => setValor(e.target.value)} />
+          </div>
+          <div>
+            <CFormLabel>ID do Mecânico (opcional)</CFormLabel>
+            <CFormInput value={mecanicoId} onChange={(e) => setMecanicoId(e.target.value)} />
+          </div>
+        </div>
+      </CModalBody>
+      <CModalFooter>
+        <CButton color="secondary" onClick={onClose}>Cancelar</CButton>
+        <CButton color="primary" onClick={handleSave} disabled={saving}>Adicionar</CButton>
+      </CModalFooter>
+    </CModal>
   );
 }
 
@@ -129,12 +152,7 @@ function AddPartDialog({ open, soId, parts, onClose, onSaved }: AddPartDialogPro
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (open) {
-      setPartId('');
-      setNome('');
-      setQuantidade('1');
-      setValorUnitario('');
-    }
+    if (open) { setPartId(''); setNome(''); setQuantidade('1'); setValorUnitario(''); }
   }, [open]);
 
   const handleSave = async () => {
@@ -155,35 +173,44 @@ function AddPartDialog({ open, soId, parts, onClose, onSaved }: AddPartDialogPro
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
-      <DialogTitle>Adicionar Peça</DialogTitle>
-      <DialogContent>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
-          <TextField
-            select
-            label="Peça"
-            value={partId}
-            onChange={(e) => {
-              const p = parts.find((x) => x.id === e.target.value);
-              setPartId(e.target.value);
-              setNome(p?.nome ?? '');
-              setValorUnitario(String(p?.precoUnitario ?? ''));
-            }}
-            SelectProps={{ native: true }}
-          >
-            <option value="" />
-            {parts.map((p) => <option key={p.id} value={p.id}>{p.nome}</option>)}
-          </TextField>
-          <TextField label="Nome da Peça" value={nome} onChange={(e) => setNome(e.target.value)} />
-          <TextField label="Quantidade" type="number" value={quantidade} onChange={(e) => setQuantidade(e.target.value)} />
-          <TextField label="Valor Unitário (R$)" type="number" value={valorUnitario} onChange={(e) => setValorUnitario(e.target.value)} />
-        </Box>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>Cancelar</Button>
-        <Button variant="contained" onClick={handleSave} disabled={saving}>Adicionar</Button>
-      </DialogActions>
-    </Dialog>
+    <CModal visible={open} onClose={onClose} size="sm">
+      <CModalHeader><CModalTitle>Adicionar Peça</CModalTitle></CModalHeader>
+      <CModalBody>
+        <div className="d-flex flex-column gap-3">
+          <div>
+            <CFormLabel>Peça</CFormLabel>
+            <CFormSelect
+              value={partId}
+              onChange={(e) => {
+                const p = parts.find((x) => x.id === e.target.value);
+                setPartId(e.target.value);
+                setNome(p?.nome ?? '');
+                setValorUnitario(String(p?.precoUnitario ?? ''));
+              }}
+            >
+              <option value="" />
+              {parts.map((p) => <option key={p.id} value={p.id}>{p.nome}</option>)}
+            </CFormSelect>
+          </div>
+          <div>
+            <CFormLabel>Nome da Peça</CFormLabel>
+            <CFormInput value={nome} onChange={(e) => setNome(e.target.value)} />
+          </div>
+          <div>
+            <CFormLabel>Quantidade</CFormLabel>
+            <CFormInput type="number" value={quantidade} onChange={(e) => setQuantidade(e.target.value)} />
+          </div>
+          <div>
+            <CFormLabel>Valor Unitário (R$)</CFormLabel>
+            <CFormInput type="number" value={valorUnitario} onChange={(e) => setValorUnitario(e.target.value)} />
+          </div>
+        </div>
+      </CModalBody>
+      <CModalFooter>
+        <CButton color="secondary" onClick={onClose}>Cancelar</CButton>
+        <CButton color="primary" onClick={handleSave} disabled={saving}>Adicionar</CButton>
+      </CModalFooter>
+    </CModal>
   );
 }
 
@@ -219,12 +246,10 @@ export function ServiceOrderDetailPage() {
   const [observacoes, setObservacoes] = useState('');
   const [savingChecklist, setSavingChecklist] = useState(false);
 
-  // Fetch company profile once on mount — non-critical for PDF generation.
   useEffect(() => {
     companiesService.getProfile().then(setEmpresa).catch(() => null);
   }, []);
 
-  // Fetch catalog data once on mount — it doesn't change with SO mutations.
   useEffect(() => {
     Promise.all([
       catalogServicesApi.list({ limit: 200 }),
@@ -232,9 +257,7 @@ export function ServiceOrderDetailPage() {
     ]).then(([svcs, prts]) => {
       setCatalogServices(svcs.data);
       setCatalogParts(prts.data);
-    }).catch(() => {
-      // catalog fetch failure is non-critical; leave lists empty
-    });
+    }).catch(() => {});
   }, []);
 
   const load = useCallback(async () => {
@@ -358,11 +381,11 @@ export function ServiceOrderDetailPage() {
   };
 
   if (loading) return (
-    <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-      <CircularProgress />
-    </Box>
+    <div className="d-flex justify-content-center mt-4">
+      <CSpinner color="primary" />
+    </div>
   );
-  if (error || !so) return <Alert severity="error">{error ?? 'OS não encontrada.'}</Alert>;
+  if (error || !so) return <CAlert color="danger">{error ?? 'OS não encontrada.'}</CAlert>;
 
   const totalServices = so.itemsServices.reduce((s, i) => s + Number(i.valor), 0);
   const totalParts = so.itemsParts.reduce((s, i) => s + Number(i.valorUnitario) * i.quantidade, 0);
@@ -375,193 +398,207 @@ export function ServiceOrderDetailPage() {
       : null;
 
   return (
-    <Box>
+    <>
       {/* Header */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-        <IconButton onClick={() => navigate('/workshop/service-orders')}><ArrowBackIcon /></IconButton>
-        <Typography variant="h5" sx={{ flex: 1 }}>Ordem de Serviço</Typography>
-        <Chip label={STATUS_LABEL[so.status]} color={STATUS_COLOR[so.status]} />
-        <Chip
-          label={so.statusPagamento}
-          color={so.statusPagamento === 'PAGO' ? 'success' : 'default'}
-          variant="outlined"
+      <div className="d-flex align-items-center gap-2 flex-wrap mb-3">
+        <CButton color="secondary" variant="ghost" size="sm" onClick={() => navigate('/workshop/service-orders')}>
+          <CIcon icon={cilArrowLeft} />
+        </CButton>
+        <h5 className="fw-bold mb-0 me-auto">Ordem de Serviço</h5>
+        <CBadge color={STATUS_COLOR[so.status]}>{STATUS_LABEL[so.status]}</CBadge>
+        <CBadge
+          color={so.statusPagamento === 'PAGO' ? 'success' : 'secondary'}
+          style={{ cursor: isOwner ? 'pointer' : 'default', border: '1px solid currentColor', background: 'transparent' }}
           onClick={isOwner ? handleTogglePayment : undefined}
-          sx={{ cursor: isOwner ? 'pointer' : 'default' }}
-        />
+        >
+          {so.statusPagamento}
+        </CBadge>
         {nextStatuses.map((s) => (
-          <Button key={s} variant="outlined" size="small" onClick={() => handleTransition(s)}>
+          <CButton key={s} color="secondary" variant="outline" size="sm" onClick={() => handleTransition(s)}>
             → {STATUS_LABEL[s]}
-          </Button>
+          </CButton>
         ))}
         {so.status === 'ORCAMENTO' && (
-          <Button variant="contained" size="small" onClick={handleGenerateLink}>
+          <CButton color="primary" size="sm" onClick={handleGenerateLink}>
             {so.approvalToken ? 'Gerar novo link' : 'Gerar link de aprovação'}
-          </Button>
+          </CButton>
         )}
-        <Button
-          size="small"
-          variant="outlined"
-          onClick={handleDownloadPdf}
-          disabled={!empresa}
-        >
+        <CButton color="secondary" variant="outline" size="sm" onClick={handleDownloadPdf} disabled={!empresa}>
           Baixar PDF
-        </Button>
-      </Box>
+        </CButton>
+      </div>
 
       {/* Dados */}
-      <Card sx={{ mb: 2 }}>
-        <CardContent>
-          <Typography variant="subtitle1" fontWeight="bold" gutterBottom>Dados</Typography>
-          <Typography>Cliente: {customer?.nome ?? so.clienteId}</Typography>
-          <Typography>Veículo: {vehicle ? `${vehicle.placa} — ${vehicle.modelo}` : so.veiculoId}</Typography>
-          {so.appointmentId && <Typography>Agendamento: {so.appointmentId}</Typography>}
-          <Typography variant="caption" color="text.secondary">
+      <CCard className="mb-3">
+        <CCardBody>
+          <div className="fw-semibold mb-2">Dados</div>
+          <div>Cliente: {customer?.nome ?? so.clienteId}</div>
+          <div>Veículo: {vehicle ? `${vehicle.placa} — ${vehicle.modelo}` : so.veiculoId}</div>
+          {so.appointmentId && <div>Agendamento: {so.appointmentId}</div>}
+          <small className="text-secondary">
             Criado em: {new Date(so.createdAt).toLocaleString('pt-BR')}
-          </Typography>
-        </CardContent>
-      </Card>
+          </small>
+        </CCardBody>
+      </CCard>
 
       {/* Checklist */}
-      <Card sx={{ mb: 2 }}>
-        <CardContent>
-          <Typography variant="subtitle1" fontWeight="bold" gutterBottom>Checklist de Entrada</Typography>
-          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 2 }}>
-            <TextField label="KM de Entrada" value={km} onChange={(e) => setKm(e.target.value)} disabled={isFinal} size="small" />
-            <TextField label="Combustível" value={combustivel} onChange={(e) => setCombustivel(e.target.value)} disabled={isFinal} size="small" />
-          </Box>
-          <TextField
-            label="Observações / Avarias"
-            value={observacoes}
-            onChange={(e) => setObservacoes(e.target.value)}
-            disabled={isFinal}
-            multiline rows={3} fullWidth sx={{ mb: 1 }}
-          />
+      <CCard className="mb-3">
+        <CCardBody>
+          <div className="fw-semibold mb-3">Checklist de Entrada</div>
+          <div className="d-flex gap-3 flex-wrap mb-3">
+            <div style={{ flex: '1 1 180px' }}>
+              <CFormLabel>KM de Entrada</CFormLabel>
+              <CFormInput size="sm" value={km} onChange={(e) => setKm(e.target.value)} disabled={isFinal} />
+            </div>
+            <div style={{ flex: '1 1 180px' }}>
+              <CFormLabel>Combustível</CFormLabel>
+              <CFormInput size="sm" value={combustivel} onChange={(e) => setCombustivel(e.target.value)} disabled={isFinal} />
+            </div>
+          </div>
+          <div className="mb-3">
+            <CFormLabel>Observações / Avarias</CFormLabel>
+            <CFormTextarea
+              rows={3}
+              value={observacoes}
+              onChange={(e) => setObservacoes(e.target.value)}
+              disabled={isFinal}
+            />
+          </div>
           {!isFinal && (
-            <Button variant="outlined" size="small" onClick={handleSaveChecklist} disabled={savingChecklist}>
+            <CButton color="secondary" variant="outline" size="sm" onClick={handleSaveChecklist} disabled={savingChecklist}>
               {savingChecklist ? 'Salvando...' : 'Salvar Checklist'}
-            </Button>
+            </CButton>
           )}
-        </CardContent>
-      </Card>
+        </CCardBody>
+      </CCard>
 
       {/* Serviços */}
-      <Card sx={{ mb: 2 }}>
-        <CardContent>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-            <Typography variant="subtitle1" fontWeight="bold">Serviços</Typography>
-            {!isFinal && <Button size="small" onClick={() => setAddServiceOpen(true)}>+ Adicionar</Button>}
-          </Box>
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>Serviço</TableCell>
-                <TableCell>Mecânico</TableCell>
-                <TableCell align="right">Valor</TableCell>
-                {!isFinal && <TableCell />}
-              </TableRow>
-            </TableHead>
-            <TableBody>
+      <CCard className="mb-3">
+        <CCardBody>
+          <div className="d-flex justify-content-between align-items-center mb-2">
+            <div className="fw-semibold">Serviços</div>
+            {!isFinal && (
+              <CButton color="secondary" variant="ghost" size="sm" onClick={() => setAddServiceOpen(true)}>
+                + Adicionar
+              </CButton>
+            )}
+          </div>
+          <CTable small responsive>
+            <CTableHead>
+              <CTableRow>
+                <CTableHeaderCell>Serviço</CTableHeaderCell>
+                <CTableHeaderCell>Mecânico</CTableHeaderCell>
+                <CTableHeaderCell className="text-end">Valor</CTableHeaderCell>
+                {!isFinal && <CTableHeaderCell />}
+              </CTableRow>
+            </CTableHead>
+            <CTableBody>
               {so.itemsServices.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell>{item.nomeServico}</TableCell>
-                  <TableCell>{item.mecanicoId ?? '—'}</TableCell>
-                  <TableCell align="right">R$ {Number(item.valor).toFixed(2)}</TableCell>
+                <CTableRow key={item.id}>
+                  <CTableDataCell>{item.nomeServico}</CTableDataCell>
+                  <CTableDataCell>{item.mecanicoId ?? '—'}</CTableDataCell>
+                  <CTableDataCell className="text-end">{fmt(item.valor)}</CTableDataCell>
                   {!isFinal && (
-                    <TableCell align="right">
-                      <Button size="small" color="error" onClick={() => handleRemoveService(item.id)}>Remover</Button>
-                    </TableCell>
+                    <CTableDataCell className="text-end">
+                      <CButton color="danger" variant="ghost" size="sm" onClick={() => handleRemoveService(item.id)}>Remover</CButton>
+                    </CTableDataCell>
                   )}
-                </TableRow>
+                </CTableRow>
               ))}
               {so.itemsServices.length === 0 && (
-                <TableRow><TableCell colSpan={isFinal ? 3 : 4} align="center">Nenhum serviço.</TableCell></TableRow>
+                <CTableRow>
+                  <CTableDataCell colSpan={isFinal ? 3 : 4} className="text-center text-secondary">Nenhum serviço.</CTableDataCell>
+                </CTableRow>
               )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+            </CTableBody>
+          </CTable>
+        </CCardBody>
+      </CCard>
 
       {/* Peças */}
-      <Card sx={{ mb: 2 }}>
-        <CardContent>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-            <Typography variant="subtitle1" fontWeight="bold">Peças</Typography>
-            {!isFinal && <Button size="small" onClick={() => setAddPartOpen(true)}>+ Adicionar</Button>}
-          </Box>
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>Peça</TableCell>
-                <TableCell align="right">Qtd</TableCell>
-                <TableCell align="right">Valor Unit.</TableCell>
-                <TableCell align="right">Subtotal</TableCell>
-                {!isFinal && <TableCell />}
-              </TableRow>
-            </TableHead>
-            <TableBody>
+      <CCard className="mb-3">
+        <CCardBody>
+          <div className="d-flex justify-content-between align-items-center mb-2">
+            <div className="fw-semibold">Peças</div>
+            {!isFinal && (
+              <CButton color="secondary" variant="ghost" size="sm" onClick={() => setAddPartOpen(true)}>
+                + Adicionar
+              </CButton>
+            )}
+          </div>
+          <CTable small responsive>
+            <CTableHead>
+              <CTableRow>
+                <CTableHeaderCell>Peça</CTableHeaderCell>
+                <CTableHeaderCell className="text-end">Qtd</CTableHeaderCell>
+                <CTableHeaderCell className="text-end">Valor Unit.</CTableHeaderCell>
+                <CTableHeaderCell className="text-end">Subtotal</CTableHeaderCell>
+                {!isFinal && <CTableHeaderCell />}
+              </CTableRow>
+            </CTableHead>
+            <CTableBody>
               {so.itemsParts.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell>{item.nomePeca}</TableCell>
-                  <TableCell align="right">{item.quantidade}</TableCell>
-                  <TableCell align="right">R$ {Number(item.valorUnitario).toFixed(2)}</TableCell>
-                  <TableCell align="right">R$ {(Number(item.valorUnitario) * item.quantidade).toFixed(2)}</TableCell>
+                <CTableRow key={item.id}>
+                  <CTableDataCell>{item.nomePeca}</CTableDataCell>
+                  <CTableDataCell className="text-end">{item.quantidade}</CTableDataCell>
+                  <CTableDataCell className="text-end">{fmt(item.valorUnitario)}</CTableDataCell>
+                  <CTableDataCell className="text-end">{fmt(Number(item.valorUnitario) * item.quantidade)}</CTableDataCell>
                   {!isFinal && (
-                    <TableCell align="right">
-                      <Button size="small" color="error" onClick={() => handleRemovePart(item.id)}>Remover</Button>
-                    </TableCell>
+                    <CTableDataCell className="text-end">
+                      <CButton color="danger" variant="ghost" size="sm" onClick={() => handleRemovePart(item.id)}>Remover</CButton>
+                    </CTableDataCell>
                   )}
-                </TableRow>
+                </CTableRow>
               ))}
               {so.itemsParts.length === 0 && (
-                <TableRow><TableCell colSpan={isFinal ? 4 : 5} align="center">Nenhuma peça.</TableCell></TableRow>
+                <CTableRow>
+                  <CTableDataCell colSpan={isFinal ? 4 : 5} className="text-center text-secondary">Nenhuma peça.</CTableDataCell>
+                </CTableRow>
               )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+            </CTableBody>
+          </CTable>
+        </CCardBody>
+      </CCard>
 
       {/* Total */}
-      <Card sx={{ mb: 2 }}>
-        <CardContent>
-          <Typography variant="subtitle1" fontWeight="bold">Total</Typography>
-          <Divider sx={{ my: 1 }} />
-          <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-            <Typography>Serviços</Typography>
-            <Typography>R$ {totalServices.toFixed(2)}</Typography>
-          </Box>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-            <Typography>Peças</Typography>
-            <Typography>R$ {totalParts.toFixed(2)}</Typography>
-          </Box>
-          <Divider sx={{ my: 1 }} />
-          <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-            <Typography variant="h6">Total</Typography>
-            <Typography variant="h6">R$ {total.toFixed(2)}</Typography>
-          </Box>
-        </CardContent>
-      </Card>
+      <CCard className="mb-3">
+        <CCardBody>
+          <div className="fw-semibold mb-2">Total</div>
+          <hr className="my-2" />
+          <div className="d-flex justify-content-between"><span>Serviços</span><span>{fmt(totalServices)}</span></div>
+          <div className="d-flex justify-content-between"><span>Peças</span><span>{fmt(totalParts)}</span></div>
+          <hr className="my-2" />
+          <div className="d-flex justify-content-between fw-bold fs-5">
+            <span>Total</span><span>{fmt(total)}</span>
+          </div>
+        </CCardBody>
+      </CCard>
 
-      {/* Aprovação — only visible when ORCAMENTO and a token already exists */}
+      {/* Aprovação */}
       {approvalDisplayLink && (
-        <Card sx={{ mb: 2 }}>
-          <CardContent>
-            <Typography variant="subtitle1" fontWeight="bold" gutterBottom>Link de Aprovação</Typography>
+        <CCard className="mb-3">
+          <CCardBody>
+            <div className="fw-semibold mb-2">Link de Aprovação</div>
             {so.approvalExpiresAt && (
-              <Alert severity="info" sx={{ mb: 1 }}>
+              <CAlert color="info" className="mb-2">
                 Token ativo até {new Date(so.approvalExpiresAt).toLocaleString('pt-BR')}
-              </Alert>
+              </CAlert>
             )}
-            <Stack direction="row" spacing={1} alignItems="center">
-              <Button variant="outlined" size="small" onClick={handleGenerateLink}>Gerar novo link</Button>
-              <Tooltip title={copied ? 'Copiado!' : 'Copiar link'}>
-                <IconButton onClick={() => handleCopy(approvalDisplayLink)}><ContentCopyIcon /></IconButton>
-              </Tooltip>
-            </Stack>
-            <Typography variant="body2" sx={{ mt: 1, wordBreak: 'break-all', color: 'text.secondary' }}>
+            <div className="d-flex gap-2 align-items-center mb-2">
+              <CButton color="secondary" variant="outline" size="sm" onClick={handleGenerateLink}>
+                Gerar novo link
+              </CButton>
+              <CTooltip content={copied ? 'Copiado!' : 'Copiar link'}>
+                <CButton color="secondary" variant="ghost" size="sm" onClick={() => handleCopy(approvalDisplayLink)}>
+                  <CIcon icon={cilCopy} />
+                </CButton>
+              </CTooltip>
+            </div>
+            <small className="text-secondary" style={{ wordBreak: 'break-all' }}>
               {approvalDisplayLink}
-            </Typography>
-          </CardContent>
-        </Card>
+            </small>
+          </CCardBody>
+        </CCard>
       )}
 
       <AddServiceDialog
@@ -578,6 +615,6 @@ export function ServiceOrderDetailPage() {
         onClose={() => setAddPartOpen(false)}
         onSaved={load}
       />
-    </Box>
+    </>
   );
 }
