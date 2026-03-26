@@ -1,13 +1,34 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
-  Alert, Box, Button, CircularProgress, Dialog, DialogActions,
-  DialogContent, DialogTitle, IconButton, Paper, Tab, Table,
-  TableBody, TableCell, TableContainer, TableHead, TablePagination,
-  TableRow, Tabs, TextField, Typography,
-} from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
+  CAlert,
+  CButton,
+  CCard,
+  CFormFeedback,
+  CFormInput,
+  CFormLabel,
+  CFormTextarea,
+  CModal,
+  CModalBody,
+  CModalFooter,
+  CModalHeader,
+  CModalTitle,
+  CNav,
+  CNavItem,
+  CNavLink,
+  CPagination,
+  CPaginationItem,
+  CSpinner,
+  CTabContent,
+  CTabPane,
+  CTable,
+  CTableBody,
+  CTableDataCell,
+  CTableHead,
+  CTableHeaderCell,
+  CTableRow,
+} from '@coreui/react';
+import CIcon from '@coreui/icons-react';
+import { cilPlus, cilPen, cilTrash } from '@coreui/icons';
 import { useForm, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -94,96 +115,109 @@ function ServicesTab() {
     }
   };
 
+  const totalPages = Math.ceil(total / rowsPerPage) || 1;
+
   return (
-    <Box sx={{ mt: 2 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-        <TextField
-          label="Buscar por nome"
+    <div className="mt-3">
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <CFormInput
+          placeholder="Buscar por nome"
           value={search}
           onChange={(e) => { setSearch(e.target.value); setPage(0); }}
-          size="small"
-          sx={{ width: 320 }}
+          style={{ maxWidth: 320 }}
+          size="sm"
         />
-        <Button variant="contained" startIcon={<AddIcon />} onClick={openCreate}>
+        <CButton color="primary" size="sm" onClick={openCreate}>
+          <CIcon icon={cilPlus} className="me-1" />
           Novo Serviço
-        </Button>
-      </Box>
+        </CButton>
+      </div>
 
-      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+      {error && <CAlert color="danger" className="mb-3">{error}</CAlert>}
 
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Nome</TableCell>
-              <TableCell>Descrição</TableCell>
-              <TableCell>Preço Padrão</TableCell>
-              <TableCell align="right">Ações</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
+      <CCard>
+        <CTable hover responsive>
+          <CTableHead>
+            <CTableRow>
+              <CTableHeaderCell>Nome</CTableHeaderCell>
+              <CTableHeaderCell>Descrição</CTableHeaderCell>
+              <CTableHeaderCell>Preço Padrão</CTableHeaderCell>
+              <CTableHeaderCell className="text-end">Ações</CTableHeaderCell>
+            </CTableRow>
+          </CTableHead>
+          <CTableBody>
             {loading ? (
-              <TableRow><TableCell colSpan={4} align="center"><CircularProgress size={24} /></TableCell></TableRow>
+              <CTableRow>
+                <CTableDataCell colSpan={4} className="text-center py-3">
+                  <CSpinner size="sm" />
+                </CTableDataCell>
+              </CTableRow>
             ) : items.map((item) => (
-              <TableRow key={item.id}>
-                <TableCell>{item.nome}</TableCell>
-                <TableCell>{item.descricao ?? '—'}</TableCell>
-                <TableCell>R$ {Number(item.precoPadrao).toFixed(2)}</TableCell>
-                <TableCell align="right">
-                  <IconButton size="small" onClick={() => openEdit(item)}><EditIcon fontSize="small" /></IconButton>
-                  <IconButton size="small" color="error" onClick={() => handleDelete(item.id)}><DeleteIcon fontSize="small" /></IconButton>
-                </TableCell>
-              </TableRow>
+              <CTableRow key={item.id}>
+                <CTableDataCell>{item.nome}</CTableDataCell>
+                <CTableDataCell>{item.descricao ?? '—'}</CTableDataCell>
+                <CTableDataCell>R$ {Number(item.precoPadrao).toFixed(2)}</CTableDataCell>
+                <CTableDataCell className="text-end">
+                  <CButton color="secondary" variant="ghost" size="sm" onClick={() => openEdit(item)}>
+                    <CIcon icon={cilPen} />
+                  </CButton>
+                  <CButton color="danger" variant="ghost" size="sm" onClick={() => handleDelete(item.id)}>
+                    <CIcon icon={cilTrash} />
+                  </CButton>
+                </CTableDataCell>
+              </CTableRow>
             ))}
-          </TableBody>
-        </Table>
-        <TablePagination
-          component="div"
-          count={total}
-          page={page}
-          rowsPerPage={rowsPerPage}
-          onPageChange={(_, p) => setPage(p)}
-          onRowsPerPageChange={(e) => { setRowsPerPage(Number(e.target.value)); setPage(0); }}
-          rowsPerPageOptions={[10, 20, 50]}
-          labelRowsPerPage="Por página:"
-        />
-      </TableContainer>
+          </CTableBody>
+        </CTable>
 
-      <Dialog open={modalOpen} onClose={() => setModalOpen(false)} fullWidth maxWidth="sm">
+        <div className="d-flex align-items-center gap-2 px-3 py-2 border-top">
+          <select
+            className="form-select form-select-sm"
+            style={{ width: 80 }}
+            value={rowsPerPage}
+            onChange={(e) => { setRowsPerPage(Number(e.target.value)); setPage(0); }}
+          >
+            {[10, 20, 50].map((n) => <option key={n} value={n}>{n}</option>)}
+          </select>
+          <small className="text-secondary">por página</small>
+          <CPagination className="ms-auto mb-0" size="sm">
+            <CPaginationItem disabled={page === 0} onClick={() => setPage((p) => p - 1)}>‹</CPaginationItem>
+            <CPaginationItem active>{page + 1} / {totalPages}</CPaginationItem>
+            <CPaginationItem disabled={page + 1 >= totalPages} onClick={() => setPage((p) => p + 1)}>›</CPaginationItem>
+          </CPagination>
+        </div>
+      </CCard>
+
+      <CModal visible={modalOpen} onClose={() => setModalOpen(false)} size="sm">
+        <CModalHeader>
+          <CModalTitle>{editing ? 'Editar Serviço' : 'Novo Serviço'}</CModalTitle>
+        </CModalHeader>
         <form onSubmit={handleSubmit(onSubmit)}>
-          <DialogTitle>{editing ? 'Editar Serviço' : 'Novo Serviço'}</DialogTitle>
-          <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: '16px !important' }}>
-            <TextField
-              label="Nome *"
-              {...register('nome')}
-              error={!!errors.nome}
-              helperText={errors.nome?.message}
-              fullWidth
-            />
-            <TextField
-              label="Descrição"
-              {...register('descricao')}
-              fullWidth
-              multiline
-              rows={2}
-            />
-            <TextField
-              label="Preço Padrão (R$) *"
-              type="number"
-              inputProps={{ step: '0.01', min: '0' }}
-              {...register('precoPadrao')}
-              error={!!errors.precoPadrao}
-              helperText={errors.precoPadrao?.message}
-              fullWidth
-            />
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setModalOpen(false)}>Cancelar</Button>
-            <Button type="submit" variant="contained">Salvar</Button>
-          </DialogActions>
+          <CModalBody>
+            <div className="d-flex flex-column gap-3">
+              <div>
+                <CFormLabel>Nome *</CFormLabel>
+                <CFormInput {...register('nome')} invalid={!!errors.nome} />
+                {errors.nome && <CFormFeedback invalid>{errors.nome.message}</CFormFeedback>}
+              </div>
+              <div>
+                <CFormLabel>Descrição</CFormLabel>
+                <CFormTextarea {...register('descricao')} rows={2} />
+              </div>
+              <div>
+                <CFormLabel>Preço Padrão (R$) *</CFormLabel>
+                <CFormInput type="number" step="0.01" min="0" {...register('precoPadrao')} invalid={!!errors.precoPadrao} />
+                {errors.precoPadrao && <CFormFeedback invalid>{errors.precoPadrao.message}</CFormFeedback>}
+              </div>
+            </div>
+          </CModalBody>
+          <CModalFooter>
+            <CButton color="secondary" onClick={() => setModalOpen(false)}>Cancelar</CButton>
+            <CButton type="submit" color="primary">Salvar</CButton>
+          </CModalFooter>
         </form>
-      </Dialog>
-    </Box>
+      </CModal>
+    </div>
   );
 }
 
@@ -250,112 +284,135 @@ function PartsTab() {
     }
   };
 
+  const totalPages = Math.ceil(total / rowsPerPage) || 1;
+
   return (
-    <Box sx={{ mt: 2 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-        <TextField
-          label="Buscar por nome ou código"
+    <div className="mt-3">
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <CFormInput
+          placeholder="Buscar por nome ou código"
           value={search}
           onChange={(e) => { setSearch(e.target.value); setPage(0); }}
-          size="small"
-          sx={{ width: 320 }}
+          style={{ maxWidth: 320 }}
+          size="sm"
         />
-        <Button variant="contained" startIcon={<AddIcon />} onClick={openCreate}>
+        <CButton color="primary" size="sm" onClick={openCreate}>
+          <CIcon icon={cilPlus} className="me-1" />
           Nova Peça
-        </Button>
-      </Box>
+        </CButton>
+      </div>
 
-      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+      {error && <CAlert color="danger" className="mb-3">{error}</CAlert>}
 
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Nome</TableCell>
-              <TableCell>Código</TableCell>
-              <TableCell>Preço Unitário</TableCell>
-              <TableCell align="right">Ações</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
+      <CCard>
+        <CTable hover responsive>
+          <CTableHead>
+            <CTableRow>
+              <CTableHeaderCell>Nome</CTableHeaderCell>
+              <CTableHeaderCell>Código</CTableHeaderCell>
+              <CTableHeaderCell>Preço Unitário</CTableHeaderCell>
+              <CTableHeaderCell className="text-end">Ações</CTableHeaderCell>
+            </CTableRow>
+          </CTableHead>
+          <CTableBody>
             {loading ? (
-              <TableRow><TableCell colSpan={4} align="center"><CircularProgress size={24} /></TableCell></TableRow>
+              <CTableRow>
+                <CTableDataCell colSpan={4} className="text-center py-3">
+                  <CSpinner size="sm" />
+                </CTableDataCell>
+              </CTableRow>
             ) : items.map((item) => (
-              <TableRow key={item.id}>
-                <TableCell>{item.nome}</TableCell>
-                <TableCell>{item.codigo ?? '—'}</TableCell>
-                <TableCell>R$ {Number(item.precoUnitario).toFixed(2)}</TableCell>
-                <TableCell align="right">
-                  <IconButton size="small" onClick={() => openEdit(item)}><EditIcon fontSize="small" /></IconButton>
-                  <IconButton size="small" color="error" onClick={() => handleDelete(item.id)}><DeleteIcon fontSize="small" /></IconButton>
-                </TableCell>
-              </TableRow>
+              <CTableRow key={item.id}>
+                <CTableDataCell>{item.nome}</CTableDataCell>
+                <CTableDataCell>{item.codigo ?? '—'}</CTableDataCell>
+                <CTableDataCell>R$ {Number(item.precoUnitario).toFixed(2)}</CTableDataCell>
+                <CTableDataCell className="text-end">
+                  <CButton color="secondary" variant="ghost" size="sm" onClick={() => openEdit(item)}>
+                    <CIcon icon={cilPen} />
+                  </CButton>
+                  <CButton color="danger" variant="ghost" size="sm" onClick={() => handleDelete(item.id)}>
+                    <CIcon icon={cilTrash} />
+                  </CButton>
+                </CTableDataCell>
+              </CTableRow>
             ))}
-          </TableBody>
-        </Table>
-        <TablePagination
-          component="div"
-          count={total}
-          page={page}
-          rowsPerPage={rowsPerPage}
-          onPageChange={(_, p) => setPage(p)}
-          onRowsPerPageChange={(e) => { setRowsPerPage(Number(e.target.value)); setPage(0); }}
-          rowsPerPageOptions={[10, 20, 50]}
-          labelRowsPerPage="Por página:"
-        />
-      </TableContainer>
+          </CTableBody>
+        </CTable>
 
-      <Dialog open={modalOpen} onClose={() => setModalOpen(false)} fullWidth maxWidth="sm">
+        <div className="d-flex align-items-center gap-2 px-3 py-2 border-top">
+          <select
+            className="form-select form-select-sm"
+            style={{ width: 80 }}
+            value={rowsPerPage}
+            onChange={(e) => { setRowsPerPage(Number(e.target.value)); setPage(0); }}
+          >
+            {[10, 20, 50].map((n) => <option key={n} value={n}>{n}</option>)}
+          </select>
+          <small className="text-secondary">por página</small>
+          <CPagination className="ms-auto mb-0" size="sm">
+            <CPaginationItem disabled={page === 0} onClick={() => setPage((p) => p - 1)}>‹</CPaginationItem>
+            <CPaginationItem active>{page + 1} / {totalPages}</CPaginationItem>
+            <CPaginationItem disabled={page + 1 >= totalPages} onClick={() => setPage((p) => p + 1)}>›</CPaginationItem>
+          </CPagination>
+        </div>
+      </CCard>
+
+      <CModal visible={modalOpen} onClose={() => setModalOpen(false)} size="sm">
+        <CModalHeader>
+          <CModalTitle>{editing ? 'Editar Peça' : 'Nova Peça'}</CModalTitle>
+        </CModalHeader>
         <form onSubmit={handleSubmit(onSubmit)}>
-          <DialogTitle>{editing ? 'Editar Peça' : 'Nova Peça'}</DialogTitle>
-          <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: '16px !important' }}>
-            <TextField
-              label="Nome *"
-              {...register('nome')}
-              error={!!errors.nome}
-              helperText={errors.nome?.message}
-              fullWidth
-            />
-            <TextField
-              label="Código / Referência"
-              {...register('codigo')}
-              fullWidth
-            />
-            <TextField
-              label="Preço Unitário (R$) *"
-              type="number"
-              inputProps={{ step: '0.01', min: '0' }}
-              {...register('precoUnitario')}
-              error={!!errors.precoUnitario}
-              helperText={errors.precoUnitario?.message}
-              fullWidth
-            />
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setModalOpen(false)}>Cancelar</Button>
-            <Button type="submit" variant="contained">Salvar</Button>
-          </DialogActions>
+          <CModalBody>
+            <div className="d-flex flex-column gap-3">
+              <div>
+                <CFormLabel>Nome *</CFormLabel>
+                <CFormInput {...register('nome')} invalid={!!errors.nome} />
+                {errors.nome && <CFormFeedback invalid>{errors.nome.message}</CFormFeedback>}
+              </div>
+              <div>
+                <CFormLabel>Código / Referência</CFormLabel>
+                <CFormInput {...register('codigo')} />
+              </div>
+              <div>
+                <CFormLabel>Preço Unitário (R$) *</CFormLabel>
+                <CFormInput type="number" step="0.01" min="0" {...register('precoUnitario')} invalid={!!errors.precoUnitario} />
+                {errors.precoUnitario && <CFormFeedback invalid>{errors.precoUnitario.message}</CFormFeedback>}
+              </div>
+            </div>
+          </CModalBody>
+          <CModalFooter>
+            <CButton color="secondary" onClick={() => setModalOpen(false)}>Cancelar</CButton>
+            <CButton type="submit" color="primary">Salvar</CButton>
+          </CModalFooter>
         </form>
-      </Dialog>
-    </Box>
+      </CModal>
+    </div>
   );
 }
 
 // --- CatalogPage ---
 export function CatalogPage() {
-  const [tab, setTab] = useState(0);
+  const [activeTab, setActiveTab] = useState(0);
 
   return (
-    <Box>
-      <Typography variant="h5" fontWeight="bold" sx={{ mb: 2 }}>
-        Catálogo
-      </Typography>
-      <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ borderBottom: 1, borderColor: 'divider' }}>
-        <Tab label="Serviços" />
-        <Tab label="Peças" />
-      </Tabs>
-      {tab === 0 && <ServicesTab />}
-      {tab === 1 && <PartsTab />}
-    </Box>
+    <>
+      <h5 className="fw-bold mb-3">Catálogo</h5>
+      <CNav variant="tabs">
+        <CNavItem>
+          <CNavLink active={activeTab === 0} onClick={() => setActiveTab(0)} style={{ cursor: 'pointer' }}>
+            Serviços
+          </CNavLink>
+        </CNavItem>
+        <CNavItem>
+          <CNavLink active={activeTab === 1} onClick={() => setActiveTab(1)} style={{ cursor: 'pointer' }}>
+            Peças
+          </CNavLink>
+        </CNavItem>
+      </CNav>
+      <CTabContent>
+        <CTabPane visible={activeTab === 0}><ServicesTab /></CTabPane>
+        <CTabPane visible={activeTab === 1}><PartsTab /></CTabPane>
+      </CTabContent>
+    </>
   );
 }
