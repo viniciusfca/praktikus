@@ -1,14 +1,22 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Box, Button, IconButton, Paper, Table, TableBody, TableCell,
-  TableContainer, TableHead, TablePagination, TableRow,
-  TextField, Typography, CircularProgress, Alert,
-} from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
-import VisibilityIcon from '@mui/icons-material/Visibility';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
+  CAlert,
+  CButton,
+  CCard,
+  CFormInput,
+  CPagination,
+  CPaginationItem,
+  CSpinner,
+  CTable,
+  CTableBody,
+  CTableDataCell,
+  CTableHead,
+  CTableHeaderCell,
+  CTableRow,
+} from '@coreui/react';
+import CIcon from '@coreui/icons-react';
+import { cilPlus, cilSearch, cilPen, cilTrash } from '@coreui/icons';
 import { customersService, type Customer } from '../../../services/customers.service';
 
 export function CustomersPage() {
@@ -39,9 +47,7 @@ export function CustomersPage() {
     }
   }, [page, rowsPerPage, search]);
 
-  useEffect(() => {
-    loadCustomers();
-  }, [loadCustomers]);
+  useEffect(() => { loadCustomers(); }, [loadCustomers]);
 
   const handleDelete = async (id: string) => {
     if (!confirm('Deseja excluir este cliente?')) return;
@@ -53,77 +59,102 @@ export function CustomersPage() {
     }
   };
 
-  return (
-    <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-        <Typography variant="h5" fontWeight="bold">Clientes</Typography>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => navigate('/workshop/customers/new')}
-        >
-          Novo Cliente
-        </Button>
-      </Box>
+  const totalPages = Math.ceil(total / rowsPerPage) || 1;
 
-      <TextField
-        label="Buscar por nome ou CPF/CNPJ"
+  return (
+    <>
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h5 className="fw-bold mb-0">Clientes</h5>
+        <CButton color="primary" size="sm" onClick={() => navigate('/workshop/customers/new')}>
+          <CIcon icon={cilPlus} className="me-1" />
+          Novo Cliente
+        </CButton>
+      </div>
+
+      <CFormInput
+        placeholder="Buscar por nome ou CPF/CNPJ"
         value={search}
         onChange={(e) => { setSearch(e.target.value); setPage(0); }}
-        sx={{ mb: 2, width: 360 }}
-        size="small"
+        className="mb-3"
+        style={{ maxWidth: 360 }}
+        size="sm"
       />
 
-      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+      {error && <CAlert color="danger" className="mb-3">{error}</CAlert>}
 
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Nome</TableCell>
-              <TableCell>CPF/CNPJ</TableCell>
-              <TableCell>WhatsApp</TableCell>
-              <TableCell align="right">Ações</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
+      <CCard>
+        <CTable hover responsive>
+          <CTableHead>
+            <CTableRow>
+              <CTableHeaderCell>Nome</CTableHeaderCell>
+              <CTableHeaderCell>CPF/CNPJ</CTableHeaderCell>
+              <CTableHeaderCell>WhatsApp</CTableHeaderCell>
+              <CTableHeaderCell className="text-end">Ações</CTableHeaderCell>
+            </CTableRow>
+          </CTableHead>
+          <CTableBody>
             {loading ? (
-              <TableRow>
-                <TableCell colSpan={4} align="center">
-                  <CircularProgress size={24} />
-                </TableCell>
-              </TableRow>
+              <CTableRow>
+                <CTableDataCell colSpan={4} className="text-center py-3">
+                  <CSpinner size="sm" />
+                </CTableDataCell>
+              </CTableRow>
             ) : customers.map((c) => (
-              <TableRow key={c.id}>
-                <TableCell>{c.nome}</TableCell>
-                <TableCell>{c.cpfCnpj}</TableCell>
-                <TableCell>{c.whatsapp ?? '—'}</TableCell>
-                <TableCell align="right">
-                  <IconButton size="small" onClick={() => navigate(`/workshop/customers/${c.id}`)}>
-                    <VisibilityIcon fontSize="small" />
-                  </IconButton>
-                  <IconButton size="small" onClick={() => navigate(`/workshop/customers/${c.id}/edit`)}>
-                    <EditIcon fontSize="small" />
-                  </IconButton>
-                  <IconButton size="small" color="error" onClick={() => handleDelete(c.id)}>
-                    <DeleteIcon fontSize="small" />
-                  </IconButton>
-                </TableCell>
-              </TableRow>
+              <CTableRow key={c.id}>
+                <CTableDataCell>{c.nome}</CTableDataCell>
+                <CTableDataCell>{c.cpfCnpj}</CTableDataCell>
+                <CTableDataCell>{c.whatsapp ?? '—'}</CTableDataCell>
+                <CTableDataCell className="text-end">
+                  <CButton
+                    color="secondary"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => navigate(`/workshop/customers/${c.id}`)}
+                    title="Ver detalhes"
+                  >
+                    <CIcon icon={cilSearch} />
+                  </CButton>
+                  <CButton
+                    color="secondary"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => navigate(`/workshop/customers/${c.id}/edit`)}
+                    title="Editar"
+                  >
+                    <CIcon icon={cilPen} />
+                  </CButton>
+                  <CButton
+                    color="danger"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleDelete(c.id)}
+                    title="Excluir"
+                  >
+                    <CIcon icon={cilTrash} />
+                  </CButton>
+                </CTableDataCell>
+              </CTableRow>
             ))}
-          </TableBody>
-        </Table>
-        <TablePagination
-          component="div"
-          count={total}
-          page={page}
-          rowsPerPage={rowsPerPage}
-          onPageChange={(_, p) => setPage(p)}
-          onRowsPerPageChange={(e) => { setRowsPerPage(Number(e.target.value)); setPage(0); }}
-          rowsPerPageOptions={[10, 20, 50]}
-          labelRowsPerPage="Por página:"
-        />
-      </TableContainer>
-    </Box>
+          </CTableBody>
+        </CTable>
+
+        <div className="d-flex align-items-center gap-2 px-3 py-2 border-top">
+          <select
+            className="form-select form-select-sm"
+            style={{ width: 80 }}
+            value={rowsPerPage}
+            onChange={(e) => { setRowsPerPage(Number(e.target.value)); setPage(0); }}
+          >
+            {[10, 20, 50].map((n) => <option key={n} value={n}>{n}</option>)}
+          </select>
+          <small className="text-secondary">por página</small>
+          <CPagination className="ms-auto mb-0" size="sm">
+            <CPaginationItem disabled={page === 0} onClick={() => setPage((p) => p - 1)}>‹</CPaginationItem>
+            <CPaginationItem active>{page + 1} / {totalPages}</CPaginationItem>
+            <CPaginationItem disabled={page + 1 >= totalPages} onClick={() => setPage((p) => p + 1)}>›</CPaginationItem>
+          </CPagination>
+        </div>
+      </CCard>
+    </>
   );
 }
