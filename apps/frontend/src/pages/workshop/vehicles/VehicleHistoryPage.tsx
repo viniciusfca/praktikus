@@ -1,10 +1,15 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  Alert, Box, Button, Card, CardContent, Chip,
-  CircularProgress, Divider, Typography,
-} from '@mui/material';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+  CAlert,
+  CBadge,
+  CButton,
+  CCard,
+  CCardBody,
+  CSpinner,
+} from '@coreui/react';
+import CIcon from '@coreui/icons-react';
+import { cilArrowLeft } from '@coreui/icons';
 import {
   vehiclesService,
   type Vehicle,
@@ -20,8 +25,8 @@ const STATUS_LABEL: Record<string, string> = {
   ENTREGUE: 'Entregue',
 };
 
-const STATUS_COLOR: Record<string, 'default' | 'info' | 'primary' | 'warning' | 'secondary' | 'success'> = {
-  ORCAMENTO: 'default',
+const STATUS_COLOR: Record<string, string> = {
+  ORCAMENTO: 'secondary',
   APROVADO: 'info',
   EM_EXECUCAO: 'primary',
   AGUARDANDO_PECA: 'warning',
@@ -62,42 +67,43 @@ export function VehicleHistoryPage() {
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-        <CircularProgress />
-      </Box>
+      <div className="d-flex justify-content-center mt-4">
+        <CSpinner color="primary" />
+      </div>
     );
   }
 
   return (
-    <Box>
-      <Button
-        startIcon={<ArrowBackIcon />}
+    <>
+      <CButton
+        color="secondary"
+        variant="ghost"
+        size="sm"
+        className="mb-3"
         onClick={() => navigate('/workshop/vehicles')}
-        sx={{ mb: 2 }}
       >
+        <CIcon icon={cilArrowLeft} className="me-1" />
         Veículos
-      </Button>
+      </CButton>
 
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h5" fontWeight="bold">
+      <div className="mb-4">
+        <h5 className="fw-bold mb-0">
           {vehicle
             ? `${vehicle.placa} — ${vehicle.marca} ${vehicle.modelo} ${vehicle.ano}`
             : 'Veículo'}
-        </Typography>
-        <Typography variant="subtitle1" color="text.secondary">
-          Prontuário do Veículo
-        </Typography>
-      </Box>
+        </h5>
+        <small className="text-secondary">Prontuário do Veículo</small>
+      </div>
 
-      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+      {error && <CAlert color="danger" className="mb-3">{error}</CAlert>}
 
       {orders.length === 0 && !error && (
-        <Typography color="text.secondary">
+        <p className="text-secondary">
           Nenhuma ordem de serviço registrada para este veículo.
-        </Typography>
+        </p>
       )}
 
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+      <div className="d-flex flex-column gap-3">
         {orders.map((o) => {
           const services = o.itemsServices.map((s) => s.nomeServico).join(', ');
           const parts = o.itemsParts
@@ -105,59 +111,49 @@ export function VehicleHistoryPage() {
             .join(', ');
 
           return (
-            <Card key={o.id} variant="outlined">
-              <CardContent>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                  <Typography variant="caption" color="text.secondary">
+            <CCard key={o.id}>
+              <CCardBody>
+                <div className="d-flex justify-content-between align-items-center mb-2">
+                  <small className="text-secondary">
                     {new Date(o.createdAt).toLocaleDateString('pt-BR', {
                       day: '2-digit',
                       month: 'long',
                       year: 'numeric',
                     })}
-                  </Typography>
-                  <Chip
-                    label={STATUS_LABEL[o.status] ?? o.status}
-                    color={STATUS_COLOR[o.status] ?? 'default'}
-                    size="small"
-                  />
-                </Box>
+                  </small>
+                  <CBadge color={STATUS_COLOR[o.status] ?? 'secondary'}>
+                    {STATUS_LABEL[o.status] ?? o.status}
+                  </CBadge>
+                </div>
 
                 {o.kmEntrada && (
-                  <Typography variant="body2" color="text.secondary">
-                    KM entrada: {o.kmEntrada}
-                  </Typography>
+                  <p className="text-secondary small mb-1">KM entrada: {o.kmEntrada}</p>
                 )}
-
                 {services && (
-                  <Typography variant="body2" sx={{ mt: 0.5 }}>
-                    <strong>Serviços:</strong> {services}
-                  </Typography>
+                  <p className="small mb-1"><strong>Serviços:</strong> {services}</p>
                 )}
-
                 {parts && (
-                  <Typography variant="body2">
-                    <strong>Peças:</strong> {parts}
-                  </Typography>
+                  <p className="small mb-0"><strong>Peças:</strong> {parts}</p>
                 )}
 
-                <Divider sx={{ my: 1 }} />
+                <hr className="my-2" />
 
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Typography fontWeight="bold">
-                    {fmt(o.total)}
-                  </Typography>
-                  <Button
-                    size="small"
+                <div className="d-flex justify-content-between align-items-center">
+                  <strong>{fmt(o.total)}</strong>
+                  <CButton
+                    color="secondary"
+                    variant="ghost"
+                    size="sm"
                     onClick={() => navigate(`/workshop/service-orders/${o.id}`)}
                   >
                     Ver OS →
-                  </Button>
-                </Box>
-              </CardContent>
-            </Card>
+                  </CButton>
+                </div>
+              </CCardBody>
+            </CCard>
           );
         })}
-      </Box>
-    </Box>
+      </div>
+    </>
   );
 }

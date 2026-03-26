@@ -1,14 +1,23 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Box, Button, Chip, IconButton, Paper, Table, TableBody, TableCell,
-  TableContainer, TableHead, TablePagination, TableRow,
-  TextField, Typography, CircularProgress, Alert,
-} from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
-import HistoryIcon from '@mui/icons-material/History';
+  CAlert,
+  CBadge,
+  CButton,
+  CCard,
+  CFormInput,
+  CPagination,
+  CPaginationItem,
+  CSpinner,
+  CTable,
+  CTableBody,
+  CTableDataCell,
+  CTableHead,
+  CTableHeaderCell,
+  CTableRow,
+} from '@coreui/react';
+import CIcon from '@coreui/icons-react';
+import { cilPlus, cilHistory, cilPen, cilTrash } from '@coreui/icons';
 import { vehiclesService, type Vehicle } from '../../../services/vehicles.service';
 
 export function VehiclesPage() {
@@ -51,92 +60,118 @@ export function VehiclesPage() {
     }
   };
 
-  return (
-    <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-        <Typography variant="h5" fontWeight="bold">Veículos</Typography>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => navigate('/workshop/vehicles/new')}
-        >
-          Novo Veículo
-        </Button>
-      </Box>
+  const totalPages = Math.ceil(total / rowsPerPage) || 1;
 
-      <TextField
-        label="Buscar por placa, marca ou modelo"
+  return (
+    <>
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h5 className="fw-bold mb-0">Veículos</h5>
+        <CButton color="primary" size="sm" onClick={() => navigate('/workshop/vehicles/new')}>
+          <CIcon icon={cilPlus} className="me-1" />
+          Novo Veículo
+        </CButton>
+      </div>
+
+      <CFormInput
+        placeholder="Buscar por placa, marca ou modelo"
         value={search}
         onChange={(e) => { setSearch(e.target.value); setPage(0); }}
-        sx={{ mb: 2, width: 360 }}
-        size="small"
+        className="mb-3"
+        style={{ maxWidth: 360 }}
+        size="sm"
       />
 
-      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+      {error && <CAlert color="danger" className="mb-3">{error}</CAlert>}
 
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Placa</TableCell>
-              <TableCell>Marca</TableCell>
-              <TableCell>Modelo</TableCell>
-              <TableCell>Ano</TableCell>
-              <TableCell>KM</TableCell>
-              <TableCell>Cliente</TableCell>
-              <TableCell align="right">Ações</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
+      <CCard>
+        <CTable hover responsive>
+          <CTableHead>
+            <CTableRow>
+              <CTableHeaderCell>Placa</CTableHeaderCell>
+              <CTableHeaderCell>Marca</CTableHeaderCell>
+              <CTableHeaderCell>Modelo</CTableHeaderCell>
+              <CTableHeaderCell>Ano</CTableHeaderCell>
+              <CTableHeaderCell>KM</CTableHeaderCell>
+              <CTableHeaderCell>Cliente</CTableHeaderCell>
+              <CTableHeaderCell className="text-end">Ações</CTableHeaderCell>
+            </CTableRow>
+          </CTableHead>
+          <CTableBody>
             {loading ? (
-              <TableRow>
-                <TableCell colSpan={7} align="center"><CircularProgress size={24} /></TableCell>
-              </TableRow>
+              <CTableRow>
+                <CTableDataCell colSpan={7} className="text-center py-3">
+                  <CSpinner size="sm" />
+                </CTableDataCell>
+              </CTableRow>
             ) : vehicles.map((v) => (
-              <TableRow key={v.id}>
-                <TableCell><Chip label={v.placa} size="small" /></TableCell>
-                <TableCell>{v.marca}</TableCell>
-                <TableCell>{v.modelo}</TableCell>
-                <TableCell>{v.ano}</TableCell>
-                <TableCell>{v.km.toLocaleString()} km</TableCell>
-                <TableCell>
-                  <Chip
-                    label={v.customerId.slice(0, 8) + '...'}
-                    size="small"
+              <CTableRow key={v.id}>
+                <CTableDataCell>
+                  <CBadge color="secondary">{v.placa}</CBadge>
+                </CTableDataCell>
+                <CTableDataCell>{v.marca}</CTableDataCell>
+                <CTableDataCell>{v.modelo}</CTableDataCell>
+                <CTableDataCell>{v.ano}</CTableDataCell>
+                <CTableDataCell>{v.km.toLocaleString()} km</CTableDataCell>
+                <CTableDataCell>
+                  <CBadge
+                    color="info"
+                    style={{ cursor: 'pointer' }}
                     onClick={() => navigate(`/workshop/customers/${v.customerId}`)}
-                    clickable
-                  />
-                </TableCell>
-                <TableCell align="right">
-                  <IconButton
-                    size="small"
+                  >
+                    {v.customerId.slice(0, 8)}…
+                  </CBadge>
+                </CTableDataCell>
+                <CTableDataCell className="text-end">
+                  <CButton
+                    color="secondary"
+                    variant="ghost"
+                    size="sm"
                     title="Prontuário"
                     onClick={() => navigate(`/workshop/vehicles/${v.id}/history`)}
                   >
-                    <HistoryIcon fontSize="small" />
-                  </IconButton>
-                  <IconButton size="small" onClick={() => navigate(`/workshop/vehicles/${v.id}/edit`)}>
-                    <EditIcon fontSize="small" />
-                  </IconButton>
-                  <IconButton size="small" color="error" onClick={() => handleDelete(v.id)}>
-                    <DeleteIcon fontSize="small" />
-                  </IconButton>
-                </TableCell>
-              </TableRow>
+                    <CIcon icon={cilHistory} />
+                  </CButton>
+                  <CButton
+                    color="secondary"
+                    variant="ghost"
+                    size="sm"
+                    title="Editar"
+                    onClick={() => navigate(`/workshop/vehicles/${v.id}/edit`)}
+                  >
+                    <CIcon icon={cilPen} />
+                  </CButton>
+                  <CButton
+                    color="danger"
+                    variant="ghost"
+                    size="sm"
+                    title="Excluir"
+                    onClick={() => handleDelete(v.id)}
+                  >
+                    <CIcon icon={cilTrash} />
+                  </CButton>
+                </CTableDataCell>
+              </CTableRow>
             ))}
-          </TableBody>
-        </Table>
-        <TablePagination
-          component="div"
-          count={total}
-          page={page}
-          rowsPerPage={rowsPerPage}
-          onPageChange={(_, p) => setPage(p)}
-          onRowsPerPageChange={(e) => { setRowsPerPage(Number(e.target.value)); setPage(0); }}
-          rowsPerPageOptions={[10, 20, 50]}
-          labelRowsPerPage="Por página:"
-        />
-      </TableContainer>
-    </Box>
+          </CTableBody>
+        </CTable>
+
+        <div className="d-flex align-items-center gap-2 px-3 py-2 border-top">
+          <select
+            className="form-select form-select-sm"
+            style={{ width: 80 }}
+            value={rowsPerPage}
+            onChange={(e) => { setRowsPerPage(Number(e.target.value)); setPage(0); }}
+          >
+            {[10, 20, 50].map((n) => <option key={n} value={n}>{n}</option>)}
+          </select>
+          <small className="text-secondary">por página</small>
+          <CPagination className="ms-auto mb-0" size="sm">
+            <CPaginationItem disabled={page === 0} onClick={() => setPage((p) => p - 1)}>‹</CPaginationItem>
+            <CPaginationItem active>{page + 1} / {totalPages}</CPaginationItem>
+            <CPaginationItem disabled={page + 1 >= totalPages} onClick={() => setPage((p) => p + 1)}>›</CPaginationItem>
+          </CPagination>
+        </div>
+      </CCard>
+    </>
   );
 }

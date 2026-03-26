@@ -4,9 +4,16 @@ import { useForm, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
-  Box, Button, Card, CardContent, TextField, Typography, Alert, CircularProgress,
-  FormHelperText,
-} from '@mui/material';
+  CAlert,
+  CButton,
+  CCard,
+  CCardBody,
+  CFormFeedback,
+  CFormInput,
+  CFormLabel,
+  CInputGroup,
+  CSpinner,
+} from '@coreui/react';
 import { vehiclesService } from '../../../services/vehicles.service';
 import { customersService } from '../../../services/customers.service';
 
@@ -80,14 +87,14 @@ export function VehicleFormPage() {
         customersService.getById(v.customerId).then((c) => {
           setCpfInput(c.cpfCnpj);
           setCustomerName(c.nome);
-        }).catch(() => { /* display-only — ignore errors */ });
+        }).catch(() => { /* display-only */ });
       });
     } else if (prefilledCustomerId) {
       reset({ customerId: prefilledCustomerId, placa: '', marca: '', modelo: '', ano: currentYear, km: 0 });
       customersService.getById(prefilledCustomerId).then((c) => {
         setCpfInput(c.cpfCnpj);
         setCustomerName(c.nome);
-      }).catch(() => { /* display-only — ignore errors */ });
+      }).catch(() => { /* display-only */ });
     }
   }, [id, isEdit, reset, searchParams]);
 
@@ -107,104 +114,93 @@ export function VehicleFormPage() {
   };
 
   return (
-    <Box sx={{ maxWidth: 560 }}>
-      <Typography variant="h5" fontWeight="bold" mb={3}>
-        {isEdit ? 'Editar Veículo' : 'Novo Veículo'}
-      </Typography>
-      <Card>
-        <CardContent sx={{ p: 3 }}>
+    <div style={{ maxWidth: 560 }}>
+      <h5 className="fw-bold mb-4">{isEdit ? 'Editar Veículo' : 'Novo Veículo'}</h5>
+      <CCard>
+        <CCardBody className="p-4">
           {errors.root && (
-            <Alert severity="error" sx={{ mb: 2 }}>{errors.root.message}</Alert>
+            <CAlert color="danger" className="mb-3">{errors.root.message}</CAlert>
           )}
-          <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate>
-            <Box sx={{ mt: 1, mb: 0.5 }}>
-              <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
-                <TextField
-                  label="CPF do Cliente"
+          <form onSubmit={handleSubmit(onSubmit)} noValidate>
+            {/* CPF search */}
+            <div className="mb-3">
+              <CFormLabel>CPF do Cliente</CFormLabel>
+              <CInputGroup>
+                <CFormInput
                   value={cpfInput}
                   onChange={(e) => setCpfInput(e.target.value.replace(/\D/g, ''))}
                   onBlur={handleCpfSearch}
-                  inputProps={{ maxLength: 14 }}
-                  sx={{ flex: 1 }}
-                  error={Boolean(cpfError || errors.customerId)}
+                  maxLength={14}
+                  invalid={Boolean(cpfError || errors.customerId)}
                 />
-                <Button
-                  variant="outlined"
+                <CButton
+                  color="secondary"
+                  variant="outline"
                   onClick={handleCpfSearch}
                   disabled={searching || !cpfInput.trim()}
-                  sx={{ mt: 0.5, minWidth: 90, height: 56 }}
+                  style={{ minWidth: 80 }}
                 >
-                  {searching ? <CircularProgress size={20} /> : 'Buscar'}
-                </Button>
-              </Box>
+                  {searching ? <CSpinner size="sm" /> : 'Buscar'}
+                </CButton>
+              </CInputGroup>
               {customerName && (
-                <Typography variant="body2" color="success.main" sx={{ mt: 0.5 }}>
-                  ✓ {customerName}
-                </Typography>
+                <div className="text-success small mt-1">✓ {customerName}</div>
               )}
-              {cpfError && (
-                <Alert severity="error" sx={{ mt: 1 }}>{cpfError}</Alert>
-              )}
+              {cpfError && <CAlert color="danger" className="mt-2 py-2">{cpfError}</CAlert>}
               {errors.customerId && !cpfError && (
-                <FormHelperText error>{errors.customerId.message}</FormHelperText>
+                <CFormFeedback invalid style={{ display: 'block' }}>
+                  {errors.customerId.message}
+                </CFormFeedback>
               )}
-            </Box>
-            <TextField
-              label="Placa (ex: ABC1234)"
-              fullWidth
-              margin="normal"
-              inputProps={{ style: { textTransform: 'uppercase' }, maxLength: 7 }}
-              {...register('placa')}
-              error={!!errors.placa}
-              helperText={errors.placa?.message}
-            />
-            <TextField
-              label="Marca"
-              fullWidth
-              margin="normal"
-              {...register('marca')}
-              error={!!errors.marca}
-              helperText={errors.marca?.message}
-            />
-            <TextField
-              label="Modelo"
-              fullWidth
-              margin="normal"
-              {...register('modelo')}
-              error={!!errors.modelo}
-              helperText={errors.modelo?.message}
-            />
-            <Box sx={{ display: 'flex', gap: 2 }}>
-              <TextField
-                label="Ano"
-                type="number"
-                fullWidth
-                margin="normal"
-                {...register('ano')}
-                error={!!errors.ano}
-                helperText={errors.ano?.message}
+            </div>
+
+            <div className="mb-3">
+              <CFormLabel>Placa (ex: ABC1234)</CFormLabel>
+              <CFormInput
+                {...register('placa')}
+                maxLength={7}
+                style={{ textTransform: 'uppercase' }}
+                invalid={!!errors.placa}
               />
-              <TextField
-                label="KM"
-                type="number"
-                fullWidth
-                margin="normal"
-                {...register('km')}
-                error={!!errors.km}
-                helperText={errors.km?.message}
-              />
-            </Box>
-            <Box sx={{ display: 'flex', gap: 2, mt: 3 }}>
-              <Button variant="outlined" fullWidth onClick={() => navigate(-1)}>
+              {errors.placa && <CFormFeedback invalid>{errors.placa.message}</CFormFeedback>}
+            </div>
+
+            <div className="mb-3">
+              <CFormLabel>Marca</CFormLabel>
+              <CFormInput {...register('marca')} invalid={!!errors.marca} />
+              {errors.marca && <CFormFeedback invalid>{errors.marca.message}</CFormFeedback>}
+            </div>
+
+            <div className="mb-3">
+              <CFormLabel>Modelo</CFormLabel>
+              <CFormInput {...register('modelo')} invalid={!!errors.modelo} />
+              {errors.modelo && <CFormFeedback invalid>{errors.modelo.message}</CFormFeedback>}
+            </div>
+
+            <div className="d-flex gap-3 mb-4">
+              <div className="flex-grow-1">
+                <CFormLabel>Ano</CFormLabel>
+                <CFormInput type="number" {...register('ano')} invalid={!!errors.ano} />
+                {errors.ano && <CFormFeedback invalid>{errors.ano.message}</CFormFeedback>}
+              </div>
+              <div className="flex-grow-1">
+                <CFormLabel>KM</CFormLabel>
+                <CFormInput type="number" {...register('km')} invalid={!!errors.km} />
+                {errors.km && <CFormFeedback invalid>{errors.km.message}</CFormFeedback>}
+              </div>
+            </div>
+
+            <div className="d-flex gap-2">
+              <CButton color="secondary" variant="outline" className="flex-grow-1" onClick={() => navigate(-1)}>
                 Cancelar
-              </Button>
-              <Button type="submit" variant="contained" fullWidth disabled={isSubmitting}>
-                {isSubmitting ? <CircularProgress size={22} /> : 'Salvar'}
-              </Button>
-            </Box>
-          </Box>
-        </CardContent>
-      </Card>
-    </Box>
+              </CButton>
+              <CButton type="submit" color="primary" className="flex-grow-1" disabled={isSubmitting}>
+                {isSubmitting ? <CSpinner size="sm" /> : 'Salvar'}
+              </CButton>
+            </div>
+          </form>
+        </CCardBody>
+      </CCard>
+    </div>
   );
 }
