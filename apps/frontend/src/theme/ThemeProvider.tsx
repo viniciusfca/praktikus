@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo, useState } from 'react';
+import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import { ThemeProvider as MuiThemeProvider, CssBaseline } from '@mui/material';
 import type { PaletteMode } from '@mui/material';
@@ -20,6 +20,11 @@ export function AppThemeProvider({ children }: { children: ReactNode }) {
   const [mode, setMode] = useState<PaletteMode>(
     () => (localStorage.getItem('theme-mode') as PaletteMode) ?? 'dark'
   );
+
+  // Mirror mode to CoreUI's CSS-variable theme system
+  useEffect(() => {
+    document.documentElement.setAttribute('data-coreui-theme', mode);
+  }, [mode]);
 
   const toggleTheme = () => {
     setMode((prev) => {
