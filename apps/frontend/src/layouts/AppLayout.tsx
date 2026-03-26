@@ -1,39 +1,55 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import {
-  Box, Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText,
-  AppBar, Toolbar, Typography, IconButton, Divider, Tooltip,
-  Avatar, Menu, MenuItem, useMediaQuery, useTheme,
-} from '@mui/material';
-import DashboardIcon from '@mui/icons-material/Dashboard';
-import EventIcon from '@mui/icons-material/Event';
-import AssignmentIcon from '@mui/icons-material/Assignment';
-import PeopleIcon from '@mui/icons-material/People';
-import DirectionsCarIcon from '@mui/icons-material/DirectionsCar';
-import InventoryIcon from '@mui/icons-material/Inventory';
-import BarChartIcon from '@mui/icons-material/BarChart';
-import SettingsIcon from '@mui/icons-material/Settings';
-import MenuIcon from '@mui/icons-material/Menu';
-import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
-import LightModeIcon from '@mui/icons-material/LightMode';
-import DarkModeIcon from '@mui/icons-material/DarkMode';
+  CSidebar,
+  CSidebarBrand,
+  CSidebarNav,
+  CSidebarToggler,
+  CNavItem,
+  CNavLink,
+  CHeader,
+  CHeaderToggler,
+  CContainer,
+  CDropdown,
+  CDropdownToggle,
+  CDropdownMenu,
+  CDropdownItem,
+  CDropdownDivider,
+  CAvatar,
+  CTooltip,
+} from '@coreui/react';
+import CIcon from '@coreui/icons-react';
+import {
+  cilSpeedometer,
+  cilCalendar,
+  cilNotes,
+  cilPeople,
+  cilCarAlt,
+  cilList,
+  cilChartLine,
+  cilSettings,
+  cilMenu,
+  cilChevronLeft,
+  cilSun,
+  cilMoon,
+  cilAccountLogout,
+} from '@coreui/icons';
 import { useAuthStore } from '../store/auth.store';
 import { useThemeMode } from '../theme/ThemeProvider';
 import { useSessionCountdown } from '../hooks/useSessionCountdown';
 
-const DRAWER_WIDTH = 240;
-const DRAWER_MINI = 64;
 const STORAGE_KEY = 'sidebar_open';
 
-const navItems = [
-  { label: 'Dashboard', icon: <DashboardIcon />, path: '/workshop/dashboard', ownerOnly: false },
-  { label: 'Agendamentos', icon: <EventIcon />, path: '/workshop/appointments', ownerOnly: false },
-  { label: 'Ordens de Serviço', icon: <AssignmentIcon />, path: '/workshop/service-orders', ownerOnly: false },
-  { label: 'Clientes', icon: <PeopleIcon />, path: '/workshop/customers', ownerOnly: false },
-  { label: 'Veículos', icon: <DirectionsCarIcon />, path: '/workshop/vehicles', ownerOnly: false },
-  { label: 'Catálogo', icon: <InventoryIcon />, path: '/workshop/catalog', ownerOnly: false },
-  { label: 'Relatórios', icon: <BarChartIcon />, path: '/workshop/reports', ownerOnly: true },
-  { label: 'Configurações', icon: <SettingsIcon />, path: '/workshop/settings', ownerOnly: false },
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const navItems: Array<{ label: string; icon: any; path: string; ownerOnly: boolean }> = [
+  { label: 'Dashboard', icon: cilSpeedometer, path: '/workshop/dashboard', ownerOnly: false },
+  { label: 'Agendamentos', icon: cilCalendar, path: '/workshop/appointments', ownerOnly: false },
+  { label: 'Ordens de Serviço', icon: cilNotes, path: '/workshop/service-orders', ownerOnly: false },
+  { label: 'Clientes', icon: cilPeople, path: '/workshop/customers', ownerOnly: false },
+  { label: 'Veículos', icon: cilCarAlt, path: '/workshop/vehicles', ownerOnly: false },
+  { label: 'Catálogo', icon: cilList, path: '/workshop/catalog', ownerOnly: false },
+  { label: 'Relatórios', icon: cilChartLine, path: '/workshop/reports', ownerOnly: true },
+  { label: 'Configurações', icon: cilSettings, path: '/workshop/settings', ownerOnly: false },
 ];
 
 function getInitials(name: string | undefined | null): string {
@@ -52,21 +68,28 @@ export function AppLayout() {
   const logout = useAuthStore((s) => s.logout);
   const user = useAuthStore((s) => s.user);
   const { mode, toggleTheme } = useThemeMode();
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-  // Sidebar open state — persisted in localStorage, default true on desktop
+  // Detect mobile (< 768px)
+  const [isMobile, setIsMobile] = useState(() =>
+    typeof window !== 'undefined' ? window.innerWidth < 768 : false
+  );
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 767px)');
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
+
+  // Desktop: sidebar expanded/narrow (persisted)
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(() => {
     if (typeof window === 'undefined') return true;
     const stored = localStorage.getItem(STORAGE_KEY);
     return stored !== null ? stored === 'true' : true;
   });
 
-  // Mobile drawer state (temporary)
-  const [mobileOpen, setMobileOpen] = useState(false);
-
-  // Avatar dropdown
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  // Mobile: overlay visible
+  const [mobileVisible, setMobileVisible] = useState(false);
 
   const handleToggleSidebar = useCallback(() => {
     setSidebarOpen((prev) => {
@@ -76,258 +99,181 @@ export function AppLayout() {
     });
   }, []);
 
-  // expired is intentionally unused — token refresh happens silently via axios interceptors
-  const { minutes, seconds, isWarning } = useSessionCountdown(user?.exp);
-
   const handleLogout = useCallback(async () => {
-    setAnchorEl(null);
     await logout();
     navigate('/login');
   }, [logout, navigate]);
 
-  const drawerWidth = isMobile ? DRAWER_WIDTH : sidebarOpen ? DRAWER_WIDTH : DRAWER_MINI;
+  const { minutes, seconds, isWarning } = useSessionCountdown(user?.exp);
 
-  const drawerContent = useMemo(() => (
-    <>
-      <Toolbar
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: sidebarOpen || isMobile ? 'space-between' : 'center',
-          px: sidebarOpen || isMobile ? 2 : 0,
-          minHeight: 64,
-        }}
-      >
-        {(sidebarOpen || isMobile) && (
-          <Typography variant="h6" fontWeight="bold" color="primary" noWrap>
-            Practicus
-          </Typography>
-        )}
-        {!isMobile && (
-          <IconButton onClick={handleToggleSidebar} size="small" aria-label={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}>
-            <ChevronLeftIcon
-              sx={{
-                transition: 'transform 0.2s',
-                transform: sidebarOpen ? 'rotate(0deg)' : 'rotate(180deg)',
-              }}
-            />
-          </IconButton>
-        )}
-      </Toolbar>
-      <Divider />
-      <List sx={{ pt: 1 }}>
-        {navItems
-          .filter((item) => !item.ownerOnly || user?.role === 'OWNER')
-          .map((item) => {
-            const active = location.pathname === item.path ||
-              location.pathname.startsWith(item.path + '/');
-            const button = (
-              <ListItem key={item.label} disablePadding>
-                <ListItemButton
-                  component={Link}
-                  to={item.path}
-                  selected={active}
-                  onClick={() => isMobile && setMobileOpen(false)}
-                  sx={{
-                    mx: 1,
-                    borderRadius: 2,
-                    justifyContent: sidebarOpen || isMobile ? 'initial' : 'center',
-                    px: sidebarOpen || isMobile ? 2 : 1.5,
-                  }}
-                >
-                  <ListItemIcon
-                    sx={{
-                      minWidth: sidebarOpen || isMobile ? 40 : 'unset',
-                      color: active ? 'primary.main' : 'text.secondary',
-                    }}
-                  >
-                    {item.icon}
-                  </ListItemIcon>
-                  {(sidebarOpen || isMobile) && (
-                    <ListItemText
-                      primary={item.label}
-                      primaryTypographyProps={{ fontSize: '0.875rem', fontWeight: active ? 600 : 400 }}
-                    />
-                  )}
-                </ListItemButton>
-              </ListItem>
+  const sidebarNav = useMemo(
+    () =>
+      navItems
+        .filter((item) => !item.ownerOnly || user?.role === 'OWNER')
+        .map((item) => {
+          const active =
+            location.pathname === item.path ||
+            location.pathname.startsWith(item.path + '/');
+
+          const navItem = (
+            <CNavItem key={item.label}>
+              <CNavLink
+                as={Link}
+                to={item.path}
+                active={active}
+                onClick={() => isMobile && setMobileVisible(false)}
+              >
+                <CIcon icon={item.icon} customClassName="nav-icon" />
+                {item.label}
+              </CNavLink>
+            </CNavItem>
+          );
+
+          // When sidebar is narrow (desktop mini mode), wrap with tooltip
+          if (!sidebarOpen && !isMobile) {
+            return (
+              <CTooltip key={item.label} content={item.label} placement="right">
+                <span>{navItem}</span>
+              </CTooltip>
             );
-            if (!sidebarOpen && !isMobile) {
-              return (
-                <Tooltip key={item.label} title={item.label} placement="right">
-                  {button}
-                </Tooltip>
-              );
-            }
-            return button;
-          })}
-      </List>
-    </>
-  ), [sidebarOpen, isMobile, location.pathname, user?.role, handleToggleSidebar]);
+          }
+
+          return navItem;
+        }),
+    [location.pathname, sidebarOpen, isMobile, user?.role]
+  );
 
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh' }}>
-      {/* AppBar */}
-      <AppBar
-        position="fixed"
-        elevation={0}
-        sx={{
-          zIndex: (t) => t.zIndex.drawer + 1,
-          borderBottom: '1px solid',
-          borderColor: 'divider',
-          bgcolor: 'background.paper',
-          color: 'text.primary',
-          width: { sm: `calc(100% - ${drawerWidth}px)` },
-          ml: { sm: `${drawerWidth}px` },
-          transition: (t) =>
-            t.transitions.create(['width', 'margin'], {
-              easing: t.transitions.easing.sharp,
-              duration: sidebarOpen
-                ? t.transitions.duration.enteringScreen
-                : t.transitions.duration.leavingScreen,
-            }),
+    <>
+      {/* Sidebar */}
+      <CSidebar
+        className="border-end"
+        colorScheme="dark"
+        narrow={!isMobile && !sidebarOpen}
+        visible={isMobile ? mobileVisible : true}
+        overlaid={isMobile}
+        onVisibleChange={(val: boolean) => {
+          if (isMobile) setMobileVisible(val);
         }}
       >
-        <Toolbar sx={{ gap: 1 }}>
-          {isMobile && (
-            <IconButton
-              edge="start"
-              onClick={() => setMobileOpen(true)}
-              sx={{ mr: 1 }}
-            >
-              <MenuIcon />
-            </IconButton>
-          )}
-          <Box sx={{ flexGrow: 1 }} />
-
-          {/* Session countdown */}
-          {user && (
-            <Typography
-              variant="caption"
-              aria-label="Session time remaining"
-              aria-live="off"
-              sx={{
-                color: isWarning ? 'warning.main' : 'text.disabled',
-                fontVariantNumeric: 'tabular-nums',
-                mr: 0.5,
-              }}
-            >
-              {`${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`}
-            </Typography>
-          )}
-
-          {/* Theme toggle */}
-          <IconButton onClick={toggleTheme} size="small" aria-label={mode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
-            {mode === 'dark' ? <LightModeIcon fontSize="small" /> : <DarkModeIcon fontSize="small" />}
-          </IconButton>
-
-          {/* Avatar */}
-          <IconButton
-            onClick={(e) => setAnchorEl(e.currentTarget)}
-            size="small"
-            aria-label="Open user menu"
-            sx={{ ml: 0.5 }}
-          >
-            <Avatar
-              sx={{ width: 32, height: 32, fontSize: '0.8rem', bgcolor: 'primary.main' }}
-            >
-              {getInitials(user?.name)}
-            </Avatar>
-          </IconButton>
-
-          {/* Avatar dropdown menu */}
-          <Menu
-            anchorEl={anchorEl}
-            open={Boolean(anchorEl)}
-            onClose={() => setAnchorEl(null)}
-            transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-            anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
-            slotProps={{ paper: { sx: { minWidth: 200, mt: 0.5 } } }}
-          >
-            <Box sx={{ px: 2, py: 1.5 }}>
-              <Typography variant="subtitle2" fontWeight={600} noWrap>
-                {user?.name ?? '—'}
-              </Typography>
-              <Typography variant="caption" color="text.secondary" noWrap>
-                {user?.email ?? '—'}
-              </Typography>
-            </Box>
-            <Divider />
-            <MenuItem onClick={handleLogout} sx={{ color: 'error.main' }}>
-              Sair
-            </MenuItem>
-          </Menu>
-        </Toolbar>
-      </AppBar>
-
-      {/* Desktop permanent/mini drawer */}
-      {!isMobile && (
-        <Drawer
-          variant="permanent"
-          sx={{
-            width: drawerWidth,
-            flexShrink: 0,
-            whiteSpace: 'nowrap',
-            transition: (t) =>
-              t.transitions.create('width', {
-                easing: t.transitions.easing.sharp,
-                duration: sidebarOpen
-                  ? t.transitions.duration.enteringScreen
-                  : t.transitions.duration.leavingScreen,
-              }),
-            '& .MuiDrawer-paper': {
-              width: drawerWidth,
-              overflowX: 'hidden',
-              transition: (t) =>
-                t.transitions.create('width', {
-                  easing: t.transitions.easing.sharp,
-                  duration: sidebarOpen
-                    ? t.transitions.duration.enteringScreen
-                    : t.transitions.duration.leavingScreen,
-                }),
-              boxSizing: 'border-box',
-            },
-          }}
+        <CSidebarBrand
+          className="d-flex align-items-center justify-content-between px-3"
+          style={{ minHeight: 56 }}
         >
-          {drawerContent}
-        </Drawer>
-      )}
+          {(sidebarOpen || isMobile) && (
+            <span className="fw-bold text-primary fs-5">Practicus</span>
+          )}
+          {!isMobile && (
+            <button
+              className="btn btn-sm btn-ghost-secondary ms-auto"
+              onClick={handleToggleSidebar}
+              aria-label={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
+              style={{ border: 'none', background: 'none', color: 'inherit' }}
+            >
+              <CIcon
+                icon={cilChevronLeft}
+                style={{
+                  transition: 'transform 0.2s',
+                  transform: sidebarOpen ? 'none' : 'rotate(180deg)',
+                }}
+              />
+            </button>
+          )}
+        </CSidebarBrand>
+        <hr className="m-0" />
+        <CSidebarNav>{sidebarNav}</CSidebarNav>
+        {!isMobile && (
+          <div onClick={handleToggleSidebar}>
+            <CSidebarToggler />
+          </div>
+        )}
+      </CSidebar>
 
-      {/* Mobile temporary drawer */}
-      {isMobile && (
-        <Drawer
-          variant="temporary"
-          open={mobileOpen}
-          onClose={() => setMobileOpen(false)}
-          ModalProps={{ keepMounted: true }}
-          sx={{
-            '& .MuiDrawer-paper': { width: DRAWER_WIDTH, boxSizing: 'border-box' },
-          }}
-        >
-          {drawerContent}
-        </Drawer>
-      )}
+      {/* Main wrapper */}
+      <div className="wrapper d-flex flex-column min-vh-100">
+        <CHeader position="sticky" className="p-0 border-bottom">
+          <CContainer fluid className="px-3 gap-2">
+            {/* Mobile hamburger */}
+            {isMobile && (
+              <CHeaderToggler
+                onClick={() => setMobileVisible(true)}
+                aria-label="Open sidebar"
+              >
+                <CIcon icon={cilMenu} size="lg" />
+              </CHeaderToggler>
+            )}
 
-      {/* Main content */}
-      <Box
-        component="main"
-        sx={{
-          flexGrow: 1,
-          p: 3,
-          width: { sm: `calc(100% - ${drawerWidth}px)` },
-          maxWidth: 1400,
-          transition: (t) =>
-            t.transitions.create(['width', 'margin'], {
-              easing: t.transitions.easing.sharp,
-              duration: sidebarOpen
-                ? t.transitions.duration.enteringScreen
-                : t.transitions.duration.leavingScreen,
-            }),
-        }}
-      >
-        <Toolbar />
-        <Outlet />
-      </Box>
-    </Box>
+            <div className="ms-auto d-flex align-items-center gap-2">
+              {/* Session countdown */}
+              {user && (
+                <small
+                  aria-label="Session time remaining"
+                  aria-live="off"
+                  style={{
+                    color: isWarning
+                      ? 'var(--cui-warning)'
+                      : 'var(--cui-secondary-color)',
+                    fontVariantNumeric: 'tabular-nums',
+                  }}
+                >
+                  {String(minutes).padStart(2, '0')}:
+                  {String(seconds).padStart(2, '0')}
+                </small>
+              )}
+
+              {/* Theme toggle */}
+              <button
+                className="btn btn-ghost-secondary btn-sm"
+                onClick={toggleTheme}
+                aria-label={
+                  mode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'
+                }
+              >
+                <CIcon icon={mode === 'dark' ? cilSun : cilMoon} />
+              </button>
+
+              {/* Avatar dropdown */}
+              <CDropdown variant="nav-item" alignment="end">
+                <CDropdownToggle caret={false} className="p-0 border-0 bg-transparent">
+                  <CAvatar
+                    size="sm"
+                    color="primary"
+                    textColor="white"
+                    aria-label="Open user menu"
+                    style={{ cursor: 'pointer' }}
+                  >
+                    {getInitials(user?.name)}
+                  </CAvatar>
+                </CDropdownToggle>
+                <CDropdownMenu style={{ minWidth: 200 }}>
+                  <div className="px-3 py-2">
+                    <div className="fw-semibold text-truncate">
+                      {user?.name ?? '—'}
+                    </div>
+                    <small className="text-secondary text-truncate d-block">
+                      {user?.email ?? '—'}
+                    </small>
+                  </div>
+                  <CDropdownDivider />
+                  <CDropdownItem
+                    onClick={handleLogout}
+                    className="text-danger"
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <CIcon icon={cilAccountLogout} className="me-2" />
+                    Sair
+                  </CDropdownItem>
+                </CDropdownMenu>
+              </CDropdown>
+            </div>
+          </CContainer>
+        </CHeader>
+
+        {/* Page content */}
+        <div className="body flex-grow-1 p-3 p-md-4">
+          <Outlet />
+        </div>
+      </div>
+    </>
   );
 }
