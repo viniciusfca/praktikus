@@ -175,6 +175,7 @@ export function RegisterPage() {
               <div className="mb-3">
                 <CFormLabel>Seu nome</CFormLabel>
                 <CFormInput
+                  aria-label="Seu nome"
                   {...form2.register('ownerName')}
                   invalid={!!form2.formState.errors.ownerName}
                 />
@@ -210,6 +211,7 @@ export function RegisterPage() {
                 <CFormLabel>Confirmar senha</CFormLabel>
                 <CFormInput
                   type="password"
+                  aria-label="Confirmar senha"
                   {...form2.register('confirmPassword')}
                   invalid={!!form2.formState.errors.confirmPassword}
                 />
