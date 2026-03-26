@@ -162,6 +162,18 @@ importers:
 
   apps/frontend:
     dependencies:
+      '@coreui/coreui':
+        specifier: ^5.3.1
+        version: 5.6.1(@popperjs/core@2.11.8)
+      '@coreui/icons':
+        specifier: ^3.0.1
+        version: 3.0.1
+      '@coreui/icons-react':
+        specifier: ^2.3.0
+        version: 2.3.0(react-dom@19.2.4)(react@19.2.4)
+      '@coreui/react':
+        specifier: ^5.6.0
+        version: 5.10.0(react-dom@19.2.4)(react@19.2.4)
       '@emotion/react':
         specifier: ^11.14.0
         version: 11.14.0(@types/react@19.2.14)(react@19.2.4)
@@ -708,6 +720,42 @@ packages:
     requiresBuild: true
     dev: true
     optional: true
+
+  /@coreui/coreui@5.6.1(@popperjs/core@2.11.8):
+    resolution: {integrity: sha512-uBqRqO4LGo6NQHfxBLGg+c5C5+SlmHICk7ey48KEESW9EAiY5eCmwhxgxgTDWrYKC5KqaAe9SGQAHugBFUdg1w==}
+    peerDependencies:
+      '@popperjs/core': ^2.11.8
+    dependencies:
+      '@popperjs/core': 2.11.8
+      html-entities: 2.6.0
+    dev: false
+
+  /@coreui/icons-react@2.3.0(react-dom@19.2.4)(react@19.2.4):
+    resolution: {integrity: sha512-s4jjCrtHnqnu30GLcfDbtWxEaB7imBQ5E6w89JzP5Jd6EV6o38tR0RNix4nXRubayJKAvIjlwZWOKEFNG0NM7Q==}
+    peerDependencies:
+      react: '>=17'
+      react-dom: '>=17'
+    dependencies:
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
+    dev: false
+
+  /@coreui/icons@3.0.1:
+    resolution: {integrity: sha512-u9UKEcRMyY9pa4jUoLij8pAR03g5g6TLWV33/Mx2ix8sffyi0eO4fLV8DSTQljDCw938zt7KYog5cVKEAJUxxg==}
+    dev: false
+
+  /@coreui/react@5.10.0(react-dom@19.2.4)(react@19.2.4):
+    resolution: {integrity: sha512-C3RuU3OznSwNShNhXi1SMkupxbd3Fq6yRYJiVqzSvcBHWoeGp8OdXORotFYkyfBri6Ncj2R7gcNnS3FobdfMrQ==}
+    peerDependencies:
+      react: '>=17'
+      react-dom: '>=17'
+    dependencies:
+      '@coreui/coreui': 5.6.1(@popperjs/core@2.11.8)
+      '@popperjs/core': 2.11.8
+      prop-types: 15.8.1
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
+    dev: false
 
   /@cspotcode/source-map-support@0.8.1:
     resolution: {integrity: sha512-IchNf6dN4tHoMFIn/7OE8LWZ19Y6q/67Bmf6vnGREv8RSbBVb9LPJxEcnwrcwX6ixSvaiGoomAUvu4YSxXrVgw==}
@@ -5035,6 +5083,10 @@ packages:
     transitivePeerDependencies:
       - '@noble/hashes'
     dev: true
+
+  /html-entities@2.6.0:
+    resolution: {integrity: sha512-kig+rMn/QOVRvr7c86gQ8lWXq+Hkv6CbAH1hLu+RG338StTpE8Z0b44SDVaqVu7HGKf27frdmUYEs9hTUX/cLQ==}
+    dev: false
 
   /html-escaper@2.0.2:
     resolution: {integrity: sha512-H2iMtd0I4Mt5eYiapRdIDjp+XzelXQ0tFE4JS7YFwFevXXMmOp9myNrUvCg0D6ws8iqkRPBfKHgbwig1SmlLfg==}
