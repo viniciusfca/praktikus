@@ -1,35 +1,32 @@
-import { Box, Card, CardContent, Grid, Typography } from '@mui/material';
-import AssignmentIcon from '@mui/icons-material/Assignment';
-import EventIcon from '@mui/icons-material/Event';
-import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
+import { CCard, CCardBody, CRow, CCol } from '@coreui/react';
+import CIcon from '@coreui/icons-react';
+import { cilNotes, cilCalendar, cilChartLine } from '@coreui/icons';
 
 const summaryCards = [
-  { label: 'OS Abertas', value: '—', icon: <AssignmentIcon fontSize="large" color="primary" /> },
-  { label: 'Agendamentos Hoje', value: '—', icon: <EventIcon fontSize="large" color="primary" /> },
-  { label: 'Faturamento do Mês', value: '—', icon: <AttachMoneyIcon fontSize="large" color="primary" /> },
+  { label: 'OS Abertas', value: '—', icon: cilNotes },
+  { label: 'Agendamentos Hoje', value: '—', icon: cilCalendar },
+  { label: 'Faturamento do Mês', value: '—', icon: cilChartLine },
 ];
 
 export function DashboardPage() {
   return (
-    <Box>
-      <Typography variant="h5" fontWeight="bold" mb={3}>
-        Dashboard
-      </Typography>
-      <Grid container spacing={3}>
+    <>
+      <h5 className="fw-bold mb-4">Dashboard</h5>
+      <CRow className="g-3">
         {summaryCards.map((card) => (
-          <Grid size={{ xs: 12, sm: 6, md: 4 }} key={card.label}>
-            <Card>
-              <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                {card.icon}
-                <Box>
-                  <Typography variant="h4" fontWeight="bold">{card.value}</Typography>
-                  <Typography variant="body2" color="text.secondary">{card.label}</Typography>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
+          <CCol key={card.label} xs={12} sm={6} md={4}>
+            <CCard>
+              <CCardBody className="d-flex align-items-center gap-3">
+                <CIcon icon={card.icon} size="3xl" className="text-primary" />
+                <div>
+                  <div className="fs-4 fw-bold">{card.value}</div>
+                  <div className="text-secondary small">{card.label}</div>
+                </div>
+              </CCardBody>
+            </CCard>
+          </CCol>
         ))}
-      </Grid>
-    </Box>
+      </CRow>
+    </>
   );
 }
