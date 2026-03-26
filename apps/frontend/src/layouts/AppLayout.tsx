@@ -4,7 +4,6 @@ import {
   CSidebar,
   CSidebarBrand,
   CSidebarNav,
-  CSidebarToggler,
   CNavItem,
   CNavLink,
   CHeader,
@@ -40,7 +39,7 @@ import { useSessionCountdown } from '../hooks/useSessionCountdown';
 
 const STORAGE_KEY = 'sidebar_open';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: use IconType from @coreui/icons when properly exported
 const navItems: Array<{ label: string; icon: any; path: string; ownerOnly: boolean }> = [
   { label: 'Dashboard', icon: cilSpeedometer, path: '/workshop/dashboard', ownerOnly: false },
   { label: 'Agendamentos', icon: cilCalendar, path: '/workshop/appointments', ownerOnly: false },
@@ -182,11 +181,6 @@ export function AppLayout() {
         </CSidebarBrand>
         <hr className="m-0" />
         <CSidebarNav>{sidebarNav}</CSidebarNav>
-        {!isMobile && (
-          <div onClick={handleToggleSidebar}>
-            <CSidebarToggler />
-          </div>
-        )}
       </CSidebar>
 
       {/* Main wrapper */}
@@ -234,12 +228,11 @@ export function AppLayout() {
 
               {/* Avatar dropdown */}
               <CDropdown variant="nav-item" alignment="end">
-                <CDropdownToggle caret={false} className="p-0 border-0 bg-transparent">
+                <CDropdownToggle caret={false} className="p-0 border-0 bg-transparent" aria-label="Open user menu">
                   <CAvatar
                     size="sm"
                     color="primary"
                     textColor="white"
-                    aria-label="Open user menu"
                     style={{ cursor: 'pointer' }}
                   >
                     {getInitials(user?.name)}
