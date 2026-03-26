@@ -1,20 +1,40 @@
 import { useCallback, useRef, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import {
-  Alert, Box, Button, Card, CardContent, Chip,
-  CircularProgress, Paper, Table, TableBody, TableCell,
-  TableContainer, TableHead, TableRow, TextField, Typography,
-} from '@mui/material';
+  CAlert,
+  CButton,
+  CCard,
+  CCardBody,
+  CCol,
+  CFormInput,
+  CFormLabel,
+  CRow,
+  CSpinner,
+  CTable,
+  CTableBody,
+  CTableDataCell,
+  CTableHead,
+  CTableHeaderCell,
+  CTableRow,
+} from '@coreui/react';
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
-  Legend, PieChart, Pie, Cell, ResponsiveContainer,
-} from 'recharts';
-import type { ValueType, NameType } from 'recharts/types/component/DefaultTooltipContent';
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  ArcElement,
+} from 'chart.js';
+import { Bar, Doughnut } from 'react-chartjs-2';
+
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement);
 import axios from 'axios';
 import { useAuthStore } from '../../../store/auth.store';
 import { reportsApi, type ReportData } from '../../../services/reports.service';
 
-const PIE_COLORS = ['#1976d2', '#9c27b0', '#ed6c02', '#2e7d32', '#d32f2f', '#0288d1'];
+const PIE_COLORS = ['#321fdb', '#9b59b6', '#fd7e14', '#1b9e3e', '#e55353', '#39f'];
 
 const STATUS_LABEL: Record<string, string> = {
   APROVADO: 'Aprovado',
@@ -27,7 +47,6 @@ const STATUS_LABEL: Record<string, string> = {
 const fmt = (n: number) =>
   n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-// Computed once at module load — acceptable for a page that doesn't survive midnight.
 const monthChips = (() => {
   const chips = [];
   const now = new Date();
@@ -49,7 +68,6 @@ const monthChips = (() => {
 export function ReportsPage() {
   const user = useAuthStore((s) => s.user);
 
-  // All hooks must be declared before any conditional return.
   const [dateStart, setDateStart] = useState(monthChips[0].dateStart);
   const [dateEnd, setDateEnd] = useState(monthChips[0].dateEnd);
   const [activeChip, setActiveChip] = useState(0);
@@ -57,11 +75,9 @@ export function ReportsPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Ref to cancel any in-flight request before starting a new one.
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const handleSearch = useCallback(async (start = dateStart, end = dateEnd) => {
-    // Cancel the previous request if still in-flight.
     abortControllerRef.current?.abort();
     const controller = new AbortController();
     abortControllerRef.current = controller;
@@ -72,15 +88,10 @@ export function ReportsPage() {
       const result = await reportsApi.get(start, end, controller.signal);
       setData(result);
     } catch (err) {
-      if (axios.isCancel(err)) {
-        // A newer request is already in flight — let it manage loading/error state.
-        return;
-      }
+      if (axios.isCancel(err)) return;
       setError('Erro ao carregar relatório.');
     } finally {
-      if (!controller.signal.aborted) {
-        setLoading(false);
-      }
+      if (!controller.signal.aborted) setLoading(false);
     }
   }, [dateStart, dateEnd]);
 
@@ -96,58 +107,67 @@ export function ReportsPage() {
   };
 
   return (
-    <Box>
-      <Typography variant="h5" fontWeight="bold" sx={{ mb: 3 }}>
-        Relatórios
-      </Typography>
+    <>
+      <h5 className="fw-bold mb-4">Relatórios</h5>
 
-      {/* Filtros */}
-      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
+      {/* Month chips */}
+      <div className="d-flex flex-wrap gap-2 mb-3">
         {monthChips.map((chip, i) => (
-          <Chip
+          <button
             key={chip.dateStart}
-            label={chip.label}
+            type="button"
+            className={`btn btn-sm ${activeChip === i ? 'btn-primary' : 'btn-outline-secondary'}`}
             onClick={() => handleChipClick(i, chip)}
-            color={activeChip === i ? 'primary' : 'default'}
-            variant={activeChip === i ? 'filled' : 'outlined'}
-          />
+          >
+            {chip.label}
+          </button>
         ))}
-      </Box>
-      <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 3 }}>
-        <TextField
-          label="De"
-          type="date"
-          size="small"
-          InputLabelProps={{ shrink: true }}
-          value={dateStart}
-          onChange={(e) => { setDateStart(e.target.value); setActiveChip(-1); }}
-        />
-        <TextField
-          label="Até"
-          type="date"
-          size="small"
-          InputLabelProps={{ shrink: true }}
-          value={dateEnd}
-          onChange={(e) => { setDateEnd(e.target.value); setActiveChip(-1); }}
-        />
-        <Button variant="contained" onClick={() => handleSearch()} disabled={loading}>
-          Buscar
-        </Button>
-      </Box>
+      </div>
 
-      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-      {loading && <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}><CircularProgress /></Box>}
+      {/* Date range + search */}
+      <CRow className="g-2 align-items-end mb-4">
+        <CCol xs="auto">
+          <CFormLabel className="mb-1">De</CFormLabel>
+          <CFormInput
+            type="date"
+            size="sm"
+            value={dateStart}
+            onChange={(e) => { setDateStart(e.target.value); setActiveChip(-1); }}
+          />
+        </CCol>
+        <CCol xs="auto">
+          <CFormLabel className="mb-1">Até</CFormLabel>
+          <CFormInput
+            type="date"
+            size="sm"
+            value={dateEnd}
+            onChange={(e) => { setDateEnd(e.target.value); setActiveChip(-1); }}
+          />
+        </CCol>
+        <CCol xs="auto">
+          <CButton color="primary" size="sm" onClick={() => handleSearch()} disabled={loading}>
+            Buscar
+          </CButton>
+        </CCol>
+      </CRow>
+
+      {error && <CAlert color="danger" className="mb-3">{error}</CAlert>}
+      {loading && (
+        <div className="d-flex justify-content-center py-5">
+          <CSpinner color="primary" />
+        </div>
+      )}
 
       {data && !loading && (
         <>
           {data.totalOs === 0 && (
-            <Typography color="text.secondary" sx={{ mb: 2 }}>
+            <p className="text-secondary mb-3">
               Nenhuma OS encontrada para o período selecionado.
-            </Typography>
+            </p>
           )}
 
           {/* KPIs */}
-          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 3 }}>
+          <CRow className="g-3 mb-4">
             {[
               { label: 'Faturamento Total', value: fmt(data.faturamentoTotal) },
               { label: 'Serviços', value: fmt(data.faturamentoServicos) },
@@ -155,108 +175,122 @@ export function ReportsPage() {
               { label: 'Total de OS', value: String(data.totalOs) },
               { label: 'OS Pagas', value: String(data.osPagas) },
             ].map((kpi) => (
-              <Card key={kpi.label} variant="outlined" sx={{ flex: '1 1 150px' }}>
-                <CardContent sx={{ pb: '12px !important' }}>
-                  <Typography variant="caption" color="text.secondary">{kpi.label}</Typography>
-                  <Typography variant="h6" fontWeight="bold">{kpi.value}</Typography>
-                </CardContent>
-              </Card>
+              <CCol key={kpi.label} xs={6} md={4} lg="auto" style={{ flex: '1 1 150px' }}>
+                <CCard>
+                  <CCardBody className="py-3">
+                    <div className="text-secondary small">{kpi.label}</div>
+                    <div className="fs-5 fw-bold">{kpi.value}</div>
+                  </CCardBody>
+                </CCard>
+              </CCol>
             ))}
-          </Box>
+          </CRow>
 
-          {/* Gráficos */}
+          {/* Charts */}
           {data.totalOs > 0 && (
-            <Box sx={{ display: 'flex', gap: 2, mb: 3, flexWrap: 'wrap' }}>
-              <Card variant="outlined" sx={{ flex: '2 1 400px' }}>
-                <CardContent>
-                  <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 2 }}>
-                    Faturamento por Mês
-                  </Typography>
-                  <ResponsiveContainer width="100%" height={260}>
-                    <BarChart data={data.faturamentoPorMes}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="mes" />
-                      <YAxis tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} />
-                      <Tooltip formatter={(v: ValueType | undefined) => {
-                        if (typeof v !== 'number') return String(v ?? '');
-                        return fmt(v);
-                      }} />
-                      <Legend />
-                      <Bar dataKey="servicos" name="Serviços" stackId="a" fill="#1976d2" />
-                      <Bar dataKey="pecas" name="Peças" stackId="a" fill="#9c27b0" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </CardContent>
-              </Card>
-
-              <Card variant="outlined" sx={{ flex: '1 1 280px' }}>
-                <CardContent>
-                  <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 2 }}>
-                    OS por Status
-                  </Typography>
-                  <ResponsiveContainer width="100%" height={260}>
-                    <PieChart>
-                      <Pie
-                        data={data.osPorStatus}
-                        dataKey="count"
-                        nameKey="status"
-                        cx="50%"
-                        cy="50%"
-                        outerRadius={90}
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        label={(props: any) => `${STATUS_LABEL[props.status] ?? props.status}: ${props.count}`}
-                      >
-                        {data.osPorStatus.map((entry, index) => (
-                          <Cell key={entry.status} fill={PIE_COLORS[index % PIE_COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip formatter={(v: ValueType | undefined, name: NameType | undefined) => {
-                        const label = STATUS_LABEL[String(name ?? '')] ?? String(name ?? '');
-                        if (typeof v !== 'number') return [String(v ?? ''), label];
-                        return [v, label];
-                      }} />
-                      <Legend formatter={(value: string) => STATUS_LABEL[value] ?? value} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </CardContent>
-              </Card>
-            </Box>
+            <CRow className="g-3 mb-4">
+              <CCol xs={12} lg={8}>
+                <CCard>
+                  <CCardBody>
+                    <div className="fw-semibold mb-3">Faturamento por Mês</div>
+                    <Bar
+                      data={{
+                        labels: data.faturamentoPorMes.map((m) => m.mes),
+                        datasets: [
+                          {
+                            label: 'Serviços',
+                            backgroundColor: '#321fdb',
+                            data: data.faturamentoPorMes.map((m) => m.servicos),
+                            stack: 'a',
+                          },
+                          {
+                            label: 'Peças',
+                            backgroundColor: '#9b59b6',
+                            data: data.faturamentoPorMes.map((m) => m.pecas),
+                            stack: 'a',
+                          },
+                        ],
+                      }}
+                      options={{
+                        plugins: {
+                          tooltip: {
+                            callbacks: {
+                              label: (ctx) =>
+                                `${ctx.dataset.label}: ${fmt(Number(ctx.raw))}`,
+                            },
+                          },
+                        },
+                        scales: {
+                          y: {
+                            stacked: true,
+                            ticks: {
+                              callback: (v) =>
+                                `R$${(Number(v) / 1000).toFixed(0)}k`,
+                            },
+                          },
+                          x: { stacked: true },
+                        },
+                        responsive: true,
+                        maintainAspectRatio: true,
+                      }}
+                    />
+                  </CCardBody>
+                </CCard>
+              </CCol>
+              <CCol xs={12} lg={4}>
+                <CCard>
+                  <CCardBody>
+                    <div className="fw-semibold mb-3">OS por Status</div>
+                    <Doughnut
+                      data={{
+                        labels: data.osPorStatus.map(
+                          (s) => STATUS_LABEL[s.status] ?? s.status
+                        ),
+                        datasets: [
+                          {
+                            data: data.osPorStatus.map((s) => s.count),
+                            backgroundColor: PIE_COLORS,
+                            hoverOffset: 4,
+                          },
+                        ],
+                      }}
+                    />
+                  </CCardBody>
+                </CCard>
+              </CCol>
+            </CRow>
           )}
 
-          {/* Top 10 serviços */}
+          {/* Top 10 services */}
           {data.topServicos.length > 0 && (
-            <Card variant="outlined">
-              <CardContent>
-                <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 2 }}>
-                  Top 10 Serviços
-                </Typography>
-                <TableContainer component={Paper} variant="outlined">
-                  <Table size="small">
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>#</TableCell>
-                        <TableCell>Serviço</TableCell>
-                        <TableCell align="right">Qtd</TableCell>
-                        <TableCell align="right">Receita</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {data.topServicos.map((s, i) => (
-                        <TableRow key={i}>
-                          <TableCell>{i + 1}</TableCell>
-                          <TableCell>{s.nomeServico}</TableCell>
-                          <TableCell align="right">{s.quantidade}</TableCell>
-                          <TableCell align="right">{fmt(s.receita)}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              </CardContent>
-            </Card>
+            <CCard>
+              <CCardBody>
+                <div className="fw-semibold mb-3">Top 10 Serviços</div>
+                <CTable small bordered striped responsive>
+                  <CTableHead>
+                    <CTableRow>
+                      <CTableHeaderCell>#</CTableHeaderCell>
+                      <CTableHeaderCell>Serviço</CTableHeaderCell>
+                      <CTableHeaderCell className="text-end">Qtd</CTableHeaderCell>
+                      <CTableHeaderCell className="text-end">Receita</CTableHeaderCell>
+                    </CTableRow>
+                  </CTableHead>
+                  <CTableBody>
+                    {data.topServicos.map((s, i) => (
+                      <CTableRow key={i}>
+                        <CTableDataCell>{i + 1}</CTableDataCell>
+                        <CTableDataCell>{s.nomeServico}</CTableDataCell>
+                        <CTableDataCell className="text-end">{s.quantidade}</CTableDataCell>
+                        <CTableDataCell className="text-end">{fmt(s.receita)}</CTableDataCell>
+                      </CTableRow>
+                    ))}
+                  </CTableBody>
+                </CTable>
+              </CCardBody>
+            </CCard>
           )}
         </>
       )}
-    </Box>
+    </>
   );
 }
