@@ -143,7 +143,7 @@ export function AppLayout() {
   );
 
   return (
-    <>
+    <div style={{ display: 'flex', minHeight: '100vh' }}>
       {/* Sidebar */}
       <CSidebar
         className="border-end"
@@ -184,7 +184,7 @@ export function AppLayout() {
       </CSidebar>
 
       {/* Main wrapper */}
-      <div className="wrapper d-flex flex-column min-vh-100">
+      <div className="wrapper d-flex flex-column flex-grow-1">
         <CHeader position="sticky" className="p-0 border-bottom">
           <CContainer fluid className="px-3 gap-2">
             {/* Mobile hamburger */}
@@ -267,6 +267,6 @@ export function AppLayout() {
           <Outlet />
         </div>
       </div>
-    </>
+    </div>
   );
 }
