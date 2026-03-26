@@ -1,13 +1,20 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
-  Box, Button, Card, CardContent, Chip, Divider, IconButton,
-  Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  Typography, Paper, CircularProgress,
-} from '@mui/material';
-import EditIcon from '@mui/icons-material/Edit';
-import AddIcon from '@mui/icons-material/Add';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+  CBadge,
+  CButton,
+  CCard,
+  CCardBody,
+  CSpinner,
+  CTable,
+  CTableBody,
+  CTableDataCell,
+  CTableHead,
+  CTableHeaderCell,
+  CTableRow,
+} from '@coreui/react';
+import CIcon from '@coreui/icons-react';
+import { cilArrowLeft, cilPen, cilPlus } from '@coreui/icons';
 import { customersService, type Customer } from '../../../services/customers.service';
 import { vehiclesService, type Vehicle } from '../../../services/vehicles.service';
 
@@ -32,81 +39,107 @@ export function CustomerDetailPage() {
     }).finally(() => setLoading(false));
   }, [id]);
 
-  if (loading) return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}><CircularProgress /></Box>;
-  if (!customer) return <Typography>Cliente não encontrado.</Typography>;
+  if (loading) {
+    return (
+      <div className="d-flex justify-content-center mt-4">
+        <CSpinner color="primary" />
+      </div>
+    );
+  }
+  if (!customer) return <p>Cliente não encontrado.</p>;
 
   return (
-    <Box>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
-        <IconButton onClick={() => navigate('/workshop/customers')}>
-          <ArrowBackIcon />
-        </IconButton>
-        <Typography variant="h5" fontWeight="bold">{customer.nome}</Typography>
-        <Button
-          startIcon={<EditIcon />}
+    <>
+      <div className="d-flex align-items-center gap-2 mb-4">
+        <CButton color="secondary" variant="ghost" size="sm" onClick={() => navigate('/workshop/customers')}>
+          <CIcon icon={cilArrowLeft} />
+        </CButton>
+        <h5 className="fw-bold mb-0">{customer.nome}</h5>
+        <CButton
+          color="secondary"
+          variant="outline"
+          size="sm"
+          className="ms-auto"
           onClick={() => navigate(`/workshop/customers/${id}/edit`)}
-          sx={{ ml: 'auto' }}
         >
+          <CIcon icon={cilPen} className="me-1" />
           Editar
-        </Button>
-      </Box>
+        </CButton>
+      </div>
 
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <Typography variant="subtitle2" color="text.secondary">CPF / CNPJ</Typography>
-          <Typography mb={1}>{customer.cpfCnpj}</Typography>
-          <Divider sx={{ my: 1 }} />
-          <Typography variant="subtitle2" color="text.secondary">WhatsApp</Typography>
-          <Typography mb={1}>{customer.whatsapp ?? '—'}</Typography>
-          <Divider sx={{ my: 1 }} />
-          <Typography variant="subtitle2" color="text.secondary">E-mail</Typography>
-          <Typography>{customer.email ?? '—'}</Typography>
-        </CardContent>
-      </Card>
+      <CCard className="mb-4">
+        <CCardBody>
+          <div className="mb-2">
+            <small className="text-secondary">CPF / CNPJ</small>
+            <div>{customer.cpfCnpj}</div>
+          </div>
+          <hr className="my-2" />
+          <div className="mb-2">
+            <small className="text-secondary">WhatsApp</small>
+            <div>{customer.whatsapp ?? '—'}</div>
+          </div>
+          <hr className="my-2" />
+          <div>
+            <small className="text-secondary">E-mail</small>
+            <div>{customer.email ?? '—'}</div>
+          </div>
+        </CCardBody>
+      </CCard>
 
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        <Typography variant="h6">Veículos</Typography>
-        <Button
-          variant="outlined"
-          startIcon={<AddIcon />}
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <h6 className="fw-bold mb-0">Veículos</h6>
+        <CButton
+          color="secondary"
+          variant="outline"
+          size="sm"
           onClick={() => navigate(`/workshop/vehicles/new?customerId=${id}`)}
         >
+          <CIcon icon={cilPlus} className="me-1" />
           Novo Veículo
-        </Button>
-      </Box>
+        </CButton>
+      </div>
 
-      <TableContainer component={Paper}>
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell>Placa</TableCell>
-              <TableCell>Marca / Modelo</TableCell>
-              <TableCell>Ano</TableCell>
-              <TableCell>KM</TableCell>
-              <TableCell />
-            </TableRow>
-          </TableHead>
-          <TableBody>
+      <CCard>
+        <CTable small hover responsive>
+          <CTableHead>
+            <CTableRow>
+              <CTableHeaderCell>Placa</CTableHeaderCell>
+              <CTableHeaderCell>Marca / Modelo</CTableHeaderCell>
+              <CTableHeaderCell>Ano</CTableHeaderCell>
+              <CTableHeaderCell>KM</CTableHeaderCell>
+              <CTableHeaderCell />
+            </CTableRow>
+          </CTableHead>
+          <CTableBody>
             {vehicles.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={5} align="center">Nenhum veículo cadastrado.</TableCell>
-              </TableRow>
+              <CTableRow>
+                <CTableDataCell colSpan={5} className="text-center text-secondary">
+                  Nenhum veículo cadastrado.
+                </CTableDataCell>
+              </CTableRow>
             ) : vehicles.map((v) => (
-              <TableRow key={v.id}>
-                <TableCell><Chip label={v.placa} size="small" /></TableCell>
-                <TableCell>{v.marca} {v.modelo}</TableCell>
-                <TableCell>{v.ano}</TableCell>
-                <TableCell>{v.km.toLocaleString()} km</TableCell>
-                <TableCell>
-                  <IconButton size="small" onClick={() => navigate(`/workshop/vehicles/${v.id}/edit`)}>
-                    <EditIcon fontSize="small" />
-                  </IconButton>
-                </TableCell>
-              </TableRow>
+              <CTableRow key={v.id}>
+                <CTableDataCell>
+                  <CBadge color="secondary">{v.placa}</CBadge>
+                </CTableDataCell>
+                <CTableDataCell>{v.marca} {v.modelo}</CTableDataCell>
+                <CTableDataCell>{v.ano}</CTableDataCell>
+                <CTableDataCell>{v.km.toLocaleString()} km</CTableDataCell>
+                <CTableDataCell>
+                  <CButton
+                    color="secondary"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => navigate(`/workshop/vehicles/${v.id}/edit`)}
+                  >
+                    <CIcon icon={cilPen} />
+                  </CButton>
+                </CTableDataCell>
+              </CTableRow>
             ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-    </Box>
+          </CTableBody>
+        </CTable>
+      </CCard>
+    </>
   );
 }

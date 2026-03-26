@@ -4,9 +4,20 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
-  Box, Button, Card, CardContent, TextField, Typography, Alert, CircularProgress,
-  Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions,
-} from '@mui/material';
+  CAlert,
+  CButton,
+  CCard,
+  CCardBody,
+  CFormFeedback,
+  CFormInput,
+  CFormLabel,
+  CModal,
+  CModalBody,
+  CModalFooter,
+  CModalHeader,
+  CModalTitle,
+  CSpinner,
+} from '@coreui/react';
 import { customersService } from '../../../services/customers.service';
 
 const schema = z.object({
@@ -71,79 +82,63 @@ export function CustomerFormPage() {
   };
 
   return (
-    <Box sx={{ maxWidth: 560 }}>
-      <Typography variant="h5" fontWeight="bold" mb={3}>
-        {isEdit ? 'Editar Cliente' : 'Novo Cliente'}
-      </Typography>
-      <Card>
-        <CardContent sx={{ p: 3 }}>
-          {errors.root && (
-            <Alert severity="error" sx={{ mb: 2 }}>{errors.root.message}</Alert>
-          )}
-          <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate>
-            <TextField
-              label="Nome"
-              fullWidth
-              margin="normal"
-              {...register('nome')}
-              error={!!errors.nome}
-              helperText={errors.nome?.message}
-            />
-            <TextField
-              label="CPF / CNPJ (somente números)"
-              fullWidth
-              margin="normal"
-              inputProps={{ maxLength: 14 }}
-              {...register('cpfCnpj')}
-              error={!!errors.cpfCnpj}
-              helperText={errors.cpfCnpj?.message}
-            />
-            <TextField
-              label="WhatsApp (opcional)"
-              fullWidth
-              margin="normal"
-              {...register('whatsapp')}
-            />
-            <TextField
-              label="E-mail (opcional)"
-              type="email"
-              fullWidth
-              margin="normal"
-              {...register('email')}
-              error={!!errors.email}
-              helperText={errors.email?.message}
-            />
-            <Box sx={{ display: 'flex', gap: 2, mt: 3 }}>
-              <Button variant="outlined" fullWidth onClick={() => navigate('/workshop/customers')}>
-                Cancelar
-              </Button>
-              <Button type="submit" variant="contained" fullWidth disabled={isSubmitting}>
-                {isSubmitting ? <CircularProgress size={22} /> : 'Salvar'}
-              </Button>
-            </Box>
-          </Box>
-        </CardContent>
-      </Card>
+    <div style={{ maxWidth: 560 }}>
+      <h5 className="fw-bold mb-4">{isEdit ? 'Editar Cliente' : 'Novo Cliente'}</h5>
 
-      <Dialog open={Boolean(savedCustomer)}>
-        <DialogTitle>Cadastrar veículo?</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            Deseja cadastrar um veículo para <strong>{savedCustomer?.nome}</strong>?
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => navigate('/workshop/customers')}>
-            Não
-          </Button>
-          <Button
-            variant="contained"
+      <CCard>
+        <CCardBody className="p-4">
+          {errors.root && (
+            <CAlert color="danger" className="mb-3">{errors.root.message}</CAlert>
+          )}
+          <form onSubmit={handleSubmit(onSubmit)} noValidate>
+            <div className="mb-3">
+              <CFormLabel>Nome</CFormLabel>
+              <CFormInput {...register('nome')} invalid={!!errors.nome} />
+              {errors.nome && <CFormFeedback invalid>{errors.nome.message}</CFormFeedback>}
+            </div>
+            <div className="mb-3">
+              <CFormLabel>CPF / CNPJ (somente números)</CFormLabel>
+              <CFormInput {...register('cpfCnpj')} maxLength={14} invalid={!!errors.cpfCnpj} />
+              {errors.cpfCnpj && <CFormFeedback invalid>{errors.cpfCnpj.message}</CFormFeedback>}
+            </div>
+            <div className="mb-3">
+              <CFormLabel>WhatsApp (opcional)</CFormLabel>
+              <CFormInput {...register('whatsapp')} />
+            </div>
+            <div className="mb-4">
+              <CFormLabel>E-mail (opcional)</CFormLabel>
+              <CFormInput type="email" {...register('email')} invalid={!!errors.email} />
+              {errors.email && <CFormFeedback invalid>{errors.email.message}</CFormFeedback>}
+            </div>
+            <div className="d-flex gap-2">
+              <CButton color="secondary" variant="outline" className="flex-grow-1" onClick={() => navigate('/workshop/customers')}>
+                Cancelar
+              </CButton>
+              <CButton type="submit" color="primary" className="flex-grow-1" disabled={isSubmitting}>
+                {isSubmitting ? <CSpinner size="sm" /> : 'Salvar'}
+              </CButton>
+            </div>
+          </form>
+        </CCardBody>
+      </CCard>
+
+      <CModal visible={Boolean(savedCustomer)} onClose={() => navigate('/workshop/customers')}>
+        <CModalHeader>
+          <CModalTitle>Cadastrar veículo?</CModalTitle>
+        </CModalHeader>
+        <CModalBody>
+          Deseja cadastrar um veículo para <strong>{savedCustomer?.nome}</strong>?
+        </CModalBody>
+        <CModalFooter>
+          <CButton color="secondary" onClick={() => navigate('/workshop/customers')}>Não</CButton>
+          <CButton
+            color="primary"
             onClick={() => navigate(`/workshop/vehicles/new?customerId=${savedCustomer?.id}`)}
           >
             Sim
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Box>
+          </CButton>
+        </CModalFooter>
+      </CModal>
+    </div>
   );
 }
