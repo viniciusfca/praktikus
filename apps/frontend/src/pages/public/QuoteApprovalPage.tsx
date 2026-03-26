@@ -2,23 +2,18 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import {
-  Box,
-  Button,
-  Card,
-  CardContent,
-  CircularProgress,
-  Divider,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Typography,
-} from '@mui/material';
-import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
-import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
+  CAlert,
+  CButton,
+  CCard,
+  CCardBody,
+  CSpinner,
+  CTable,
+  CTableBody,
+  CTableDataCell,
+  CTableHead,
+  CTableHeaderCell,
+  CTableRow,
+} from '@coreui/react';
 import { publicQuotesApi, type QuoteData } from '../../services/service-orders.service';
 
 type PageState =
@@ -77,8 +72,7 @@ export function QuoteApprovalPage() {
   }, [token]);
 
   const handleApprove = async () => {
-    if (submitting) return;
-    if (!token) return;
+    if (submitting || !token) return;
     setSubmitting(true);
     try {
       await publicQuotesApi.approve(token);
@@ -86,14 +80,9 @@ export function QuoteApprovalPage() {
     } catch (err) {
       if (axios.isAxiosError(err)) {
         const status = err.response?.status;
-        if (status === 410) {
-          setState({ kind: 'expired' });
-        } else if (status === 409) {
-          const soStatus: string = err.response?.data?.status ?? 'APROVADO';
-          setState({ kind: 'already_used', status: soStatus });
-        } else {
-          setState({ kind: 'action_error', message: 'Erro ao processar. Tente novamente.' });
-        }
+        if (status === 410) setState({ kind: 'expired' });
+        else if (status === 409) setState({ kind: 'already_used', status: err.response?.data?.status ?? 'APROVADO' });
+        else setState({ kind: 'action_error', message: 'Erro ao processar. Tente novamente.' });
       } else {
         setState({ kind: 'action_error', message: 'Erro ao processar. Tente novamente.' });
       }
@@ -103,8 +92,7 @@ export function QuoteApprovalPage() {
   };
 
   const handleReject = async () => {
-    if (submitting) return;
-    if (!token) return;
+    if (submitting || !token) return;
     setSubmitting(true);
     try {
       await publicQuotesApi.reject(token);
@@ -112,14 +100,9 @@ export function QuoteApprovalPage() {
     } catch (err) {
       if (axios.isAxiosError(err)) {
         const status = err.response?.status;
-        if (status === 410) {
-          setState({ kind: 'expired' });
-        } else if (status === 409) {
-          const soStatus: string = err.response?.data?.status ?? 'APROVADO';
-          setState({ kind: 'already_used', status: soStatus });
-        } else {
-          setState({ kind: 'action_error', message: 'Erro ao processar. Tente novamente.' });
-        }
+        if (status === 410) setState({ kind: 'expired' });
+        else if (status === 409) setState({ kind: 'already_used', status: err.response?.data?.status ?? 'APROVADO' });
+        else setState({ kind: 'action_error', message: 'Erro ao processar. Tente novamente.' });
       } else {
         setState({ kind: 'action_error', message: 'Erro ao processar. Tente novamente.' });
       }
@@ -129,243 +112,190 @@ export function QuoteApprovalPage() {
   };
 
   return (
-    <Box
-      sx={{
+    <div
+      style={{
         minHeight: '100vh',
-        bgcolor: 'background.default',
         display: 'flex',
         alignItems: 'flex-start',
         justifyContent: 'center',
-        p: { xs: 2, sm: 4 },
+        padding: '2rem 1rem',
       }}
     >
-      <Box sx={{ width: '100%', maxWidth: 720 }}>
+      <div style={{ width: '100%', maxWidth: 720 }}>
         {state.kind === 'loading' && (
-          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 10 }}>
-            <CircularProgress />
-          </Box>
+          <div className="d-flex justify-content-center mt-5">
+            <CSpinner color="primary" />
+          </div>
         )}
 
         {state.kind === 'invalid' && (
-          <Card sx={{ mt: 6, textAlign: 'center' }}>
-            <CardContent sx={{ p: 4 }}>
-              <Typography variant="h5" fontWeight="bold" gutterBottom>
-                Link inválido
-              </Typography>
-              <Typography color="text.secondary">
-                Este link de aprovação não é válido. Verifique o link e tente novamente.
-              </Typography>
-            </CardContent>
-          </Card>
+          <CCard className="mt-5 text-center">
+            <CCardBody className="p-4">
+              <h5 className="fw-bold mb-2">Link inválido</h5>
+              <p className="text-secondary mb-0">Este link de aprovação não é válido. Verifique o link e tente novamente.</p>
+            </CCardBody>
+          </CCard>
         )}
 
         {state.kind === 'expired' && (
-          <Card sx={{ mt: 6, textAlign: 'center' }}>
-            <CardContent sx={{ p: 4 }}>
-              <Typography variant="h5" fontWeight="bold" gutterBottom>
-                Link expirado
-              </Typography>
-              <Typography color="text.secondary">
-                Link expirado. Entre em contato com a oficina.
-              </Typography>
-            </CardContent>
-          </Card>
+          <CCard className="mt-5 text-center">
+            <CCardBody className="p-4">
+              <h5 className="fw-bold mb-2">Link expirado</h5>
+              <p className="text-secondary mb-0">Link expirado. Entre em contato com a oficina.</p>
+            </CCardBody>
+          </CCard>
         )}
 
         {state.kind === 'already_used' && (
-          <Card sx={{ mt: 6, textAlign: 'center' }}>
-            <CardContent sx={{ p: 4 }}>
-              <Typography variant="h5" fontWeight="bold" gutterBottom>
-                Orçamento já respondido
-              </Typography>
-              <Typography color="text.secondary">
+          <CCard className="mt-5 text-center">
+            <CCardBody className="p-4">
+              <h5 className="fw-bold mb-2">Orçamento já respondido</h5>
+              <p className="text-secondary mb-0">
                 Orçamento já respondido. Status atual:{' '}
                 {STATUS_LABELS[state.status] ?? state.status}
-              </Typography>
-            </CardContent>
-          </Card>
+              </p>
+            </CCardBody>
+          </CCard>
         )}
 
         {state.kind === 'action_error' && (
-          <Card sx={{ mt: 6, textAlign: 'center' }}>
-            <CardContent sx={{ p: 4 }}>
-              <Typography variant="h5" fontWeight="bold" gutterBottom>
-                Erro
-              </Typography>
-              <Typography color="error">{state.message}</Typography>
-            </CardContent>
-          </Card>
+          <CCard className="mt-5 text-center">
+            <CCardBody className="p-4">
+              <h5 className="fw-bold mb-2">Erro</h5>
+              <CAlert color="danger" className="mb-0">{state.message}</CAlert>
+            </CCardBody>
+          </CCard>
         )}
 
         {state.kind === 'approved' && (
-          <Card sx={{ mt: 6, textAlign: 'center' }}>
-            <CardContent sx={{ p: 4 }}>
-              <CheckCircleOutlineIcon color="success" sx={{ fontSize: 56, mb: 1 }} />
-              <Typography variant="h5" fontWeight="bold" gutterBottom>
-                Orçamento aprovado!
-              </Typography>
-              <Typography color="text.secondary">
-                Orçamento aprovado! Aguarde contato da oficina.
-              </Typography>
-            </CardContent>
-          </Card>
+          <CCard className="mt-5 text-center">
+            <CCardBody className="p-4">
+              <div style={{ fontSize: '3rem', color: 'var(--cui-success)', marginBottom: '0.5rem' }}>✓</div>
+              <h5 className="fw-bold mb-2">Orçamento aprovado!</h5>
+              <p className="text-secondary mb-0">Orçamento aprovado! Aguarde contato da oficina.</p>
+            </CCardBody>
+          </CCard>
         )}
 
         {state.kind === 'rejected' && (
-          <Card sx={{ mt: 6, textAlign: 'center' }}>
-            <CardContent sx={{ p: 4 }}>
-              <CancelOutlinedIcon color="error" sx={{ fontSize: 56, mb: 1 }} />
-              <Typography variant="h5" fontWeight="bold" gutterBottom>
-                Orçamento recusado
-              </Typography>
-              <Typography color="text.secondary">Orçamento recusado.</Typography>
-            </CardContent>
-          </Card>
+          <CCard className="mt-5 text-center">
+            <CCardBody className="p-4">
+              <div style={{ fontSize: '3rem', color: 'var(--cui-danger)', marginBottom: '0.5rem' }}>✗</div>
+              <h5 className="fw-bold mb-2">Orçamento recusado</h5>
+              <p className="text-secondary mb-0">Orçamento recusado.</p>
+            </CCardBody>
+          </CCard>
         )}
 
         {state.kind === 'success' && (
           <>
-            {/* Header */}
-            <Box sx={{ textAlign: 'center', mb: 3 }}>
-              <Typography variant="h4" fontWeight="bold">
-                {state.data.empresa?.nome_fantasia ?? 'Oficina'}
-              </Typography>
-              <Typography variant="subtitle1" color="text.secondary">
-                Aprovação de Orçamento
-              </Typography>
-            </Box>
+            <div className="text-center mb-4">
+              <h4 className="fw-bold">{state.data.empresa?.nome_fantasia ?? 'Oficina'}</h4>
+              <p className="text-secondary mb-0">Aprovação de Orçamento</p>
+            </div>
 
-            <Card sx={{ mb: 3 }}>
-              <CardContent>
-                <Typography variant="h6" fontWeight="bold" gutterBottom>
-                  Dados do Cliente e Veículo
-                </Typography>
-                <Divider sx={{ mb: 2 }} />
-                <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
-                  <Typography variant="body2" color="text.secondary">
-                    Cliente
-                  </Typography>
-                  <Typography variant="body2">{state.data.cliente?.nome ?? '-'}</Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    CPF / CNPJ
-                  </Typography>
-                  <Typography variant="body2">{state.data.cliente?.cpf_cnpj ?? '-'}</Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Veículo
-                  </Typography>
-                  <Typography variant="body2">
+            <CCard className="mb-3">
+              <CCardBody>
+                <div className="fw-semibold mb-2">Dados do Cliente e Veículo</div>
+                <hr className="my-2" />
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.25rem 1rem' }}>
+                  <small className="text-secondary">Cliente</small>
+                  <small>{state.data.cliente?.nome ?? '—'}</small>
+                  <small className="text-secondary">CPF / CNPJ</small>
+                  <small>{state.data.cliente?.cpf_cnpj ?? '—'}</small>
+                  <small className="text-secondary">Veículo</small>
+                  <small>
                     {state.data.veiculo
                       ? `${state.data.veiculo.marca} ${state.data.veiculo.modelo} (${state.data.veiculo.ano})`
-                      : '-'}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Placa
-                  </Typography>
-                  <Typography variant="body2">{state.data.veiculo?.placa ?? '-'}</Typography>
-                </Box>
-              </CardContent>
-            </Card>
+                      : '—'}
+                  </small>
+                  <small className="text-secondary">Placa</small>
+                  <small>{state.data.veiculo?.placa ?? '—'}</small>
+                </div>
+              </CCardBody>
+            </CCard>
 
-            {/* Services table */}
             {state.data.itemsServices.length > 0 && (
-              <Card sx={{ mb: 3 }}>
-                <CardContent>
-                  <Typography variant="h6" fontWeight="bold" gutterBottom>
-                    Serviços
-                  </Typography>
-                  <Divider sx={{ mb: 2 }} />
-                  <TableContainer component={Paper} elevation={0} variant="outlined">
-                    <Table size="small">
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>Nome</TableCell>
-                          <TableCell align="right">Valor</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {state.data.itemsServices.map((item) => (
-                          <TableRow key={item.id}>
-                            <TableCell>{item.nomeServico}</TableCell>
-                            <TableCell align="right">{formatCurrency(item.valor)}</TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                </CardContent>
-              </Card>
+              <CCard className="mb-3">
+                <CCardBody>
+                  <div className="fw-semibold mb-2">Serviços</div>
+                  <hr className="my-2" />
+                  <CTable small responsive>
+                    <CTableHead>
+                      <CTableRow>
+                        <CTableHeaderCell>Nome</CTableHeaderCell>
+                        <CTableHeaderCell className="text-end">Valor</CTableHeaderCell>
+                      </CTableRow>
+                    </CTableHead>
+                    <CTableBody>
+                      {state.data.itemsServices.map((item) => (
+                        <CTableRow key={item.id}>
+                          <CTableDataCell>{item.nomeServico}</CTableDataCell>
+                          <CTableDataCell className="text-end">{formatCurrency(item.valor)}</CTableDataCell>
+                        </CTableRow>
+                      ))}
+                    </CTableBody>
+                  </CTable>
+                </CCardBody>
+              </CCard>
             )}
 
-            {/* Parts table */}
             {state.data.itemsParts.length > 0 && (
-              <Card sx={{ mb: 3 }}>
-                <CardContent>
-                  <Typography variant="h6" fontWeight="bold" gutterBottom>
-                    Peças
-                  </Typography>
-                  <Divider sx={{ mb: 2 }} />
-                  <TableContainer component={Paper} elevation={0} variant="outlined">
-                    <Table size="small">
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>Nome</TableCell>
-                          <TableCell align="right">Qtd</TableCell>
-                          <TableCell align="right">Valor Unit.</TableCell>
-                          <TableCell align="right">Subtotal</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {state.data.itemsParts.map((item) => (
-                          <TableRow key={item.id}>
-                            <TableCell>{item.nomePeca}</TableCell>
-                            <TableCell align="right">{item.quantidade}</TableCell>
-                            <TableCell align="right">
-                              {formatCurrency(item.valorUnitario)}
-                            </TableCell>
-                            <TableCell align="right">
-                              {formatCurrency(item.quantidade * item.valorUnitario)}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                </CardContent>
-              </Card>
+              <CCard className="mb-3">
+                <CCardBody>
+                  <div className="fw-semibold mb-2">Peças</div>
+                  <hr className="my-2" />
+                  <CTable small responsive>
+                    <CTableHead>
+                      <CTableRow>
+                        <CTableHeaderCell>Nome</CTableHeaderCell>
+                        <CTableHeaderCell className="text-end">Qtd</CTableHeaderCell>
+                        <CTableHeaderCell className="text-end">Valor Unit.</CTableHeaderCell>
+                        <CTableHeaderCell className="text-end">Subtotal</CTableHeaderCell>
+                      </CTableRow>
+                    </CTableHead>
+                    <CTableBody>
+                      {state.data.itemsParts.map((item) => (
+                        <CTableRow key={item.id}>
+                          <CTableDataCell>{item.nomePeca}</CTableDataCell>
+                          <CTableDataCell className="text-end">{item.quantidade}</CTableDataCell>
+                          <CTableDataCell className="text-end">{formatCurrency(item.valorUnitario)}</CTableDataCell>
+                          <CTableDataCell className="text-end">{formatCurrency(item.quantidade * item.valorUnitario)}</CTableDataCell>
+                        </CTableRow>
+                      ))}
+                    </CTableBody>
+                  </CTable>
+                </CCardBody>
+              </CCard>
             )}
 
-            {/* Total */}
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 4 }}>
-              <Typography variant="h6" fontWeight="bold">
-                Total: {formatCurrency(state.data.total)}
-              </Typography>
-            </Box>
+            <div className="d-flex justify-content-end mb-4">
+              <h6 className="fw-bold mb-0">Total: {formatCurrency(state.data.total)}</h6>
+            </div>
 
-            {/* Action buttons */}
-            <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', mb: 4 }}>
-              <Button
-                variant="contained"
+            <div className="d-flex gap-3 justify-content-center mb-4">
+              <CButton
                 color="success"
-                size="large"
+                size="lg"
                 disabled={submitting}
                 onClick={handleApprove}
-                startIcon={submitting ? <CircularProgress size={18} color="inherit" /> : undefined}
               >
+                {submitting ? <CSpinner size="sm" className="me-1" /> : null}
                 Aprovar Orçamento
-              </Button>
-              <Button
-                variant="outlined"
+              </CButton>
+              <CButton
                 color="secondary"
-                size="large"
+                variant="outline"
+                size="lg"
                 disabled={submitting}
                 onClick={handleReject}
               >
                 Recusar
-              </Button>
-            </Box>
+              </CButton>
+            </div>
           </>
         )}
-      </Box>
-    </Box>
+      </div>
+    </div>
   );
 }
