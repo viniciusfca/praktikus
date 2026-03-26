@@ -4,9 +4,15 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
-  Box, Button, Card, CardContent, TextField,
-  Typography, Alert, CircularProgress,
-} from '@mui/material';
+  CAlert,
+  CButton,
+  CCard,
+  CCardBody,
+  CFormFeedback,
+  CFormInput,
+  CFormLabel,
+  CSpinner,
+} from '@coreui/react';
 import { authService } from '../../services/auth.service';
 import { useAuthStore } from '../../store/auth.store';
 
@@ -41,59 +47,61 @@ export function LoginPage() {
   };
 
   return (
-    <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', p: 2 }}>
-      <Card sx={{ width: '100%', maxWidth: 420 }}>
-        <CardContent sx={{ p: 4 }}>
-          <Typography variant="h5" fontWeight="bold" textAlign="center" mb={1}>
-            Practicus
-          </Typography>
-          <Typography variant="body2" color="text.secondary" textAlign="center" mb={3}>
-            Acesse sua conta
-          </Typography>
+    <div
+      style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '1rem',
+      }}
+    >
+      <CCard style={{ width: '100%', maxWidth: 420 }}>
+        <CCardBody className="p-4">
+          <h5 className="fw-bold text-center mb-1">Practicus</h5>
+          <p className="text-secondary text-center mb-3">Acesse sua conta</p>
 
-          {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+          {error && <CAlert color="danger" className="mb-3">{error}</CAlert>}
 
-          <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate>
-            <TextField
-              label="E-mail"
-              type="email"
-              fullWidth
-              margin="normal"
-              inputProps={{ 'aria-label': 'E-mail' }}
-              {...register('email')}
-              error={!!errors.email}
-              helperText={errors.email?.message}
-            />
-            <TextField
-              label="Senha"
-              type="password"
-              fullWidth
-              margin="normal"
-              inputProps={{ 'aria-label': 'Senha' }}
-              {...register('password')}
-              error={!!errors.password}
-              helperText={errors.password?.message}
-            />
-            <Button
+          <form onSubmit={handleSubmit(onSubmit)} noValidate>
+            <div className="mb-3">
+              <CFormLabel>E-mail</CFormLabel>
+              <CFormInput
+                type="email"
+                {...register('email')}
+                invalid={!!errors.email}
+                aria-label="E-mail"
+              />
+              {errors.email && <CFormFeedback invalid>{errors.email.message}</CFormFeedback>}
+            </div>
+            <div className="mb-3">
+              <CFormLabel>Senha</CFormLabel>
+              <CFormInput
+                type="password"
+                {...register('password')}
+                invalid={!!errors.password}
+                aria-label="Senha"
+              />
+              {errors.password && <CFormFeedback invalid>{errors.password.message}</CFormFeedback>}
+            </div>
+            <CButton
               type="submit"
-              variant="contained"
-              fullWidth
-              size="large"
+              color="primary"
+              className="w-100 mt-2"
               disabled={isSubmitting}
-              sx={{ mt: 2 }}
             >
-              {isSubmitting ? <CircularProgress size={24} /> : 'Entrar'}
-            </Button>
-          </Box>
+              {isSubmitting ? <CSpinner size="sm" /> : 'Entrar'}
+            </CButton>
+          </form>
 
-          <Typography variant="body2" textAlign="center" mt={2}>
+          <p className="text-center mt-3 mb-0" style={{ fontSize: '0.875rem' }}>
             Não tem conta?{' '}
             <Link to="/register" style={{ color: 'inherit' }}>
               Cadastre sua oficina
             </Link>
-          </Typography>
-        </CardContent>
-      </Card>
-    </Box>
+          </p>
+        </CCardBody>
+      </CCard>
+    </div>
   );
 }
