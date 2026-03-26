@@ -162,6 +162,9 @@ importers:
 
   apps/frontend:
     dependencies:
+      '@coreui/chartjs':
+        specifier: ^4.0.0
+        version: 4.2.0(@popperjs/core@2.11.8)
       '@coreui/coreui':
         specifier: ^5.3.1
         version: 5.6.1(@popperjs/core@2.11.8)
@@ -198,6 +201,9 @@ importers:
       axios:
         specifier: ^1.13.6
         version: 1.13.6
+      chart.js:
+        specifier: ^4.4.0
+        version: 4.5.1
       jwt-decode:
         specifier: ^4.0.0
         version: 4.0.0
@@ -720,6 +726,15 @@ packages:
     requiresBuild: true
     dev: true
     optional: true
+
+  /@coreui/chartjs@4.2.0(@popperjs/core@2.11.8):
+    resolution: {integrity: sha512-lgAbknvYAnCcZdG5Sv/ZmHF9N9yytAmL1hroBCTd1+1fJNYvDcOmYyj8HNe8nvS9X/yo5bEQ/kx+HenP2gAXFA==}
+    dependencies:
+      '@coreui/coreui': 5.6.1(@popperjs/core@2.11.8)
+      chart.js: 4.5.1
+    transitivePeerDependencies:
+      - '@popperjs/core'
+    dev: false
 
   /@coreui/coreui@5.6.1(@popperjs/core@2.11.8):
     resolution: {integrity: sha512-uBqRqO4LGo6NQHfxBLGg+c5C5+SlmHICk7ey48KEESW9EAiY5eCmwhxgxgTDWrYKC5KqaAe9SGQAHugBFUdg1w==}
@@ -1639,6 +1654,10 @@ packages:
     dependencies:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
+
+  /@kurkle/color@0.3.4:
+    resolution: {integrity: sha512-M5UknZPHRu3DEDWoipU6sE8PdkZ6Z/S+v4dD+Ke8IaNlpdSQah50lz1KtcFBa2vsdOnwbbnxJwVM4wty6udA5w==}
+    dev: false
 
   /@lukeed/csprng@1.1.0:
     resolution: {integrity: sha512-Z7C/xXCiGWsg0KuKsHTKJxbWhpI3Vs5GwLfOean7MGyVFGqdRgBbAjOCh6u4bbjPc/8MJ2pZmK/0DLdCbivLDA==}
@@ -3823,6 +3842,13 @@ packages:
   /chardet@2.1.1:
     resolution: {integrity: sha512-PsezH1rqdV9VvyNhxxOW32/d75r01NY7TQCmOqomRo15ZSOKbpTFVsfjghxo6JloQUCGnH4k1LGu0R4yCLlWQQ==}
     dev: true
+
+  /chart.js@4.5.1:
+    resolution: {integrity: sha512-GIjfiT9dbmHRiYi6Nl2yFCq7kkwdkp1W/lp2J99rX0yo9tgJGn3lKQATztIjb5tVtevcBtIdICNWqlq5+E8/Pw==}
+    engines: {pnpm: '>=8'}
+    dependencies:
+      '@kurkle/color': 0.3.4
+    dev: false
 
   /chokidar@4.0.3:
     resolution: {integrity: sha512-Qgzu8kfBvo+cA4962jnP1KkS6Dop5NS6g7R5LFYJr4b8Ub94PPQXUksCw9PvXoeXPRRddRNC5C1JQUR2SMGtnA==}
