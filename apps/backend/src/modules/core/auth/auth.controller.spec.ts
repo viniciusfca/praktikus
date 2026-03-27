@@ -56,7 +56,7 @@ describe('AuthController', () => {
 
   describe('PATCH /auth/me/password', () => {
     it('should call changePassword with userId from JWT and return 204', async () => {
-      const mockReq = { user: { sub: 'user-1' } };
+      const mockReq = { user: { userId: 'user-1' } };
       mockAuthService.changePassword = jest.fn().mockResolvedValue(undefined);
 
       // call the controller method directly

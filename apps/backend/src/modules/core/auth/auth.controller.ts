@@ -8,11 +8,17 @@ import {
   Request,
   UseGuards,
 } from '@nestjs/common';
+import { Request as ExpressRequest } from 'express';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
+import { AuthUser } from './jwt.strategy';
+
+interface RequestWithUser extends ExpressRequest {
+  user: AuthUser;
+}
 
 @Controller('auth')
 export class AuthController {
@@ -46,9 +52,9 @@ export class AuthController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @UseGuards(JwtAuthGuard)
   async changePassword(
-    @Request() req: any,
+    @Request() req: RequestWithUser,
     @Body() dto: ChangePasswordDto,
   ): Promise<void> {
-    await this.authService.changePassword(req.user.sub, dto.currentPassword, dto.newPassword);
+    await this.authService.changePassword(req.user.userId, dto.currentPassword, dto.newPassword);
   }
 }
