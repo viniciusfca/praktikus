@@ -127,6 +127,25 @@ export class AuthService {
     await this.refreshTokenRepo.update({ tokenHash }, { revoked: true });
   }
 
+  async changePassword(
+    userId: string,
+    currentPassword: string,
+    newPassword: string,
+  ): Promise<void> {
+    const user = await this.userRepo.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new UnauthorizedException('Usuário não encontrado.');
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!isMatch) {
+      throw new UnauthorizedException('Senha atual incorreta.');
+    }
+
+    user.passwordHash = await bcrypt.hash(newPassword, 10);
+    await this.userRepo.save(user);
+  }
+
   private async generateTokens(user: UserEntity): Promise<AuthTokens> {
     // name and email are included for UI display only.
     // Backend guards must never rely on these JWT claims as authoritative —

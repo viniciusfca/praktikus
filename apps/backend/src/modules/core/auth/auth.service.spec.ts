@@ -174,4 +174,37 @@ describe('AuthService', () => {
       );
     });
   });
+
+  describe('changePassword', () => {
+    it('should update passwordHash when currentPassword is correct', async () => {
+      const user = { id: 'u1', passwordHash: 'old_hash' };
+      mockUserRepo.findOne.mockResolvedValue(user);
+      jest.spyOn(require('bcrypt'), 'compare').mockResolvedValue(true as never);
+      jest.spyOn(require('bcrypt'), 'hash').mockResolvedValue('new_hash' as never);
+      mockUserRepo.save.mockResolvedValue({ ...user, passwordHash: 'new_hash' });
+
+      await service.changePassword('u1', 'oldPass', 'newPass12');
+
+      expect(mockUserRepo.save).toHaveBeenCalledWith(
+        expect.objectContaining({ passwordHash: 'new_hash' }),
+      );
+    });
+
+    it('should throw UnauthorizedException when currentPassword is wrong', async () => {
+      mockUserRepo.findOne.mockResolvedValue({ id: 'u1', passwordHash: 'hash' });
+      jest.spyOn(require('bcrypt'), 'compare').mockResolvedValue(false as never);
+
+      await expect(service.changePassword('u1', 'wrong', 'newPass12')).rejects.toThrow(
+        UnauthorizedException,
+      );
+    });
+
+    it('should throw UnauthorizedException when user not found', async () => {
+      mockUserRepo.findOne.mockResolvedValue(null);
+
+      await expect(service.changePassword('u1', 'any', 'newPass12')).rejects.toThrow(
+        UnauthorizedException,
+      );
+    });
+  });
 });
