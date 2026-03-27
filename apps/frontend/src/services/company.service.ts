@@ -40,9 +40,7 @@ export const companyService = {
   async uploadLogo(file: File): Promise<CompanyProfile> {
     const form = new FormData();
     form.append('file', file);
-    const { data } = await api.post<CompanyProfile>('/workshop/company/logo', form, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
+    const { data } = await api.post<CompanyProfile>('/workshop/company/logo', form);
     return data;
   },
 };

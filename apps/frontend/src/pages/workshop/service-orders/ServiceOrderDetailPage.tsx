@@ -36,7 +36,7 @@ import { vehiclesService, type Vehicle } from '../../../services/vehicles.servic
 import { catalogServicesApi, catalogPartsApi, type CatalogService, type CatalogPart } from '../../../services/catalog.service';
 import { pdf } from '@react-pdf/renderer';
 import { OsPdf } from '../../../components/OsPdf';
-import { companiesService, type CompanyProfile } from '../../../services/companies.service';
+import { companyService as companiesService, type CompanyProfile } from '../../../services/company.service';
 
 // ---------- helpers ----------
 const STATUS_LABEL: Record<SoStatus, string> = {
