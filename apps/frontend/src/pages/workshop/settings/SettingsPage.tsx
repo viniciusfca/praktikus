@@ -77,7 +77,10 @@ function CompanyTab() {
         zip: p.endereco?.zip ?? '',
       });
       setLoading(false);
-    }).catch(() => setLoading(false));
+    }).catch(() => {
+      setError('Erro ao carregar dados da empresa.');
+      setLoading(false);
+    });
   }, [reset]);
 
   const onSubmit = async (data: CompanyForm) => {
