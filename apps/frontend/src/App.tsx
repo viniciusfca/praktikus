@@ -17,6 +17,7 @@ import { AppointmentsPage } from './pages/workshop/appointments/AppointmentsPage
 import { ServiceOrdersPage } from './pages/workshop/service-orders/ServiceOrdersPage';
 import { ServiceOrderDetailPage } from './pages/workshop/service-orders/ServiceOrderDetailPage';
 import { ReportsPage } from './pages/workshop/reports/ReportsPage';
+import { SettingsPage } from './pages/workshop/settings/SettingsPage';
 import { QuoteApprovalPage } from './pages/public/QuoteApprovalPage';
 import { PrivateRoute } from './components/PrivateRoute';
 import { useAuthStore } from './store/auth.store';
@@ -58,6 +59,7 @@ function App() {
             <Route path="service-orders" element={<ServiceOrdersPage />} />
             <Route path="service-orders/:id" element={<ServiceOrderDetailPage />} />
             <Route path="reports" element={<ReportsPage />} />
+            <Route path="settings" element={<SettingsPage />} />
           </Route>
         </Routes>
     </AppThemeProvider>

@@ -48,7 +48,7 @@ const navItems: Array<{ label: string; icon: any; path: string; ownerOnly: boole
   { label: 'Veículos', icon: cilCarAlt, path: '/workshop/vehicles', ownerOnly: false },
   { label: 'Catálogo', icon: cilList, path: '/workshop/catalog', ownerOnly: false },
   { label: 'Relatórios', icon: cilChartLine, path: '/workshop/reports', ownerOnly: true },
-  { label: 'Configurações', icon: cilSettings, path: '/workshop/settings', ownerOnly: false },
+  { label: 'Configurações', icon: cilSettings, path: '/workshop/settings', ownerOnly: true },
 ];
 
 function getInitials(name: string | undefined | null): string {
