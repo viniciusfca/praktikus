@@ -7,6 +7,7 @@ const mockAuthService = {
   login: jest.fn().mockResolvedValue({ access_token: 'tok', refresh_token: 'ref' }),
   refresh: jest.fn().mockResolvedValue({ access_token: 'tok', refresh_token: 'ref' }),
   logout: jest.fn().mockResolvedValue(undefined),
+  changePassword: jest.fn().mockResolvedValue(undefined),
 };
 
 describe('AuthController', () => {
@@ -51,5 +52,24 @@ describe('AuthController', () => {
   it('should call logout with refresh token', async () => {
     await controller.logout('refresh_tok');
     expect(mockAuthService.logout).toHaveBeenCalledWith('refresh_tok');
+  });
+
+  describe('PATCH /auth/me/password', () => {
+    it('should call changePassword with userId from JWT and return 204', async () => {
+      const mockReq = { user: { sub: 'user-1' } };
+      mockAuthService.changePassword = jest.fn().mockResolvedValue(undefined);
+
+      // call the controller method directly
+      await controller.changePassword(mockReq as any, {
+        currentPassword: 'oldPass12',
+        newPassword: 'newPass12',
+      });
+
+      expect(mockAuthService.changePassword).toHaveBeenCalledWith(
+        'user-1',
+        'oldPass12',
+        'newPass12',
+      );
+    });
   });
 });
