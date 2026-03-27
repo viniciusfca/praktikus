@@ -52,4 +52,8 @@ export const authService = {
   isAuthenticated(): boolean {
     return !!localStorage.getItem('access_token');
   },
+
+  async changePassword(currentPassword: string, newPassword: string): Promise<void> {
+    await api.patch('/auth/me/password', { currentPassword, newPassword });
+  },
 };
