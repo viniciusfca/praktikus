@@ -10,6 +10,9 @@ export interface JwtPayload {
   sub: string;
   tenant_id: string;
   role: string;
+  name?: string;
+  email?: string;
+  tenant_status?: string;
   iat?: number;
   exp?: number;
 }
@@ -19,6 +22,7 @@ export interface AuthUser {
   tenantId: string;
   role: string;
   email: string;
+  tenantStatus: string;
 }
 
 @Injectable()
@@ -45,6 +49,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       tenantId: payload.tenant_id,
       role: payload.role,
       email: user.email,
+      tenantStatus: payload.tenant_status ?? 'ACTIVE',
     };
   }
 }

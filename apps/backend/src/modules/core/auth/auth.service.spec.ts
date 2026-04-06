@@ -28,6 +28,7 @@ const mockTenancyService = {
   createTenant: jest.fn(),
   createTenantWithManager: jest.fn().mockResolvedValue({ id: 'tenant-1', schemaName: 'tenant_1', status: TenantStatus.TRIAL }),
   findByCnpj: jest.fn(),
+  findById: jest.fn(),
 };
 
 const mockDataSource = {
@@ -143,6 +144,32 @@ describe('AuthService', () => {
       await expect(
         service.login({ email: 'owner@test.com', password: 'wrongpass' }),
       ).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('should include tenant_status in token payload', async () => {
+      const user = {
+        id: 'user-1',
+        tenantId: 'tenant-1',
+        role: UserRole.OWNER,
+        email: 'owner@test.com',
+        passwordHash: '$2b$10$hash',
+        name: 'João',
+      };
+      mockUserRepo.findOne.mockResolvedValue(user);
+      mockTenancyService.findById.mockResolvedValue({
+        id: 'tenant-1',
+        status: TenantStatus.ACTIVE,
+      });
+      mockRefreshTokenRepo.create.mockReturnValue({});
+      mockRefreshTokenRepo.save.mockResolvedValue({});
+      jest.spyOn(require('bcrypt'), 'compare').mockResolvedValue(true as never);
+
+      await service.login({ email: 'owner@test.com', password: 'senha1234' });
+
+      expect(mockJwtService.sign).toHaveBeenCalledWith(
+        expect.objectContaining({ tenant_status: TenantStatus.ACTIVE }),
+        expect.any(Object),
+      );
     });
   });
 

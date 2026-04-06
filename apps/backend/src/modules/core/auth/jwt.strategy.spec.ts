@@ -48,6 +48,7 @@ describe('JwtStrategy', () => {
         tenantId: 'tenant-uuid-1',
         role: 'OWNER',
         email: 'owner@test.com',
+        tenantStatus: 'ACTIVE',
       });
       expect(mockUserRepo.findOne).toHaveBeenCalledWith({ where: { id: 'user-uuid-1' } });
     });

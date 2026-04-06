@@ -77,7 +77,7 @@ export class AuthService {
     // and billing can be retried via a separate flow.
     await this.billingService.setupTrial(tenant.id, dto.email, dto.nomeFantasia);
 
-    return this.generateTokens(user);
+    return this.generateTokens(user, tenant.status);
   }
 
   async login(dto: LoginDto): Promise<AuthTokens> {
@@ -91,7 +91,8 @@ export class AuthService {
       throw new UnauthorizedException('Credenciais inválidas.');
     }
 
-    return this.generateTokens(user);
+    const tenant = await this.tenancyService.findById(user.tenantId);
+    return this.generateTokens(user, tenant?.status ?? 'ACTIVE');
   }
 
   async refresh(refreshToken: string): Promise<AuthTokens> {
@@ -116,7 +117,8 @@ export class AuthService {
       throw new UnauthorizedException();
     }
 
-    return this.generateTokens(user);
+    const tenant = await this.tenancyService.findById(user.tenantId);
+    return this.generateTokens(user, tenant?.status ?? 'ACTIVE');
   }
 
   async logout(refreshToken: string): Promise<void> {
@@ -146,7 +148,7 @@ export class AuthService {
     await this.userRepo.save(user);
   }
 
-  private async generateTokens(user: UserEntity): Promise<AuthTokens> {
+  private async generateTokens(user: UserEntity, tenantStatus: string): Promise<AuthTokens> {
     // name and email are included for UI display only.
     // Backend guards must never rely on these JWT claims as authoritative —
     // always re-fetch from the database for any security-sensitive operation.
@@ -156,6 +158,7 @@ export class AuthService {
       role: user.role,
       name: user.name,
       email: user.email,
+      tenant_status: tenantStatus,
     };
 
     const accessToken = this.jwtService.sign(payload, { expiresIn: '15m' });
