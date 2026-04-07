@@ -217,6 +217,81 @@ function CompanyTab() {
   );
 }
 
+// ---- SubscriptionTab ----
+
+const STATUS_LABEL: Record<string, string> = {
+  TRIAL: 'Trial',
+  ACTIVE: 'Ativo',
+  OVERDUE: 'Em atraso',
+  SUSPENDED: 'Suspenso',
+};
+
+const STATUS_COLOR: Record<string, string> = {
+  TRIAL: 'var(--cui-info)',
+  ACTIVE: 'var(--cui-success)',
+  OVERDUE: 'var(--cui-warning)',
+  SUSPENDED: 'var(--cui-danger)',
+};
+
+function SubscriptionTab() {
+  const [profile, setProfile] = useState<CompanyProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    companyService.getProfile()
+      .then(setProfile)
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) return <div className="text-center py-4"><CSpinner /></div>;
+  if (!profile) return <CAlert color="danger">Erro ao carregar dados de assinatura.</CAlert>;
+
+  const statusLabel = STATUS_LABEL[profile.status] ?? profile.status;
+  const statusColor = STATUS_COLOR[profile.status] ?? 'var(--cui-secondary)';
+
+  const nextDate = profile.status === 'TRIAL'
+    ? profile.trialEndsAt
+    : profile.billingAnchorDate;
+
+  const formattedDate = nextDate
+    ? new Date(nextDate).toLocaleDateString('pt-BR')
+    : '—';
+
+  const dateLabel = profile.status === 'TRIAL' ? 'Fim do trial' : 'Próxima cobrança';
+
+  return (
+    <div style={{ maxWidth: 420 }}>
+      <div className="mb-4 d-flex align-items-center gap-3">
+        <span className="fw-semibold">Status:</span>
+        <span
+          className="px-3 py-1 rounded"
+          style={{
+            backgroundColor: statusColor,
+            color: '#fff',
+            fontSize: '0.875rem',
+            fontWeight: 600,
+          }}
+        >
+          {statusLabel}
+        </span>
+      </div>
+      <div className="mb-4">
+        <span className="fw-semibold">{dateLabel}:</span>{' '}
+        <span>{formattedDate}</span>
+      </div>
+      <CButton
+        color="primary"
+        variant="outline"
+        href="https://www.asaas.com/login"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        Gerenciar assinatura
+      </CButton>
+    </div>
+  );
+}
+
 // ---- AccountTab ----
 
 function AccountTab() {
@@ -312,6 +387,11 @@ export function SettingsPage() {
                 Minha Conta
               </CNavLink>
             </CNavItem>
+            <CNavItem>
+              <CNavLink active={activeTab === 2} onClick={() => setActiveTab(2)} style={{ cursor: 'pointer' }}>
+                Assinatura
+              </CNavLink>
+            </CNavItem>
           </CNav>
           <CTabContent>
             <CTabPane visible={activeTab === 0}>
@@ -319,6 +399,9 @@ export function SettingsPage() {
             </CTabPane>
             <CTabPane visible={activeTab === 1}>
               <AccountTab />
+            </CTabPane>
+            <CTabPane visible={activeTab === 2}>
+              <SubscriptionTab />
             </CTabPane>
           </CTabContent>
         </CCardBody>

@@ -17,6 +17,9 @@ export interface CompanyProfile {
   telefone: string | null;
   endereco: CompanyAddress | null;
   logoUrl: string | null;
+  status: 'TRIAL' | 'ACTIVE' | 'OVERDUE' | 'SUSPENDED';
+  trialEndsAt: string | null;
+  billingAnchorDate: string | null;
 }
 
 export interface UpdateCompanyPayload {
