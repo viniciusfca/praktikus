@@ -235,16 +235,18 @@ const STATUS_COLOR: Record<string, string> = {
 
 function SubscriptionTab() {
   const [profile, setProfile] = useState<CompanyProfile | null>(null);
+  const [error, setError] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     companyService.getProfile()
       .then(setProfile)
+      .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, []);
 
   if (loading) return <div className="text-center py-4"><CSpinner /></div>;
-  if (!profile) return <CAlert color="danger">Erro ao carregar dados de assinatura.</CAlert>;
+  if (error || !profile) return <CAlert color="danger">Erro ao carregar dados de assinatura.</CAlert>;
 
   const statusLabel = STATUS_LABEL[profile.status] ?? profile.status;
   const statusColor = STATUS_COLOR[profile.status] ?? 'var(--cui-secondary)';
@@ -257,7 +259,12 @@ function SubscriptionTab() {
     ? new Date(nextDate).toLocaleDateString('pt-BR')
     : '—';
 
-  const dateLabel = profile.status === 'TRIAL' ? 'Fim do trial' : 'Próxima cobrança';
+  const dateLabel =
+    profile.status === 'TRIAL'
+      ? 'Fim do trial'
+      : profile.status === 'OVERDUE'
+        ? 'Vencimento em atraso'
+        : 'Próxima cobrança';
 
   return (
     <div style={{ maxWidth: 420 }}>
