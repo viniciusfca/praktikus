@@ -73,7 +73,7 @@ export class BillingService {
             value: planValue,
             nextDueDate: dueDateStr,
             cycle: 'MONTHLY',
-            description: 'Plano Practicus — R$69,90/mês',
+            description: 'Plano Praktikus — R$69,90/mês',
             trialPeriodDays: 30,
           }),
         });
