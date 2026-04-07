@@ -12,6 +12,7 @@ import * as crypto from 'crypto';
 import { UserEntity, UserRole } from './user.entity';
 import { RefreshTokenEntity } from './refresh-token.entity';
 import { TenancyService } from '../tenancy/tenancy.service';
+import { TenantStatus } from '../tenancy/tenant.entity';
 import { BillingService } from '../billing/billing.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -92,7 +93,7 @@ export class AuthService {
     }
 
     const tenant = await this.tenancyService.findById(user.tenantId);
-    return this.generateTokens(user, tenant?.status ?? 'ACTIVE');
+    return this.generateTokens(user, tenant?.status ?? TenantStatus.ACTIVE);
   }
 
   async refresh(refreshToken: string): Promise<AuthTokens> {
@@ -118,7 +119,7 @@ export class AuthService {
     }
 
     const tenant = await this.tenancyService.findById(user.tenantId);
-    return this.generateTokens(user, tenant?.status ?? 'ACTIVE');
+    return this.generateTokens(user, tenant?.status ?? TenantStatus.ACTIVE);
   }
 
   async logout(refreshToken: string): Promise<void> {

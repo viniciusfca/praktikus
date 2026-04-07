@@ -5,6 +5,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { Repository } from 'typeorm';
 import { UserEntity } from './user.entity';
+import { TenantStatus } from '../tenancy/tenant.entity';
 
 export interface JwtPayload {
   sub: string;
@@ -49,7 +50,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       tenantId: payload.tenant_id,
       role: payload.role,
       email: user.email,
-      tenantStatus: payload.tenant_status ?? 'ACTIVE',
+      tenantStatus: payload.tenant_status ?? TenantStatus.ACTIVE,
     };
   }
 }
