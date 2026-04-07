@@ -18,6 +18,13 @@ api.interceptors.response.use(
   (res) => res,
   async (error) => {
     const original = error.config;
+    if (error.response?.status === 403) {
+      const message = error.response?.data?.message;
+      if (message === 'conta_suspensa') {
+        window.location.href = '/suspended';
+        return;
+      }
+    }
     if (error.response?.status === 401 && !original._retry) {
       original._retry = true;
       const refreshToken = localStorage.getItem('refresh_token');

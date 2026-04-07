@@ -12,6 +12,7 @@ export interface JwtUser {
   name: string;
   email: string;
   exp: number;
+  tenant_status: 'TRIAL' | 'ACTIVE' | 'OVERDUE' | 'SUSPENDED';
 }
 
 interface AuthState {
