@@ -7,7 +7,16 @@ import { TenancyService } from '../tenancy/tenancy.service';
 
 const mockBillingRepo = { findOne: jest.fn(), save: jest.fn(), create: jest.fn(), find: jest.fn() };
 const mockTenancyService = { findById: jest.fn(), updateStatus: jest.fn() };
-const mockConfig = { get: jest.fn() };
+const mockConfig = {
+  get: jest.fn((key: string) => {
+    const map: Record<string, string> = {
+      ASAAS_API_KEY: 'mock',
+      ASAAS_API_URL: 'https://sandbox.asaas.com/api/v3',
+      ASAAS_PLAN_VALUE: '69.90',
+    };
+    return map[key];
+  }),
+};
 
 describe('BillingService', () => {
   let service: BillingService;
@@ -106,6 +115,39 @@ describe('BillingService', () => {
 
       expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('IBGE'));
       fetchSpy.mockRestore();
+    });
+  });
+
+  describe('setupTrial', () => {
+    it('should create billing record with mock IDs when ASAAS_API_KEY is "mock"', async () => {
+      const billing = { id: 'billing-1', tenantId: 'tenant-1' };
+      mockBillingRepo.create.mockReturnValue(billing);
+      mockBillingRepo.save.mockResolvedValue(billing);
+
+      await service.setupTrial('tenant-1', 'owner@test.com', 'Auto Center');
+
+      expect(mockBillingRepo.save).toHaveBeenCalledWith(
+        expect.objectContaining({ tenantId: 'tenant-1' }),
+      );
+    });
+
+    it('should set mock asaasCustomerId containing tenantId', async () => {
+      const capturedArg: any = {};
+      mockBillingRepo.create.mockImplementation((data: any) => {
+        Object.assign(capturedArg, data);
+        return data;
+      });
+      mockBillingRepo.save.mockResolvedValue({});
+
+      await service.setupTrial('tenant-abc', 'owner@test.com', 'Auto Center');
+
+      expect(capturedArg.asaasCustomerId).toContain('tenant-abc');
+    });
+  });
+
+  describe('isMockMode', () => {
+    it('should be in mock mode when ASAAS_API_KEY is "mock"', () => {
+      expect((service as any).isMock).toBe(true);
     });
   });
 });
