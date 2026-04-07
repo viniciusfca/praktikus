@@ -1,10 +1,12 @@
 import { MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
 import { HealthController } from './health/health.controller';
 import { DatabaseModule } from './database/database.module';
 import { TenancyModule } from './modules/core/tenancy/tenancy.module';
 import { TenancyMiddleware } from './modules/core/tenancy/tenancy.middleware';
 import { AuthModule } from './modules/core/auth/auth.module';
+import { TenantStatusGuard } from './modules/core/auth/tenant-status.guard';
 import { CompaniesModule } from './modules/workshop/companies/companies.module';
 import { CustomersModule } from './modules/workshop/customers/customers.module';
 import { VehiclesModule } from './modules/workshop/vehicles/vehicles.module';
@@ -28,7 +30,9 @@ import { ReportsModule } from './modules/workshop/reports/reports.module';
     ReportsModule,
   ],
   controllers: [HealthController],
-  providers: [],
+  providers: [
+    { provide: APP_GUARD, useClass: TenantStatusGuard },
+  ],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {
