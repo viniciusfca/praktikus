@@ -97,4 +97,11 @@ export class BillingService {
       this.billingRepo.create({ tenantId, asaasCustomerId, asaasSubscriptionId }),
     );
   }
+
+  async findTenantIdBySubscriptionId(subscriptionId: string): Promise<string | null> {
+    const billing = await this.billingRepo.findOne({
+      where: { asaasSubscriptionId: subscriptionId },
+    });
+    return billing?.tenantId ?? null;
+  }
 }

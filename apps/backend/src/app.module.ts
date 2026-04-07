@@ -14,6 +14,7 @@ import { CatalogModule } from './modules/workshop/catalog/catalog.module';
 import { AppointmentsModule } from './modules/workshop/appointments/appointments.module';
 import { ServiceOrdersModule } from './modules/workshop/service-orders/service-orders.module';
 import { ReportsModule } from './modules/workshop/reports/reports.module';
+import { BillingModule } from './modules/core/billing/billing.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { ReportsModule } from './modules/workshop/reports/reports.module';
     DatabaseModule,
     TenancyModule,
     AuthModule,
+    BillingModule,
     CompaniesModule,
     CustomersModule,
     VehiclesModule,

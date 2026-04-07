@@ -114,4 +114,8 @@ export class TenancyService {
   async findByCnpj(cnpj: string): Promise<TenantEntity | null> {
     return this.tenantRepo.findOne({ where: { cnpj } });
   }
+
+  async updateStatus(tenantId: string, status: TenantStatus): Promise<void> {
+    await this.tenantRepo.update({ id: tenantId }, { status });
+  }
 }
