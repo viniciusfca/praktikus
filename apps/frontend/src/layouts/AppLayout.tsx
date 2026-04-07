@@ -266,7 +266,7 @@ export function AppLayout() {
         {/* Page content */}
         <div className="body flex-grow-1 p-3 p-md-4">
           {user?.tenant_status === 'OVERDUE' && (
-            <CAlert color="warning" className="mb-3 text-center py-2">
+            <CAlert color="warning" className="mb-0 rounded-0 text-center py-2">
               Pagamento em atraso. Regularize para evitar suspensão da conta.
             </CAlert>
           )}
