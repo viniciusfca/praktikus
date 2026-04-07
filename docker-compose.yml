@@ -3,7 +3,7 @@ version: '3.9'
 services:
   postgres:
     image: postgres:15-alpine
-    container_name: practicus_postgres
+    container_name: praktikus_postgres
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -20,7 +20,7 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: practicus_redis
+    container_name: praktikus_redis
     ports:
       - '6379:6379'
     volumes:
@@ -35,7 +35,7 @@ services:
     build:
       context: .
       dockerfile: apps/backend/Dockerfile
-    container_name: practicus_backend
+    container_name: praktikus_backend
     ports:
       - '3000:3000'
     env_file:
@@ -53,7 +53,7 @@ services:
     build:
       context: .
       dockerfile: apps/frontend/Dockerfile
-    container_name: practicus_frontend
+    container_name: praktikus_frontend
     ports:
       - '80:80'
     depends_on:

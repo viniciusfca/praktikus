@@ -704,7 +704,7 @@ describe('ServiceOrdersService', () => {
 
 ```bash
 cd apps/backend
-node "c:\Users\vinic\OneDrive\Projetos\practicus\node_modules\.pnpm\jest@30.3.0_@types+node@22.19.15_ts-node@10.9.2\node_modules\jest\bin\jest.js" --testPathPattern=service-orders.service.spec
+node "c:\Users\vinic\OneDrive\Projetos\Praktikus\node_modules\.pnpm\jest@30.3.0_@types+node@22.19.15_ts-node@10.9.2\node_modules\jest\bin\jest.js" --testPathPattern=service-orders.service.spec
 ```
 
 Expected: 12 tests passing.
@@ -957,7 +957,7 @@ describe('PublicQuotesService', () => {
 
 ```bash
 cd apps/backend
-node "c:\Users\vinic\OneDrive\Projetos\practicus\node_modules\.pnpm\jest@30.3.0_@types+node@22.19.15_ts-node@10.9.2\node_modules\jest\bin\jest.js" --testPathPattern=public-quotes.service.spec
+node "c:\Users\vinic\OneDrive\Projetos\Praktikus\node_modules\.pnpm\jest@30.3.0_@types+node@22.19.15_ts-node@10.9.2\node_modules\jest\bin\jest.js" --testPathPattern=public-quotes.service.spec
 ```
 
 Expected: 5 tests passing.
@@ -1168,7 +1168,7 @@ imports: [..., AppointmentsModule, ServiceOrdersModule],
 
 ```bash
 cd apps/backend
-node "c:\Users\vinic\OneDrive\Projetos\practicus\node_modules\.pnpm\jest@30.3.0_@types+node@22.19.15_ts-node@10.9.2\node_modules\jest\bin\jest.js"
+node "c:\Users\vinic\OneDrive\Projetos\Praktikus\node_modules\.pnpm\jest@30.3.0_@types+node@22.19.15_ts-node@10.9.2\node_modules\jest\bin\jest.js"
 ```
 
 Expected: all existing tests + new tests passing.
@@ -2425,7 +2425,7 @@ git commit -m "feat(service-orders): add QuoteApprovalPage and register all rout
 
 ```bash
 cd apps/backend
-node "c:\Users\vinic\OneDrive\Projetos\practicus\node_modules\.pnpm\jest@30.3.0_@types+node@22.19.15_ts-node@10.9.2\node_modules\jest\bin\jest.js"
+node "c:\Users\vinic\OneDrive\Projetos\Praktikus\node_modules\.pnpm\jest@30.3.0_@types+node@22.19.15_ts-node@10.9.2\node_modules\jest\bin\jest.js"
 ```
 
 Expected: all test suites passing (existing 14 + 2 new = 16 suites).

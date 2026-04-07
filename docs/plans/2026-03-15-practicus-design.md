@@ -1,4 +1,4 @@
-# Practicus — Design Document
+# Praktikus — Design Document
 **Date:** 2026-03-15
 **Status:** Approved
 
@@ -6,7 +6,7 @@
 
 ## 1. Visão Geral
 
-Practicus é uma plataforma SaaS multi-tenant para prestadores de serviço. O primeiro segmento é **oficinas mecânicas** (incluindo subcategorias: loja de pneus, estética veicular, auto elétrica, troca de óleo). Futuros segmentos planejados: clínicas médicas, odontológicas, barbearias.
+Praktikus é uma plataforma SaaS multi-tenant para prestadores de serviço. O primeiro segmento é **oficinas mecânicas** (incluindo subcategorias: loja de pneus, estética veicular, auto elétrica, troca de óleo). Futuros segmentos planejados: clínicas médicas, odontológicas, barbearias.
 
 **Modelo de negócio:** 30 dias de trial gratuito + R$69,90/mês, com reajuste anual configurável.
 
@@ -30,7 +30,7 @@ Practicus é uma plataforma SaaS multi-tenant para prestadores de serviço. O pr
 ## 3. Estrutura do Monorepo
 
 ```
-practicus/
+Praktikus/
 ├── apps/
 │   ├── backend/                  # NestJS
 │   └── frontend/                 # React + MUI

@@ -1,10 +1,10 @@
-# Rename Practicus → Praktikus Implementation Plan
+# Rename Praktikus → Praktikus Implementation Plan
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** Renomear a marca do produto de "Practicus" para "Praktikus" em todo o código, configuração e documentação do monorepo.
+**Goal:** Renomear a marca do produto de "Praktikus" para "Praktikus" em todo o código, configuração e documentação do monorepo.
 
-**Architecture:** Find & replace global preservando capitalização (`Practicus` → `Praktikus`, `practicus` → `praktikus`). Sem mudanças de lógica — apenas texto. Três tarefas agrupadas por categoria, cada uma com seu commit.
+**Architecture:** Find & replace global preservando capitalização (`Praktikus` → `Praktikus`, `Praktikus` → `praktikus`). Sem mudanças de lógica — apenas texto. Três tarefas agrupadas por categoria, cada uma com seu commit.
 
 **Tech Stack:** PowerShell (sed equivalente no Windows), NestJS, React, pnpm workspaces.
 
@@ -23,31 +23,31 @@
 
 ```bash
 # AppLayout — brand na sidebar
-sed -i 's/Practicus/Praktikus/g' apps/frontend/src/layouts/AppLayout.tsx
+sed -i 's/Praktikus/Praktikus/g' apps/frontend/src/layouts/AppLayout.tsx
 
 # LoginPage — heading
-sed -i 's/Practicus/Praktikus/g' apps/frontend/src/pages/auth/LoginPage.tsx
+sed -i 's/Praktikus/Praktikus/g' apps/frontend/src/pages/auth/LoginPage.tsx
 
 # RegisterPage — heading
-sed -i 's/Practicus/Praktikus/g' apps/frontend/src/pages/auth/RegisterPage.tsx
+sed -i 's/Praktikus/Praktikus/g' apps/frontend/src/pages/auth/RegisterPage.tsx
 
 # LandingPage — navbar brand
-sed -i 's/Practicus/Praktikus/g' apps/frontend/src/pages/LandingPage.tsx
+sed -i 's/Praktikus/Praktikus/g' apps/frontend/src/pages/LandingPage.tsx
 
 # App.test.tsx — regex de texto
-sed -i 's/Practicus/Praktikus/g' apps/frontend/src/App.test.tsx
+sed -i 's/Praktikus/Praktikus/g' apps/frontend/src/App.test.tsx
 ```
 
 **Step 2: Verificar as substituições**
 
 ```bash
-grep -n "Practicus\|practicus" apps/frontend/src/layouts/AppLayout.tsx \
+grep -n "Praktikus\|Praktikus" apps/frontend/src/layouts/AppLayout.tsx \
   apps/frontend/src/pages/auth/LoginPage.tsx \
   apps/frontend/src/pages/auth/RegisterPage.tsx \
   apps/frontend/src/pages/LandingPage.tsx \
   apps/frontend/src/App.test.tsx
 ```
-Expected: nenhuma linha com "Practicus" ou "practicus"
+Expected: nenhuma linha com "Praktikus" ou "Praktikus"
 
 **Step 3: Rodar testes frontend**
 
@@ -71,7 +71,7 @@ git add apps/frontend/src/layouts/AppLayout.tsx \
         apps/frontend/src/pages/auth/RegisterPage.tsx \
         apps/frontend/src/pages/LandingPage.tsx \
         apps/frontend/src/App.test.tsx
-git commit -m "chore: rename Practicus → Praktikus in frontend UI and tests"
+git commit -m "chore: rename Praktikus → Praktikus in frontend UI and tests"
 ```
 
 ---
@@ -86,20 +86,20 @@ git commit -m "chore: rename Practicus → Praktikus in frontend UI and tests"
 
 ```bash
 # billing.service — descrição do plano no Asaas
-sed -i 's/Plano Practicus/Plano Praktikus/g' apps/backend/src/modules/core/billing/billing.service.ts
+sed -i 's/Plano Praktikus/Plano Praktikus/g' apps/backend/src/modules/core/billing/billing.service.ts
 
 # data-source — defaults de conexão com o banco
-sed -i "s/'practicus'/'praktikus'/g" apps/backend/src/database/data-source.ts
-sed -i "s/'practicus_dev'/'praktikus_dev'/g" apps/backend/src/database/data-source.ts
+sed -i "s/'Praktikus'/'praktikus'/g" apps/backend/src/database/data-source.ts
+sed -i "s/'Praktikus_dev'/'praktikus_dev'/g" apps/backend/src/database/data-source.ts
 ```
 
 **Step 2: Verificar**
 
 ```bash
-grep -n "practicus\|Practicus" apps/backend/src/modules/core/billing/billing.service.ts \
+grep -n "Praktikus\|Praktikus" apps/backend/src/modules/core/billing/billing.service.ts \
   apps/backend/src/database/data-source.ts
 ```
-Expected: nenhuma linha com "practicus" ou "Practicus"
+Expected: nenhuma linha com "Praktikus" ou "Praktikus"
 
 Confirme que o resultado esperado de `data-source.ts` ficou assim:
 ```typescript
@@ -120,7 +120,7 @@ Expected: todos os testes passam
 ```bash
 git add apps/backend/src/modules/core/billing/billing.service.ts \
         apps/backend/src/database/data-source.ts
-git commit -m "chore: rename Practicus → Praktikus in backend source"
+git commit -m "chore: rename Praktikus → Praktikus in backend source"
 ```
 
 ---
@@ -139,28 +139,28 @@ git commit -m "chore: rename Practicus → Praktikus in backend source"
 
 ```bash
 # Raiz do monorepo
-sed -i 's/"name": "practicus"/"name": "praktikus"/g' package.json
+sed -i 's/"name": "Praktikus"/"name": "praktikus"/g' package.json
 
 # Shared package — nome do pacote
-sed -i 's/"name": "@practicus\/shared"/"name": "@praktikus\/shared"/g' packages/shared/package.json
+sed -i 's/"name": "@Praktikus\/shared"/"name": "@praktikus\/shared"/g' packages/shared/package.json
 
 # Backend — dependency
-sed -i 's/"@practicus\/shared"/"@praktikus\/shared"/g' apps/backend/package.json
+sed -i 's/"@Praktikus\/shared"/"@praktikus\/shared"/g' apps/backend/package.json
 
 # Frontend — dependency
-sed -i 's/"@practicus\/shared"/"@praktikus\/shared"/g' apps/frontend/package.json
+sed -i 's/"@Praktikus\/shared"/"@praktikus\/shared"/g' apps/frontend/package.json
 ```
 
 **Step 2: Renomear containers Docker**
 
 ```bash
-sed -i 's/practicus_/praktikus_/g' docker-compose.yml
+sed -i 's/Praktikus_/praktikus_/g' docker-compose.yml
 ```
 
 **Step 3: Verificar package.json files e docker-compose**
 
 ```bash
-grep -n "practicus\|Practicus" package.json packages/shared/package.json \
+grep -n "Praktikus\|Praktikus" package.json packages/shared/package.json \
   apps/backend/package.json apps/frontend/package.json docker-compose.yml
 ```
 Expected: nenhuma ocorrência
@@ -169,20 +169,20 @@ Expected: nenhuma ocorrência
 
 ```bash
 # Substituir em todos os .md dentro de docs/plans
-find docs/plans -name "*.md" -exec sed -i 's/Practicus/Praktikus/g' {} \;
-find docs/plans -name "*.md" -exec sed -i 's/practicus/praktikus/g' {} \;
+find docs/plans -name "*.md" -exec sed -i 's/Praktikus/Praktikus/g' {} \;
+find docs/plans -name "*.md" -exec sed -i 's/Praktikus/praktikus/g' {} \;
 ```
 
 **Step 5: Verificar docs**
 
 ```bash
-grep -rn "practicus\|Practicus" docs/plans --include="*.md" | grep -iv "praktikus" | head -5
+grep -rn "Praktikus\|Praktikus" docs/plans --include="*.md" | grep -iv "praktikus" | head -5
 ```
 Expected: nenhuma ocorrência
 
 **Step 6: Reinstalar dependências (para atualizar lockfile)**
 
-O rename do `@practicus/shared` → `@praktikus/shared` altera o `pnpm-lock.yaml`. Reinstalar para manter consistência:
+O rename do `@Praktikus/shared` → `@praktikus/shared` altera o `pnpm-lock.yaml`. Reinstalar para manter consistência:
 
 ```bash
 pnpm install 2>&1 | tail -5
@@ -203,7 +203,7 @@ Expected: todos passam
 git add package.json packages/shared/package.json \
         apps/backend/package.json apps/frontend/package.json \
         docker-compose.yml docs/plans/ pnpm-lock.yaml
-git commit -m "chore: rename practicus → praktikus in configs, docker and docs"
+git commit -m "chore: rename Praktikus → praktikus in configs, docker and docs"
 ```
 
 ---

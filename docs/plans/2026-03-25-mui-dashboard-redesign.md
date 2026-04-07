@@ -55,7 +55,7 @@ Pages are NOT rewritten individually — component polishes are applied via MUI 
 - Mobile breakpoint: `< sm` — hamburger icon in AppBar opens temporary Drawer
 
 ### AppBar
-- Left: Logo "Practicus" (desktop) / hamburger MenuIcon (mobile)
+- Left: Logo "Praktikus" (desktop) / hamburger MenuIcon (mobile)
 - Right: theme toggle (LightMode/DarkMode icon) + Avatar
 - Avatar: initials of the logged-in user (e.g., "JD" for "João Doe"), colored with `primary.main`
 - Avatar click opens `Menu` dropdown with:

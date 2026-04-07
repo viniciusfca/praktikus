@@ -530,7 +530,7 @@ export function LoginPage() {
     >
       <CCard style={{ width: '100%', maxWidth: 420 }}>
         <CCardBody className="p-4">
-          <h5 className="fw-bold text-center mb-1">Practicus</h5>
+          <h5 className="fw-bold text-center mb-1">Praktikus</h5>
           <p className="text-secondary text-center mb-3">Acesse sua conta</p>
 
           {error && <CAlert color="danger" className="mb-3">{error}</CAlert>}
@@ -689,7 +689,7 @@ export function RegisterPage() {
     >
       <CCard style={{ width: '100%', maxWidth: 520 }}>
         <CCardBody className="p-4">
-          <h5 className="fw-bold text-center mb-1">Practicus</h5>
+          <h5 className="fw-bold text-center mb-1">Praktikus</h5>
           <p className="text-secondary text-center mb-3">Cadastre sua oficina — 30 dias grátis</p>
 
           {/* Step indicator */}
@@ -1237,7 +1237,7 @@ export function LandingPage() {
     <div style={{ minHeight: '100vh' }}>
       {/* Header */}
       <div className="d-flex justify-content-between align-items-center px-4 py-3">
-        <span className="fw-bold fs-5 text-primary">Practicus</span>
+        <span className="fw-bold fs-5 text-primary">Praktikus</span>
         <div className="d-flex gap-2">
           <CButton color="secondary" variant="ghost" href="/login">Entrar</CButton>
           <CButton color="primary" href="/register">Começar grátis</CButton>

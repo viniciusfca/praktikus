@@ -2065,7 +2065,7 @@ Dentro do bloco `<Route path="/workshop" ...>`, adicionar após `<Route path="da
 **Step 2: Rodar todos os testes**
 
 ```bash
-cd c:/Users/vinic/OneDrive/Projetos/practicus/.worktrees/entrega-3
+cd c:/Users/vinic/OneDrive/Projetos/Praktikus/.worktrees/entrega-3
 pnpm test
 ```
 

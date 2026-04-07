@@ -2,7 +2,7 @@
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** Criar a estrutura base do monorepo Practicus com NestJS backend, React+MUI frontend, PostgreSQL, Redis e Docker Compose para desenvolvimento local funcionando com `docker-compose up`.
+**Goal:** Criar a estrutura base do monorepo Praktikus com NestJS backend, React+MUI frontend, PostgreSQL, Redis e Docker Compose para desenvolvimento local funcionando com `docker-compose up`.
 
 **Architecture:** Monorepo com pnpm workspaces contendo `apps/backend` (NestJS + TypeORM), `apps/frontend` (React + Vite + MUI) e `packages/shared` (tipos TypeScript compartilhados). Docker Compose orquestra todos os serviços. Dark theme MUI como padrão com toggle para light.
 
@@ -22,17 +22,17 @@
 **Step 1: Inicializar git no diretório do projeto**
 
 ```bash
-cd c:/Users/vinic/OneDrive/Projetos/practicus
+cd c:/Users/vinic/OneDrive/Projetos/Praktikus
 git init
 ```
 
-Expected: `Initialized empty Git repository in .../practicus/.git/`
+Expected: `Initialized empty Git repository in .../Praktikus/.git/`
 
 **Step 2: Criar `package.json` raiz**
 
 ```json
 {
-  "name": "practicus",
+  "name": "Praktikus",
   "version": "1.0.0",
   "private": true,
   "scripts": {
@@ -127,7 +127,7 @@ mkdir -p packages/shared/src/enums
 
 ```json
 {
-  "name": "@practicus/shared",
+  "name": "@Praktikus/shared",
   "version": "1.0.0",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -227,7 +227,7 @@ Expected: diretório `apps/backend/` criado com estrutura NestJS padrão.
 Editar `apps/backend/package.json`, adicionar em `dependencies`:
 
 ```json
-"@practicus/shared": "workspace:*"
+"@Praktikus/shared": "workspace:*"
 ```
 
 **Step 3: Atualizar `apps/backend/tsconfig.json`**
@@ -245,7 +245,7 @@ Editar `apps/backend/package.json`, adicionar em `dependencies`:
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "paths": {
-      "@practicus/shared": ["../../packages/shared/src"]
+      "@Praktikus/shared": ["../../packages/shared/src"]
     }
   },
   "include": ["src/**/*"],
@@ -341,9 +341,9 @@ NODE_ENV=development
 # Database
 DB_HOST=localhost
 DB_PORT=5432
-DB_USER=practicus
-DB_PASS=practicus_dev
-DB_NAME=practicus
+DB_USER=Praktikus
+DB_PASS=Praktikus_dev
+DB_NAME=Praktikus
 
 # Redis
 REDIS_HOST=localhost
@@ -386,9 +386,9 @@ PORT=3000
 NODE_ENV=development
 DB_HOST=localhost
 DB_PORT=5432
-DB_USER=practicus
-DB_PASS=practicus_dev
-DB_NAME=practicus
+DB_USER=Praktikus
+DB_PASS=Praktikus_dev
+DB_NAME=Praktikus
 REDIS_HOST=localhost
 REDIS_PORT=6379
 JWT_SECRET=dev_secret_change_in_prod
@@ -486,9 +486,9 @@ describe('Database Connection', () => {
           type: 'postgres',
           host: process.env.DB_HOST ?? 'localhost',
           port: Number(process.env.DB_PORT ?? 5432),
-          username: process.env.DB_USER ?? 'practicus',
-          password: process.env.DB_PASS ?? 'practicus_dev',
-          database: process.env.DB_NAME ?? 'practicus',
+          username: process.env.DB_USER ?? 'Praktikus',
+          password: process.env.DB_PASS ?? 'Praktikus_dev',
+          database: process.env.DB_NAME ?? 'Praktikus',
           entities: [],
           synchronize: false,
         }),
@@ -595,7 +595,7 @@ pnpm add -D @testing-library/react @testing-library/jest-dom @testing-library/us
 Editar `apps/frontend/package.json`, adicionar em `dependencies`:
 
 ```json
-"@practicus/shared": "workspace:*"
+"@Praktikus/shared": "workspace:*"
 ```
 
 **Step 4: Configurar Vitest em `apps/frontend/vite.config.ts`**
@@ -654,7 +654,7 @@ describe('App', () => {
         <App />
       </MemoryRouter>
     );
-    expect(screen.getByText(/Practicus/i)).toBeInTheDocument();
+    expect(screen.getByText(/Praktikus/i)).toBeInTheDocument();
   });
 });
 ```
@@ -790,7 +790,7 @@ export function LandingPage() {
       {/* Header */}
       <Box sx={{ px: 4, py: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Typography variant="h5" fontWeight="bold" color="primary">
-          Practicus
+          Praktikus
         </Typography>
         <Box sx={{ display: 'flex', gap: 2 }}>
           <Button variant="text" href="/login">Entrar</Button>
@@ -951,7 +951,7 @@ COPY --from=deps /app/apps/backend/node_modules ./apps/backend/node_modules
 COPY packages/shared ./packages/shared
 COPY apps/backend ./apps/backend
 COPY tsconfig.base.json ./
-RUN pnpm --filter @practicus/shared build
+RUN pnpm --filter @Praktikus/shared build
 RUN pnpm --filter backend build
 
 FROM node:20-alpine AS runner
@@ -1017,7 +1017,7 @@ COPY --from=deps /app/apps/frontend/node_modules ./apps/frontend/node_modules
 COPY packages/shared ./packages/shared
 COPY apps/frontend ./apps/frontend
 COPY tsconfig.base.json ./
-RUN pnpm --filter @practicus/shared build
+RUN pnpm --filter @Praktikus/shared build
 RUN pnpm --filter frontend build
 
 FROM nginx:alpine AS runner
@@ -1058,9 +1058,9 @@ git commit -m "chore: add Dockerfiles for backend and frontend"
 
 ```env
 # PostgreSQL
-POSTGRES_USER=practicus
-POSTGRES_PASSWORD=practicus_dev
-POSTGRES_DB=practicus
+POSTGRES_USER=Praktikus
+POSTGRES_PASSWORD=Praktikus_dev
+POSTGRES_DB=Praktikus
 
 # Redis
 REDIS_PORT=6379
@@ -1070,9 +1070,9 @@ PORT=3000
 NODE_ENV=development
 DB_HOST=postgres
 DB_PORT=5432
-DB_USER=practicus
-DB_PASS=practicus_dev
-DB_NAME=practicus
+DB_USER=Praktikus
+DB_PASS=Praktikus_dev
+DB_NAME=Praktikus
 REDIS_HOST=redis
 JWT_SECRET=dev_secret_change_in_production
 JWT_EXPIRES_IN=15m
@@ -1096,7 +1096,7 @@ version: '3.9'
 services:
   postgres:
     image: postgres:15-alpine
-    container_name: practicus_postgres
+    container_name: Praktikus_postgres
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -1113,7 +1113,7 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: practicus_redis
+    container_name: Praktikus_redis
     ports:
       - '6379:6379'
     volumes:
@@ -1128,7 +1128,7 @@ services:
     build:
       context: .
       dockerfile: apps/backend/Dockerfile
-    container_name: practicus_backend
+    container_name: Praktikus_backend
     ports:
       - '3000:3000'
     env_file:
@@ -1148,7 +1148,7 @@ services:
     build:
       context: .
       dockerfile: apps/frontend/Dockerfile
-    container_name: practicus_frontend
+    container_name: Praktikus_frontend
     ports:
       - '80:80'
     depends_on:
@@ -1228,7 +1228,7 @@ git commit -m "chore: add Docker Compose for local development"
 **Step 1: Instalar todas as dependências do monorepo**
 
 ```bash
-cd c:/Users/vinic/OneDrive/Projetos/practicus
+cd c:/Users/vinic/OneDrive/Projetos/Praktikus
 pnpm install
 ```
 
@@ -1241,10 +1241,10 @@ docker-compose up --build
 ```
 
 Expected: Logs mostrando:
-- `practicus_postgres` — `database system is ready to accept connections`
-- `practicus_redis` — `Ready to accept connections`
-- `practicus_backend` — `Backend running on http://localhost:3000`
-- `practicus_frontend` — `nginx` iniciando
+- `Praktikus_postgres` — `database system is ready to accept connections`
+- `Praktikus_redis` — `Ready to accept connections`
+- `Praktikus_backend` — `Backend running on http://localhost:3000`
+- `Praktikus_frontend` — `nginx` iniciando
 
 **Step 3: Testar o health check do backend**
 
@@ -1261,7 +1261,7 @@ Expected:
 
 Abrir no browser: `http://localhost:80`
 
-Expected: Landing page da Practicus com dark theme, cards de segmentos visíveis.
+Expected: Landing page da Praktikus com dark theme, cards de segmentos visíveis.
 
 **Step 5: Testar o banco de dados com o backend rodando**
 

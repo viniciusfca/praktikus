@@ -6,7 +6,7 @@
 
 ## 1. Objetivo
 
-Implementar CRUD de clientes e veículos no contexto multi-tenant da Practicus. Clientes podem ser pessoa física (CPF) ou jurídica (CNPJ). Veículos são obrigatoriamente vinculados a um cliente.
+Implementar CRUD de clientes e veículos no contexto multi-tenant da Praktikus. Clientes podem ser pessoa física (CPF) ou jurídica (CNPJ). Veículos são obrigatoriamente vinculados a um cliente.
 
 ---
 

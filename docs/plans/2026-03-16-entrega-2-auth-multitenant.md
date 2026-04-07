@@ -39,9 +39,9 @@ export const AppDataSource = new DataSource({
   type: 'postgres',
   host: process.env.DB_HOST ?? 'localhost',
   port: Number(process.env.DB_PORT ?? 5432),
-  username: process.env.DB_USER ?? 'practicus',
-  password: process.env.DB_PASS ?? 'practicus_dev',
-  database: process.env.DB_NAME ?? 'practicus',
+  username: process.env.DB_USER ?? 'Praktikus',
+  password: process.env.DB_PASS ?? 'Praktikus_dev',
+  database: process.env.DB_NAME ?? 'Praktikus',
   entities: [join(__dirname, '../**/*.entity{.ts,.js}')],
   migrations: [join(__dirname, './migrations/*.{ts,js}')],
   migrationsTableName: 'migrations',
@@ -1519,7 +1519,7 @@ export class BillingService {
           value: parseFloat(planValue),
           nextDueDate: dueDateStr,
           cycle: 'MONTHLY',
-          description: 'Plano Practicus — R$69,90/mês',
+          description: 'Plano Praktikus — R$69,90/mês',
           trialPeriodDays: 30,
         }),
       });
@@ -2267,7 +2267,7 @@ export function LoginPage() {
       <Card sx={{ width: '100%', maxWidth: 420 }}>
         <CardContent sx={{ p: 4 }}>
           <Typography variant="h5" fontWeight="bold" textAlign="center" mb={1}>
-            Practicus
+            Praktikus
           </Typography>
           <Typography variant="body2" color="text.secondary" textAlign="center" mb={3}>
             Acesse sua conta
@@ -2485,7 +2485,7 @@ export function RegisterPage() {
       <Card sx={{ width: '100%', maxWidth: 520 }}>
         <CardContent sx={{ p: 4 }}>
           <Typography variant="h5" fontWeight="bold" textAlign="center" mb={1}>
-            Practicus
+            Praktikus
           </Typography>
           <Typography variant="body2" color="text.secondary" textAlign="center" mb={3}>
             Cadastre sua oficina — 30 dias grátis
@@ -2771,7 +2771,7 @@ export function AppLayout() {
       <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
         <Toolbar sx={{ justifyContent: 'space-between' }}>
           <Typography variant="h6" fontWeight="bold" color="primary">
-            Practicus
+            Praktikus
           </Typography>
           <Box sx={{ display: 'flex', gap: 1 }}>
             <IconButton onClick={toggleTheme} color="inherit"><Brightness4Icon /></IconButton>
@@ -2931,9 +2931,9 @@ Editar `.env` e `.env.example` na raiz:
 
 ```env
 # PostgreSQL
-POSTGRES_USER=practicus
-POSTGRES_PASSWORD=practicus_dev
-POSTGRES_DB=practicus
+POSTGRES_USER=Praktikus
+POSTGRES_PASSWORD=Praktikus_dev
+POSTGRES_DB=Praktikus
 
 # Redis
 REDIS_PORT=6379
@@ -2943,9 +2943,9 @@ PORT=3000
 NODE_ENV=development
 DB_HOST=postgres
 DB_PORT=5432
-DB_USER=practicus
-DB_PASS=practicus_dev
-DB_NAME=practicus
+DB_USER=Praktikus
+DB_PASS=Praktikus_dev
+DB_NAME=Praktikus
 REDIS_HOST=redis
 JWT_SECRET=dev_secret_change_in_production_min_32_chars
 JWT_EXPIRES_IN=15m
@@ -2963,7 +2963,7 @@ VITE_API_URL=http://localhost:3000/api
 **Step 2: Subir todos os serviços**
 
 ```bash
-cd c:/Users/vinic/OneDrive/Projetos/practicus
+cd c:/Users/vinic/OneDrive/Projetos/Praktikus
 docker-compose up --build
 ```
 

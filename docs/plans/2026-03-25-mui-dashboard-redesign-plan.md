@@ -2,7 +2,7 @@
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** Adopt the MUI Dashboard template visual style across the Practicus frontend — new palette, mini/collapsible sidebar, avatar menu — by changing only `theme.ts` and `AppLayout.tsx`.
+**Goal:** Adopt the MUI Dashboard template visual style across the Praktikus frontend — new palette, mini/collapsible sidebar, avatar menu — by changing only `theme.ts` and `AppLayout.tsx`.
 
 **Architecture:** Shell-first approach. Update the theme with the new palette, typography, shape, and global component overrides first (so every page picks up changes automatically). Then rewrite AppLayout with the new sidebar behavior and avatar menu. No page files are modified.
 
@@ -223,7 +223,7 @@ export function AppLayout() {
       >
         {(sidebarOpen || isMobile) && (
           <Typography variant="h6" fontWeight="bold" color="primary" noWrap>
-            Practicus
+            Praktikus
           </Typography>
         )}
         {!isMobile && (
