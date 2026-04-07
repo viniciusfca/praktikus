@@ -19,6 +19,7 @@ import { ServiceOrderDetailPage } from './pages/workshop/service-orders/ServiceO
 import { ReportsPage } from './pages/workshop/reports/ReportsPage';
 import { SettingsPage } from './pages/workshop/settings/SettingsPage';
 import { QuoteApprovalPage } from './pages/public/QuoteApprovalPage';
+import { SuspendedPage } from './pages/public/SuspendedPage';
 import { PrivateRoute } from './components/PrivateRoute';
 import { useAuthStore } from './store/auth.store';
 
@@ -36,6 +37,7 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/quotes/:token" element={<QuoteApprovalPage />} />
+          <Route path="/suspended" element={<SuspendedPage />} />
           <Route
             path="/workshop"
             element={
