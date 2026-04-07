@@ -104,4 +104,32 @@ describe('BillingController', () => {
     await expect(controller.handleWebhook(sig, makeRawReq(rawBody), payload)).resolves.toBeUndefined();
     expect(mockTenancyService.updateStatus).not.toHaveBeenCalled();
   });
+
+  it('should return 200 and NOT call updateStatus when subscriptionId is not found in DB', async () => {
+    const payload = { event: 'PAYMENT_RECEIVED', payment: { subscription: 'sub-unknown' } };
+    const rawBody = JSON.stringify(payload);
+    const sig = makeSignature(rawBody, 'test-secret');
+    mockBillingService.findTenantIdBySubscriptionId.mockResolvedValue(null);
+
+    await expect(controller.handleWebhook(sig, makeRawReq(rawBody), payload)).resolves.toBeUndefined();
+    expect(mockBillingService.findTenantIdBySubscriptionId).toHaveBeenCalledWith('sub-unknown');
+    expect(mockTenancyService.updateStatus).not.toHaveBeenCalled();
+  });
+
+  it('should return 200 and NOT call updateStatus when known event has no subscriptionId', async () => {
+    const payload = { event: 'PAYMENT_RECEIVED' }; // no payment.subscription, no subscription.id
+    const rawBody = JSON.stringify(payload);
+    const sig = makeSignature(rawBody, 'test-secret');
+
+    await expect(controller.handleWebhook(sig, makeRawReq(rawBody), payload)).resolves.toBeUndefined();
+    expect(mockBillingService.findTenantIdBySubscriptionId).not.toHaveBeenCalled();
+    expect(mockTenancyService.updateStatus).not.toHaveBeenCalled();
+  });
+
+  it('should throw ForbiddenException when rawBody is missing', async () => {
+    const req = {}; // no rawBody property
+    await expect(
+      controller.handleWebhook('any-sig', req as any, {}),
+    ).rejects.toThrow(ForbiddenException);
+  });
 });

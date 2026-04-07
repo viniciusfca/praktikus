@@ -42,10 +42,20 @@ export class BillingController {
     @Body() payload: any,
   ): Promise<void> {
     const secret = this.config.get<string>('ASAAS_WEBHOOK_TOKEN', '');
-    const rawBody = req.rawBody?.toString() ?? '';
+
+    if (!secret || !req.rawBody) {
+      throw new ForbiddenException('Assinatura de webhook inválida');
+    }
+
+    const rawBody = req.rawBody.toString();
     const expected = crypto.createHmac('sha256', secret).update(rawBody).digest('hex');
 
-    if (!secret || signature !== expected) {
+    const sigBuffer = Buffer.from(signature ?? '', 'hex');
+    const expBuffer = Buffer.from(expected, 'hex');
+    const isValid =
+      sigBuffer.length === expBuffer.length && crypto.timingSafeEqual(sigBuffer, expBuffer);
+
+    if (!isValid) {
       throw new ForbiddenException('Assinatura de webhook inválida');
     }
 
