@@ -31,6 +31,9 @@ import { ReportsModule } from './modules/workshop/reports/reports.module';
   ],
   controllers: [HealthController],
   providers: [
+    // Global guard — runs before per-route guards (JwtAuthGuard, RolesGuard).
+    // Safely short-circuits when req.user is undefined (unauthenticated routes).
+    // Guard chain: TenantStatusGuard (global) → JwtAuthGuard → RolesGuard (per route).
     { provide: APP_GUARD, useClass: TenantStatusGuard },
   ],
 })
