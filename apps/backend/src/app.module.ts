@@ -1,5 +1,6 @@
 import { MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 import { APP_GUARD } from '@nestjs/core';
 import { HealthController } from './health/health.controller';
 import { DatabaseModule } from './database/database.module';
@@ -19,6 +20,7 @@ import { BillingModule } from './modules/core/billing/billing.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true, envFilePath: '.env' }),
+    ScheduleModule.forRoot(),
     DatabaseModule,
     TenancyModule,
     AuthModule,
