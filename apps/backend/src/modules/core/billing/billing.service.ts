@@ -121,7 +121,7 @@ export class BillingService {
       if (!tenant?.billingAnchorDate) continue;
 
       const anchor = new Date(tenant.billingAnchorDate);
-      if (anchor.getDate() !== todayDay || anchor.getMonth() + 1 !== todayMonth) continue;
+      if (anchor.getDate() !== todayDay) continue;
 
       let ipcaRate: number;
       try {
@@ -143,12 +143,17 @@ export class BillingService {
       const baseUrl = this.config.get<string>('ASAAS_API_URL', 'https://sandbox.asaas.com/api/v3');
 
       try {
-        await fetch(`${baseUrl}/subscriptions/${billing.asaasSubscriptionId}`, {
+        const patchRes = await fetch(`${baseUrl}/subscriptions/${billing.asaasSubscriptionId}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json', access_token: apiKey },
           body: JSON.stringify({ value: newValue }),
         });
-        this.logger.log(`Reajuste anual aplicado tenant ${billing.tenantId}: R$${currentValue} → R$${newValue}`);
+        if (!patchRes.ok) {
+          const body = await patchRes.text();
+          this.logger.error(`Asaas PATCH failed for tenant ${billing.tenantId}: ${patchRes.status} ${body}`);
+        } else {
+          this.logger.log(`Reajuste anual aplicado tenant ${billing.tenantId}: R$${currentValue} → R$${newValue}`);
+        }
       } catch (err) {
         this.logger.error(`Asaas PATCH subscription failed for tenant ${billing.tenantId}: ${(err as Error).message}`);
       }

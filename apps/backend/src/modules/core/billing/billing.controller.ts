@@ -1,13 +1,13 @@
 import {
   Body,
   Controller,
-  ForbiddenException,
   Headers,
   HttpCode,
   HttpStatus,
   Logger,
   Post,
   Req,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Request } from 'express';
@@ -44,7 +44,7 @@ export class BillingController {
     const secret = this.config.get<string>('ASAAS_WEBHOOK_TOKEN', '');
 
     if (!secret || !req.rawBody) {
-      throw new ForbiddenException('Assinatura de webhook inválida');
+      throw new UnauthorizedException('Assinatura de webhook inválida');
     }
 
     const rawBody = req.rawBody.toString();
@@ -56,7 +56,7 @@ export class BillingController {
       sigBuffer.length === expBuffer.length && crypto.timingSafeEqual(sigBuffer, expBuffer);
 
     if (!isValid) {
-      throw new ForbiddenException('Assinatura de webhook inválida');
+      throw new UnauthorizedException('Assinatura de webhook inválida');
     }
 
     const targetStatus = EVENT_STATUS_MAP[payload?.event];

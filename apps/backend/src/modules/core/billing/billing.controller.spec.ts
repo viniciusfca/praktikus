@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ForbiddenException } from '@nestjs/common';
+import { UnauthorizedException } from '@nestjs/common';
 import { BillingController } from './billing.controller';
 import { BillingService } from './billing.service';
 import { TenancyService } from '../tenancy/tenancy.service';
@@ -45,11 +45,11 @@ describe('BillingController', () => {
     jest.clearAllMocks();
   });
 
-  it('should throw ForbiddenException for invalid signature', async () => {
+  it('should throw UnauthorizedException for invalid signature', async () => {
     const rawBody = '{"event":"PAYMENT_RECEIVED"}';
     await expect(
       controller.handleWebhook('invalid-sig', makeRawReq(rawBody), {}),
-    ).rejects.toThrow(ForbiddenException);
+    ).rejects.toThrow(UnauthorizedException);
   });
 
   it('should update status to ACTIVE on PAYMENT_RECEIVED', async () => {
@@ -126,10 +126,10 @@ describe('BillingController', () => {
     expect(mockTenancyService.updateStatus).not.toHaveBeenCalled();
   });
 
-  it('should throw ForbiddenException when rawBody is missing', async () => {
+  it('should throw UnauthorizedException when rawBody is missing', async () => {
     const req = {}; // no rawBody property
     await expect(
       controller.handleWebhook('any-sig', req as any, {}),
-    ).rejects.toThrow(ForbiddenException);
+    ).rejects.toThrow(UnauthorizedException);
   });
 });
