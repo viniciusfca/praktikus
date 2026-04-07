@@ -26,7 +26,7 @@ export function LandingPage() {
     <div style={{ minHeight: '100vh' }}>
       {/* Header */}
       <div className="d-flex justify-content-between align-items-center px-4 py-3">
-        <span className="fw-bold fs-5 text-primary">Practicus</span>
+        <span className="fw-bold fs-5 text-primary">Praktikus</span>
         <div className="d-flex gap-2">
           <CButton color="secondary" variant="ghost" href="/login">Entrar</CButton>
           <CButton color="primary" href="/register">Começar grátis</CButton>

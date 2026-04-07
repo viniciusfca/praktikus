@@ -81,7 +81,7 @@ export function RegisterPage() {
     >
       <CCard style={{ width: '100%', maxWidth: 520 }}>
         <CCardBody className="p-4">
-          <h5 className="fw-bold text-center mb-1">Practicus</h5>
+          <h5 className="fw-bold text-center mb-1">Praktikus</h5>
           <p className="text-secondary text-center mb-3">Cadastre sua oficina — 30 dias grátis</p>
 
           {/* Step indicator */}

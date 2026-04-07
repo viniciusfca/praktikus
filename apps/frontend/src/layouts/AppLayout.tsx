@@ -161,7 +161,7 @@ export function AppLayout() {
           style={{ minHeight: 56 }}
         >
           {(sidebarOpen || isMobile) && (
-            <span className="fw-bold text-primary fs-5">Practicus</span>
+            <span className="fw-bold text-primary fs-5">Praktikus</span>
           )}
           {!isMobile && (
             <button

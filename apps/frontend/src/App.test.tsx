@@ -10,6 +10,6 @@ describe('App', () => {
 
   it('renders the landing page on root route', () => {
     render(<MemoryRouter><App /></MemoryRouter>);
-    expect(screen.getByText(/Practicus/i)).toBeInTheDocument();
+    expect(screen.getByText(/Praktikus/i)).toBeInTheDocument();
   });
 });
