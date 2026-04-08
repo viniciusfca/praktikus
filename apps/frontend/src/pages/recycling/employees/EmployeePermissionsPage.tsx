@@ -37,9 +37,8 @@ export function EmployeePermissionsPage() {
     register,
     handleSubmit,
     reset,
-    formState: { isSubmitting },
+    formState: { errors, isSubmitting },
     setError,
-    formState: { errors },
   } = useForm<PermissionsFormData>();
 
   useEffect(() => {

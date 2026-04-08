@@ -38,7 +38,7 @@ export class EmployeePermissionsGuard implements CanActivate {
 
     try {
       const perms = await this.employeesService.getPermissions(user.tenantId, user.userId);
-      return !!(perms as any)[permKey];
+      return !!(perms as Record<string, unknown>)[permKey];
     } catch {
       throw new ForbiddenException('Sem permissão para esta ação.');
     }
