@@ -8,6 +8,9 @@ import { RegisterRecyclingPage } from './pages/auth/RegisterRecyclingPage';
 import { AppLayout } from './layouts/AppLayout';
 import { RecyclingLayout } from './layouts/RecyclingLayout';
 import { RecyclingDashboardPage } from './pages/recycling/DashboardPage';
+import { EmployeesPage } from './pages/recycling/employees/EmployeesPage';
+import { EmployeeFormPage } from './pages/recycling/employees/EmployeeFormPage';
+import { EmployeePermissionsPage } from './pages/recycling/employees/EmployeePermissionsPage';
 import { DashboardPage } from './pages/workshop/DashboardPage';
 import { CustomersPage } from './pages/workshop/customers/CustomersPage';
 import { CustomerFormPage } from './pages/workshop/customers/CustomerFormPage';
@@ -77,6 +80,9 @@ function App() {
           >
             <Route index element={<Navigate to="dashboard" replace />} />
             <Route path="dashboard" element={<RecyclingDashboardPage />} />
+            <Route path="employees" element={<EmployeesPage />} />
+            <Route path="employees/new" element={<EmployeeFormPage />} />
+            <Route path="employees/:id/permissions" element={<EmployeePermissionsPage />} />
           </Route>
         </Routes>
     </AppThemeProvider>

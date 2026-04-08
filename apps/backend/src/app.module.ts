@@ -16,6 +16,7 @@ import { AppointmentsModule } from './modules/workshop/appointments/appointments
 import { ServiceOrdersModule } from './modules/workshop/service-orders/service-orders.module';
 import { ReportsModule } from './modules/workshop/reports/reports.module';
 import { BillingModule } from './modules/core/billing/billing.module';
+import { RecyclingModule } from './modules/recycling/recycling.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { BillingModule } from './modules/core/billing/billing.module';
     AppointmentsModule,
     ServiceOrdersModule,
     ReportsModule,
+    RecyclingModule,
   ],
   controllers: [HealthController],
   providers: [
