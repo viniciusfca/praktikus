@@ -19,7 +19,7 @@ Banco: PostgreSQL com isolamento por **schema por tenant**. Cache: Redis. Billin
 
 | O que criar | Onde criar |
 |-------------|-----------|
-| Novo módulo de domínio (backend) | `apps/backend/src/modules/<nome>/` |
+| Novo módulo de domínio (backend) | `apps/backend/src/modules/workshop/<nome>/` (features de oficina) ou `apps/backend/src/modules/core/<nome>/` (auth, billing, infra) |
 | Componente reutilizável (frontend) | `apps/frontend/src/components/` |
 | Nova página (frontend) | `apps/frontend/src/pages/` |
 | Hook customizado (frontend) | `apps/frontend/src/hooks/` |
@@ -43,8 +43,7 @@ modules/<nome>/
 ├── dto/
 │   ├── create-<nome>.dto.ts
 │   └── update-<nome>.dto.ts
-└── entities/
-    └── <nome>.entity.ts
+└── <nome>.entity.ts
 ```
 
 ### Regras obrigatórias
@@ -55,7 +54,7 @@ modules/<nome>/
 - **Guards de autenticação/autorização nas rotas** (decorators no controller), não dentro dos services.
 - **Testes unitários** em arquivos `*.spec.ts` dentro de `src/`. Testes de integração em `test/integration/`.
 - **Injeção de dependência** sempre via construtor — nunca instancie services manualmente.
-- **Multi-tenancy**: o contexto do tenant é resolvido pelo `TenancyMiddleware` e disponibilizado via `REQUEST`. Nunca passe `tenantId` como parâmetro de método entre services internos — use o contexto.
+- **Multi-tenancy**: o controller extrai `tenantId` de `req.user.tenantId` (pós-guard JWT) e passa explicitamente para cada método do service. Nunca use `req.tenantId` do middleware diretamente nos services — ele não é verificado. Nunca encadeie `tenantId` de service para service sem extrair do controller.
 
 ### Migrations
 
@@ -80,7 +79,7 @@ Migrations ficam em `apps/backend/src/database/migrations/`. **Nunca edite uma m
 
 - **Estado global via Zustand** (`src/store/`). Não use React Context para estado de aplicação — use apenas para injeção de dependência leve (ex: tema, i18n).
 - **Chamadas de API apenas em `src/services/`** com axios. Nunca faça chamadas HTTP diretamente dentro de componentes.
-- **Formulários com `react-hook-form` + `zod`**. Nunca use `useState` para gerenciar campos de formulário.
+- **Formulários com `react-hook-form` + `zod`**. Nunca use `useState` para gerenciar **valores de campos de formulário**. `useState` é permitido para estado de UI local (loading, listas carregadas assincronamente, erros de fetch).
 - **Sem lógica de negócio em componentes**. Extraia para hooks customizados em `src/hooks/`.
 - **Componentes de página** ficam em `src/pages/` e são responsáveis apenas por composição. Lógica vai em hooks, dados vêm do store ou de hooks.
 - **Validação de schemas** sempre com `zod`. O schema pode ser importado de `@praktikus/shared` quando for compartilhado com o backend.
@@ -90,14 +89,14 @@ Migrations ficam em `apps/backend/src/database/migrations/`. **Nunca edite uma m
 ## Pacote Shared (`packages/shared/`)
 
 Tudo que é usado tanto no backend quanto no frontend deve ficar aqui:
-- Tipos de entidades (ex: `User`, `Vehicle`, `ServiceOrder`)
-- Enums (ex: `ServiceOrderStatus`, `UserRole`)
+- Enums atualmente exportados: `Role` (roles de usuário) e `TenantStatus` (status do plano)
+- Adicione aqui novos tipos, DTOs e enums que precisem ser compartilhados entre backend e frontend
 - Schemas Zod de validação reutilizáveis
 
 Importe sempre como `@praktikus/shared`:
 
 ```typescript
-import { ServiceOrderStatus, UserRole } from '@praktikus/shared'
+import { Role, TenantStatus } from '@praktikus/shared'
 ```
 
 ---
@@ -122,11 +121,11 @@ import { ServiceOrderStatus, UserRole } from '@praktikus/shared'
 - ❌ **Não use `synchronize: true` no TypeORM** fora de testes — sempre migrations
 - ❌ **Não edite migrations já executadas** — crie uma nova
 - ❌ **Não faça chamadas HTTP dentro de componentes React** — use services
-- ❌ **Não use `useState` para formulários** — use react-hook-form
+- ❌ **Não use `useState` para valores de campos de formulário** — use react-hook-form. `useState` para estado de UI local (loading, erros, listas async) é permitido.
 - ❌ **Não use React Context para estado global** — use Zustand
 - ❌ **Não duplique tipos entre backend e frontend** — coloque em `@praktikus/shared`
 - ❌ **Não instancie services manualmente** — use injeção de dependência do NestJS
-- ❌ **Não passe `tenantId` como parâmetro entre services** — use o contexto de tenant
+- ❌ **Não use `req.tenantId` do middleware nos services** — sempre extraia `tenantId` de `req.user.tenantId` no controller (pós-guard) e passe explicitamente
 
 ---
 
