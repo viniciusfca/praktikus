@@ -120,7 +120,7 @@ curl http://localhost:3000/health
 
 ## Scripts disponíveis
 
-### Raíz (monorepo)
+### Raiz (monorepo)
 
 | Script | Descrição |
 |--------|-----------|
