@@ -17,7 +17,7 @@ COPY --from=deps /app/apps/frontend/node_modules ./apps/frontend/node_modules
 COPY packages/shared ./packages/shared
 COPY apps/frontend ./apps/frontend
 COPY tsconfig.base.json ./
-RUN pnpm --filter @practicus/shared build
+RUN pnpm --filter @praktikus/shared build
 RUN pnpm --filter frontend build
 
 FROM nginx:alpine AS runner

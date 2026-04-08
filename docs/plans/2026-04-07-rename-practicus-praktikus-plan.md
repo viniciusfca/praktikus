@@ -1,10 +1,10 @@
-# Rename Practicus → Praktikus Implementation Plan
+# Rename praktikus → Praktikus Implementation Plan
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** Renomear a marca do produto de "Practicus" para "Praktikus" em todo o código, configuração e documentação do monorepo.
+**Goal:** Renomear a marca do produto de "praktikus" para "Praktikus" em todo o código, configuração e documentação do monorepo.
 
-**Architecture:** Find & replace global preservando capitalização (`Practicus` → `Praktikus`, `practicus` → `praktikus`). Sem mudanças de lógica — apenas texto. Três tarefas agrupadas por categoria, cada uma com seu commit.
+**Architecture:** Find & replace global preservando capitalização (`praktikus` → `Praktikus`, `praktikus` → `praktikus`). Sem mudanças de lógica — apenas texto. Três tarefas agrupadas por categoria, cada uma com seu commit.
 
 **Tech Stack:** PowerShell (sed equivalente no Windows), NestJS, React, pnpm workspaces.
 
@@ -21,18 +21,18 @@
 
 **Step 1: Fazer as substituições**
 
-Em cada arquivo, substituir `Practicus` por `Praktikus`.
+Em cada arquivo, substituir `praktikus` por `Praktikus`.
 
 **Step 2: Verificar as substituições**
 
 ```bash
-grep -n "Practicus\|practicus" apps/frontend/src/layouts/AppLayout.tsx \
+grep -n "praktikus\|praktikus" apps/frontend/src/layouts/AppLayout.tsx \
   apps/frontend/src/pages/auth/LoginPage.tsx \
   apps/frontend/src/pages/auth/RegisterPage.tsx \
   apps/frontend/src/pages/LandingPage.tsx \
   apps/frontend/src/App.test.tsx
 ```
-Expected: nenhuma linha com "Practicus" ou "practicus"
+Expected: nenhuma linha com "praktikus" ou "praktikus"
 
 **Step 3: Rodar testes frontend**
 
@@ -56,7 +56,7 @@ git add apps/frontend/src/layouts/AppLayout.tsx \
         apps/frontend/src/pages/auth/RegisterPage.tsx \
         apps/frontend/src/pages/LandingPage.tsx \
         apps/frontend/src/App.test.tsx
-git commit -m "chore: rename Practicus → Praktikus in frontend UI and tests"
+git commit -m "chore: rename praktikus → Praktikus in frontend UI and tests"
 ```
 
 ---
@@ -69,13 +69,13 @@ git commit -m "chore: rename Practicus → Praktikus in frontend UI and tests"
 
 **Step 1: Fazer as substituições**
 
-Em `billing.service.ts`, substituir `Plano Practicus` por `Plano Praktikus`.
-Em `data-source.ts`, substituir os defaults: `practicus` → `praktikus`, `practicus_dev` → `praktikus_dev`.
+Em `billing.service.ts`, substituir `Plano praktikus` por `Plano Praktikus`.
+Em `data-source.ts`, substituir os defaults: `praktikus` → `praktikus`, `praktikus_dev` → `praktikus_dev`.
 
 **Step 2: Verificar**
 
 ```bash
-grep -n "practicus\|Practicus" apps/backend/src/modules/core/billing/billing.service.ts \
+grep -n "praktikus\|praktikus" apps/backend/src/modules/core/billing/billing.service.ts \
   apps/backend/src/database/data-source.ts
 ```
 Expected: nenhuma linha
@@ -92,7 +92,7 @@ Expected: todos os testes passam
 ```bash
 git add apps/backend/src/modules/core/billing/billing.service.ts \
         apps/backend/src/database/data-source.ts
-git commit -m "chore: rename Practicus → Praktikus in backend source"
+git commit -m "chore: rename praktikus → Praktikus in backend source"
 ```
 
 ---
@@ -111,25 +111,25 @@ git commit -m "chore: rename Practicus → Praktikus in backend source"
 
 **Step 1: Renomear pacote compartilhado e path alias**
 
-Substituir `@practicus/shared` → `@praktikus/shared` em:
+Substituir `@praktikus/shared` → `@praktikus/shared` em:
 - `packages/shared/package.json`
 - `apps/backend/package.json`
 - `apps/frontend/package.json`
 - `apps/backend/tsconfig.json`
 
-Substituir `"name": "practicus"` → `"name": "praktikus"` em `package.json`.
+Substituir `"name": "praktikus"` → `"name": "praktikus"` em `package.json`.
 
 **Step 2: Renomear containers Docker**
 
-Substituir `practicus_` → `praktikus_` em `docker-compose.yml`.
+Substituir `praktikus_` → `praktikus_` em `docker-compose.yml`.
 
 **Step 3: Atualizar integration test defaults**
 
-Em `apps/backend/test/integration/database.module.spec.ts`, substituir defaults: `practicus` → `praktikus`, `practicus_dev` → `praktikus_dev`.
+Em `apps/backend/test/integration/database.module.spec.ts`, substituir defaults: `praktikus` → `praktikus`, `praktikus_dev` → `praktikus_dev`.
 
 **Step 4: Atualizar docs (exceto docs de rename)**
 
-Substituir `Practicus` → `Praktikus` e `practicus` → `praktikus` em todos os `.md` de `docs/plans/`, exceto os dois documentos de rename.
+Substituir `praktikus` → `Praktikus` e `praktikus` → `praktikus` em todos os `.md` de `docs/plans/`, exceto os dois documentos de rename.
 
 **Step 5: Reinstalar dependências**
 
@@ -152,7 +152,7 @@ git add package.json packages/shared/package.json \
         apps/backend/tsconfig.json \
         apps/backend/test/integration/database.module.spec.ts \
         docker-compose.yml docs/plans/ pnpm-lock.yaml
-git commit -m "chore: rename practicus → praktikus in configs, docker and docs"
+git commit -m "chore: rename praktikus → praktikus in configs, docker and docs"
 ```
 
 ---
