@@ -13,6 +13,7 @@ import { UserEntity, UserRole } from './user.entity';
 import { RefreshTokenEntity } from './refresh-token.entity';
 import { TenancyService } from '../tenancy/tenancy.service';
 import { TenantStatus } from '../tenancy/tenant.entity';
+import { TenantSegment } from '@praktikus/shared';
 import { BillingService } from '../billing/billing.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -56,6 +57,7 @@ export class AuthService {
           nomeFantasia: dto.nomeFantasia,
           telefone: dto.telefone,
           endereco: dto.endereco,
+          segment: dto.segment,
         },
         manager,
       );
@@ -78,7 +80,7 @@ export class AuthService {
     // and billing can be retried via a separate flow.
     await this.billingService.setupTrial(tenant.id, dto.email, dto.nomeFantasia);
 
-    return this.generateTokens(user, tenant.status);
+    return this.generateTokens(user, tenant.status, tenant.segment);
   }
 
   async login(dto: LoginDto): Promise<AuthTokens> {
@@ -93,7 +95,7 @@ export class AuthService {
     }
 
     const tenant = await this.tenancyService.findById(user.tenantId);
-    return this.generateTokens(user, tenant?.status ?? TenantStatus.ACTIVE);
+    return this.generateTokens(user, tenant?.status ?? TenantStatus.ACTIVE, tenant?.segment);
   }
 
   async refresh(refreshToken: string): Promise<AuthTokens> {
@@ -119,7 +121,7 @@ export class AuthService {
     }
 
     const tenant = await this.tenancyService.findById(user.tenantId);
-    return this.generateTokens(user, tenant?.status ?? TenantStatus.ACTIVE);
+    return this.generateTokens(user, tenant?.status ?? TenantStatus.ACTIVE, tenant?.segment);
   }
 
   async logout(refreshToken: string): Promise<void> {
@@ -149,7 +151,7 @@ export class AuthService {
     await this.userRepo.save(user);
   }
 
-  private async generateTokens(user: UserEntity, tenantStatus: string): Promise<AuthTokens> {
+  private async generateTokens(user: UserEntity, tenantStatus: string, tenantSegment?: TenantSegment): Promise<AuthTokens> {
     // name and email are included for UI display only.
     // Backend guards must never rely on these JWT claims as authoritative —
     // always re-fetch from the database for any security-sensitive operation.
@@ -160,6 +162,7 @@ export class AuthService {
       name: user.name,
       email: user.email,
       tenant_status: tenantStatus,
+      tenant_segment: tenantSegment ?? TenantSegment.WORKSHOP,
     };
 
     const accessToken = this.jwtService.sign(payload, { expiresIn: '15m' });

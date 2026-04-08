@@ -4,7 +4,10 @@ import { AppThemeProvider } from './theme/ThemeProvider';
 import { LandingPage } from './pages/LandingPage';
 import { LoginPage } from './pages/auth/LoginPage';
 import { RegisterPage } from './pages/auth/RegisterPage';
+import { RegisterRecyclingPage } from './pages/auth/RegisterRecyclingPage';
 import { AppLayout } from './layouts/AppLayout';
+import { RecyclingLayout } from './layouts/RecyclingLayout';
+import { RecyclingDashboardPage } from './pages/recycling/DashboardPage';
 import { DashboardPage } from './pages/workshop/DashboardPage';
 import { CustomersPage } from './pages/workshop/customers/CustomersPage';
 import { CustomerFormPage } from './pages/workshop/customers/CustomerFormPage';
@@ -36,6 +39,7 @@ function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/register/recycling" element={<RegisterRecyclingPage />} />
           <Route path="/quotes/:token" element={<QuoteApprovalPage />} />
           <Route path="/suspended" element={<SuspendedPage />} />
           <Route
@@ -62,6 +66,17 @@ function App() {
             <Route path="service-orders/:id" element={<ServiceOrderDetailPage />} />
             <Route path="reports" element={<ReportsPage />} />
             <Route path="settings" element={<SettingsPage />} />
+          </Route>
+          <Route
+            path="/recycling"
+            element={
+              <PrivateRoute>
+                <RecyclingLayout />
+              </PrivateRoute>
+            }
+          >
+            <Route index element={<Navigate to="dashboard" replace />} />
+            <Route path="dashboard" element={<RecyclingDashboardPage />} />
           </Route>
         </Routes>
     </AppThemeProvider>

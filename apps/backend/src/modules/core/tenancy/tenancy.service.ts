@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource, EntityManager } from 'typeorm';
 import { TenantEntity, TenantStatus } from './tenant.entity';
+import { TenantSegment } from '@praktikus/shared';
 import { createTenantTablesSql } from '../../../database/tenant-migrations/create-tenant-tables';
 
 interface CreateTenantInput {
@@ -10,6 +11,7 @@ interface CreateTenantInput {
   nomeFantasia: string;
   telefone?: string;
   endereco?: TenantEntity['endereco'];
+  segment?: TenantSegment;
 }
 
 @Injectable()
@@ -48,6 +50,7 @@ export class TenancyService {
       status: TenantStatus.TRIAL,
       trialEndsAt,
       billingAnchorDate: new Date(),
+      segment: input.segment ?? TenantSegment.WORKSHOP,
     });
 
     const saved = await this.tenantRepo.save(tenant);
@@ -78,6 +81,7 @@ export class TenancyService {
       status: TenantStatus.TRIAL,
       trialEndsAt,
       billingAnchorDate: new Date(),
+      segment: input.segment ?? TenantSegment.WORKSHOP,
     });
 
     const saved = await manager.save(tenant);

@@ -8,6 +8,7 @@ export interface RegisterPayload {
   password: string;
   ownerName: string;
   telefone?: string;
+  segment?: 'WORKSHOP' | 'RECYCLING';
 }
 
 export interface LoginPayload {
