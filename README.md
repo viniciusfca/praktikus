@@ -107,7 +107,7 @@ Isso sobe os containers:
 - **postgres** — PostgreSQL na porta `5432`
 - **redis** — Redis na porta `6379`
 - **backend** — API NestJS em `http://localhost:3000`
-- **frontend** — React em `http://localhost:5173`
+- **frontend** — React em `http://localhost:80` (ou simplesmente `http://localhost`)
 
 ### 4. Verifique que está funcionando
 
@@ -133,7 +133,7 @@ curl http://localhost:3000/health
 
 | Script | Descrição |
 |--------|-----------|
-| `pnpm dev:backend` | Sobe o backend em modo watch |
+| `pnpm --filter backend start:dev` | Sobe o backend em modo watch |
 | `pnpm --filter backend test` | Roda testes unitários |
 | `pnpm --filter backend test:e2e` | Roda testes de integração |
 | `pnpm --filter backend migration:generate` | Gera migration com base nas entities |

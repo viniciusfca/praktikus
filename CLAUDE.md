@@ -109,7 +109,7 @@ import { Role, TenantStatus } from '@praktikus/shared'
 | Classes | PascalCase | `UserService`, `CreateUserDto` |
 | Variáveis e funções | camelCase | `userId`, `createUser()` |
 | Constantes globais | SCREAMING_SNAKE_CASE | `MAX_RETRY_COUNT` |
-| Enums | PascalCase (nome) + SCREAMING_SNAKE_CASE (valores) | `UserRole.OWNER` |
+| Enums | PascalCase (nome) + SCREAMING_SNAKE_CASE (valores) | `Role.OWNER`, `TenantStatus.ACTIVE` |
 | Tabelas PostgreSQL | snake_case | `service_orders` |
 | Colunas PostgreSQL | snake_case | `created_at`, `tenant_schema` |
 
