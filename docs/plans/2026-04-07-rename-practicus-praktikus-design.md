@@ -1,4 +1,4 @@
-# Design: Rename Praktikus → Praktikus
+# Design: Rename Practicus → Praktikus
 
 **Data:** 2026-04-07
 **Status:** Aprovado
@@ -7,7 +7,7 @@
 
 ## Objetivo
 
-Renomear a marca do produto de "Praktikus" para "Praktikus" em todo o código, configuração e documentação do monorepo.
+Renomear a marca do produto de "Practicus" para "Praktikus" em todo o código, configuração e documentação do monorepo.
 
 ---
 
@@ -15,8 +15,8 @@ Renomear a marca do produto de "Praktikus" para "Praktikus" em todo o código, c
 
 Find & replace global preservando capitalização, em um único commit:
 
-- `Praktikus` → `Praktikus`
-- `Praktikus` → `praktikus`
+- `Practicus` → `Praktikus`
+- `practicus` → `praktikus`
 
 ---
 
@@ -36,28 +36,30 @@ Find & replace global preservando capitalização, em um único commit:
 | Arquivo | Conteúdo alterado |
 |---|---|
 | `apps/backend/src/modules/core/billing/billing.service.ts` | Descrição do plano no Asaas |
-| `apps/backend/src/database/data-source.ts` | Defaults de DB (`Praktikus` → `praktikus`, `Praktikus_dev` → `praktikus_dev`) |
+| `apps/backend/src/database/data-source.ts` | Defaults de DB (`practicus` → `praktikus`, `practicus_dev` → `praktikus_dev`) |
 
 ### Package names (infra)
 
 | Arquivo | Conteúdo alterado |
 |---|---|
-| `package.json` (raiz) | `"name": "Praktikus"` → `"name": "praktikus"` |
-| `packages/shared/package.json` | `@Praktikus/shared` → `@praktikus/shared` |
-| `apps/backend/package.json` | dependency `@Praktikus/shared` → `@praktikus/shared` |
-| `apps/frontend/package.json` | dependency `@Praktikus/shared` → `@praktikus/shared` |
+| `package.json` (raiz) | `"name": "practicus"` → `"name": "praktikus"` |
+| `packages/shared/package.json` | `@practicus/shared` → `@praktikus/shared` |
+| `apps/backend/package.json` | dependency `@practicus/shared` → `@praktikus/shared` |
+| `apps/frontend/package.json` | dependency `@practicus/shared` → `@praktikus/shared` |
+| `apps/backend/tsconfig.json` | path alias `@practicus/shared` → `@praktikus/shared` |
 
 ### Docker
 
 | Arquivo | Conteúdo alterado |
 |---|---|
-| `docker-compose.yml` | Container names `Praktikus_*` → `praktikus_*` |
+| `docker-compose.yml` | Container names `practicus_*` → `praktikus_*` |
 
 ### Testes
 
 | Arquivo | Conteúdo alterado |
 |---|---|
-| `apps/frontend/src/App.test.tsx` | Regex `/Praktikus/i` → `/Praktikus/i` |
+| `apps/frontend/src/App.test.tsx` | Regex `/Practicus/i` → `/Praktikus/i` |
+| `apps/backend/test/integration/database.module.spec.ts` | DB defaults `practicus` → `praktikus` |
 
 ### Documentação
 
@@ -68,7 +70,7 @@ Find & replace global preservando capitalização, em um único commit:
 ## Fora do Escopo
 
 - Nome do repositório GitHub (gerenciado fora do código)
-- Pasta do projeto no disco (`/Projetos/Praktikus`) — sem impacto no código
+- Pasta do projeto no disco (`/Projetos/practicus`) — sem impacto no código
 - Variáveis de ambiente reais em `.env` files (não versionadas)
 
 ---

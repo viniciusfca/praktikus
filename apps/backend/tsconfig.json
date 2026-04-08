@@ -11,8 +11,8 @@
     "emitDecoratorMetadata": true,
     "strictPropertyInitialization": false,
     "paths": {
-      "@practicus/shared": ["../../packages/shared/src"],
-      "@practicus/shared/*": ["../../packages/shared/src/*"]
+      "@praktikus/shared": ["../../packages/shared/src"],
+      "@praktikus/shared/*": ["../../packages/shared/src/*"]
     }
   },
   "include": ["src/**/*"],
