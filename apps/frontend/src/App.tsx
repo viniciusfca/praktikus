@@ -45,7 +45,7 @@ function App() {
           <Route
             path="/workshop"
             element={
-              <PrivateRoute>
+              <PrivateRoute requiredSegment="WORKSHOP">
                 <AppLayout />
               </PrivateRoute>
             }
@@ -70,7 +70,7 @@ function App() {
           <Route
             path="/recycling"
             element={
-              <PrivateRoute>
+              <PrivateRoute requiredSegment="RECYCLING">
                 <RecyclingLayout />
               </PrivateRoute>
             }

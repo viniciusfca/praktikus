@@ -60,7 +60,7 @@ export function RegisterRecyclingPage() {
     setError(null);
     try {
       const { confirmPassword: _discard, ...rest } = data;
-      const tokens = await authService.register({ ...step1Data, ...rest, segment: 'RECYCLING' });
+      const tokens = await authService.registerRecycling({ ...step1Data, ...rest });
       setTokens(tokens);
       navigate('/recycling/dashboard');
     } catch (err: unknown) {

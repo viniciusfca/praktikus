@@ -1,9 +1,11 @@
+import { TenantSegment } from '@praktikus/shared';
+
 /**
  * Gera as instruções SQL para criar as tabelas de um novo tenant.
  * Usa CREATE TABLE IF NOT EXISTS para idempotência (pode ser re-executado).
  */
-export function createTenantTablesSql(schemaName: string): string[] {
-  return [
+export function createTenantTablesSql(schemaName: string, segment: TenantSegment = TenantSegment.WORKSHOP): string[] {
+  const workshopTables = [
     `CREATE TABLE IF NOT EXISTS "${schemaName}".customers (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       nome VARCHAR NOT NULL,
@@ -93,6 +95,9 @@ export function createTenantTablesSql(schemaName: string): string[] {
       valor_unitario NUMERIC(10,2) NOT NULL,
       created_at TIMESTAMPTZ DEFAULT NOW()
     )`,
+  ];
+
+  const recyclingTables = [
     `CREATE TABLE IF NOT EXISTS "${schemaName}".units (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       name VARCHAR NOT NULL,
@@ -208,4 +213,9 @@ export function createTenantTablesSql(schemaName: string): string[] {
       updated_at TIMESTAMPTZ DEFAULT NOW()
     )`,
   ];
+
+  if (segment === TenantSegment.RECYCLING) {
+    return recyclingTables;
+  }
+  return workshopTables;
 }

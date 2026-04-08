@@ -27,6 +27,11 @@ export const authService = {
     return data;
   },
 
+  async registerRecycling(payload: Omit<RegisterPayload, 'segment'>): Promise<AuthTokens> {
+    const { data } = await api.post<AuthTokens>('/auth/register/recycling', payload);
+    return data;
+  },
+
   async login(payload: LoginPayload): Promise<AuthTokens> {
     const { data } = await api.post<AuthTokens>('/auth/login', payload);
     return data;

@@ -10,11 +10,13 @@ import {
 } from '@nestjs/common';
 import { Request as ExpressRequest } from 'express';
 import { AuthService } from './auth.service';
+import { AuthTokens } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { AuthUser } from './jwt.strategy';
+import { TenantSegment } from '@praktikus/shared';
 
 interface RequestWithUser extends ExpressRequest {
   user: AuthUser;
@@ -27,6 +29,11 @@ export class AuthController {
   @Post('register')
   async register(@Body() dto: RegisterDto) {
     return this.authService.register(dto);
+  }
+
+  @Post('register/recycling')
+  registerRecycling(@Body() dto: RegisterDto): Promise<AuthTokens> {
+    return this.authService.register({ ...dto, segment: TenantSegment.RECYCLING });
   }
 
   @Post('login')
