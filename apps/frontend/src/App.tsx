@@ -15,6 +15,7 @@ import { ProductsPage } from './pages/recycling/products/ProductsPage';
 import { ProductFormPage } from './pages/recycling/products/ProductFormPage';
 import { SuppliersPage } from './pages/recycling/suppliers/SuppliersPage';
 import { SupplierFormPage } from './pages/recycling/suppliers/SupplierFormPage';
+import { CashRegisterPage } from './pages/recycling/cash-register/CashRegisterPage';
 import { DashboardPage } from './pages/workshop/DashboardPage';
 import { CustomersPage } from './pages/workshop/customers/CustomersPage';
 import { CustomerFormPage } from './pages/workshop/customers/CustomerFormPage';
@@ -93,6 +94,7 @@ function App() {
             <Route path="suppliers" element={<SuppliersPage />} />
             <Route path="suppliers/new" element={<SupplierFormPage />} />
             <Route path="suppliers/:id/edit" element={<SupplierFormPage />} />
+            <Route path="cash-register" element={<CashRegisterPage />} />
           </Route>
         </Routes>
     </AppThemeProvider>

@@ -3,8 +3,9 @@ import { EmployeesModule } from './employees/employees.module';
 import { UnitsModule } from './units/units.module';
 import { ProductsModule } from './products/products.module';
 import { SuppliersModule } from './suppliers/suppliers.module';
+import { CashRegisterModule } from './cash-register/cash-register.module';
 
 @Module({
-  imports: [EmployeesModule, UnitsModule, ProductsModule, SuppliersModule],
+  imports: [EmployeesModule, UnitsModule, ProductsModule, SuppliersModule, CashRegisterModule],
 })
 export class RecyclingModule {}
