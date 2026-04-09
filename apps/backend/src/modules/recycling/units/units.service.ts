@@ -14,13 +14,14 @@ export class UnitsService {
     return `tenant_${tenantId.replace(/-/g, '')}`;
   }
 
-  private async withSchema<T>(tenantId: string, fn: (manager: EntityManager) => Promise<T>): Promise<T> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private async withSchema<T>(tenantId: string, fn: (manager: EntityManager, qr: any) => Promise<T>): Promise<T> {
     const schemaName = this.getSchemaName(tenantId);
     const qr = this.dataSource.createQueryRunner();
     await qr.connect();
     try {
       await qr.query(`SET search_path TO "${schemaName}", public`);
-      return await fn(qr.manager);
+      return await fn(qr.manager, qr);
     } finally {
       await qr.release();
     }
@@ -52,12 +53,8 @@ export class UnitsService {
   }
 
   async delete(tenantId: string, id: string): Promise<void> {
-    const schemaName = this.getSchemaName(tenantId);
-    const qr = this.dataSource.createQueryRunner();
-    await qr.connect();
-    try {
-      await qr.query(`SET search_path TO "${schemaName}", public`);
-      const repo = qr.manager.getRepository(UnitEntity);
+    return this.withSchema(tenantId, async (manager, qr) => {
+      const repo = manager.getRepository(UnitEntity);
       const unit = await repo.findOne({ where: { id } });
       if (!unit) throw new NotFoundException('Unidade não encontrada.');
       const [{ count }] = await qr.query(
@@ -65,8 +62,6 @@ export class UnitsService {
       );
       if (Number(count) > 0) throw new ConflictException('Unidade possui produtos cadastrados.');
       await repo.remove(unit);
-    } finally {
-      await qr.release();
-    }
+    });
   }
 }
