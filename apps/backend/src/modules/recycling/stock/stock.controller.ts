@@ -20,8 +20,10 @@ export class StockController {
   }
 
   @Get('daily')
-  getDailyTotals(@Request() req: RequestWithUser, @Query('date') date: string) {
-    const d = date ?? new Date().toISOString().split('T')[0];
+  getDailyTotals(@Request() req: RequestWithUser, @Query('date') date?: string) {
+    const d = date && /^\d{4}-\d{2}-\d{2}$/.test(date)
+      ? date
+      : new Date().toISOString().split('T')[0];
     return this.stockService.getDailyPurchaseTotals(req.user.tenantId, d);
   }
 

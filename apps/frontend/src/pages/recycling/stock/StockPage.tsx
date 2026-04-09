@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import {
   CAlert,
   CBadge,
@@ -111,9 +111,8 @@ export function StockPage() {
               </CTableRow>
             ) : (
               balances.map((b) => (
-                <>
+                <React.Fragment key={b.productId}>
                   <CTableRow
-                    key={b.productId}
                     style={{ cursor: 'pointer' }}
                     onClick={() => handleRowClick(b)}
                   >
@@ -126,13 +125,13 @@ export function StockPage() {
                     </CTableDataCell>
                   </CTableRow>
                   {expandedProductId === b.productId && (
-                    <CTableRow key={`${b.productId}-movements`}>
+                    <CTableRow>
                       <CTableDataCell colSpan={3} className="p-0 bg-light">
                         <MovementsPanel productId={b.productId} />
                       </CTableDataCell>
                     </CTableRow>
                   )}
-                </>
+                </React.Fragment>
               ))
             )}
           </CTableBody>
