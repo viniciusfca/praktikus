@@ -2,8 +2,9 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { CashRegisterService } from './cash-register.service';
-import { CashSessionEntity, CashSessionStatus } from './cash-session.entity';
-import { CashTransactionEntity, TransactionType, PaymentMethod } from './cash-transaction.entity';
+import { CashSessionStatus, TransactionType, PaymentMethod } from '@praktikus/shared';
+import { CashSessionEntity } from './cash-session.entity';
+import { CashTransactionEntity } from './cash-transaction.entity';
 
 const mockSessionRepo = { findOne: jest.fn(), create: jest.fn(), save: jest.fn() };
 const mockTxRepo = { create: jest.fn(), save: jest.fn(), find: jest.fn() };

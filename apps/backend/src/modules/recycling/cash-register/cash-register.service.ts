@@ -1,6 +1,7 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { DataSource, EntityManager } from 'typeorm';
-import { CashSessionEntity, CashSessionStatus } from './cash-session.entity';
+import { CashSessionStatus } from '@praktikus/shared';
+import { CashSessionEntity } from './cash-session.entity';
 import { CashTransactionEntity } from './cash-transaction.entity';
 import { AddTransactionDto } from './dto/add-transaction.dto';
 

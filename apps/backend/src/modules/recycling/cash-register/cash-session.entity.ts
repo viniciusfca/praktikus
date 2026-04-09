@@ -1,8 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
 import { CashSessionStatus } from '@praktikus/shared';
 
-export { CashSessionStatus };
-
 @Entity({ name: 'cash_sessions' })
 export class CashSessionEntity {
   @PrimaryGeneratedColumn('uuid')

@@ -1,8 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn } from 'typeorm';
 import { TransactionType, PaymentMethod } from '@praktikus/shared';
 
-export { TransactionType, PaymentMethod };
-
 @Entity({ name: 'cash_transactions' })
 export class CashTransactionEntity {
   @PrimaryGeneratedColumn('uuid')
