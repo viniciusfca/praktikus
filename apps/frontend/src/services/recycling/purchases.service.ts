@@ -1,4 +1,7 @@
 import { api } from '../api';
+import { PaymentMethod } from '@praktikus/shared';
+
+export { PaymentMethod };
 
 export interface PurchaseItem {
   id: string;
@@ -13,7 +16,7 @@ export interface Purchase {
   supplierId: string;
   operatorId: string;
   cashSessionId: string | null;
-  paymentMethod: 'CASH' | 'PIX' | 'CARD';
+  paymentMethod: PaymentMethod;
   totalAmount: number;
   purchasedAt: string;
   notes: string | null;
@@ -22,7 +25,7 @@ export interface Purchase {
 
 export interface CreatePurchasePayload {
   supplierId: string;
-  paymentMethod: 'CASH' | 'PIX' | 'CARD';
+  paymentMethod: PaymentMethod;
   items: Array<{ productId: string; quantity: number; unitPrice: number }>;
   notes?: string;
 }

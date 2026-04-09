@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -26,9 +26,8 @@ import {
 } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
 import { cilPlus, cilTrash } from '@coreui/icons';
-import { purchasesService } from '../../../services/recycling/purchases.service';
-import { suppliersService, type Supplier } from '../../../services/recycling/suppliers.service';
-import { productsService, type Product } from '../../../services/recycling/products.service';
+import { purchasesService, PaymentMethod } from '../../../services/recycling/purchases.service';
+import { usePurchaseFormData } from '../../../hooks/recycling/usePurchaseFormData';
 
 const itemSchema = z.object({
   productId: z.string().uuid('Selecione um produto'),
@@ -38,7 +37,7 @@ const itemSchema = z.object({
 
 const schema = z.object({
   supplierId: z.string().uuid('Selecione um fornecedor'),
-  paymentMethod: z.enum(['CASH', 'PIX', 'CARD'], { errorMap: () => ({ message: 'Selecione a forma de pagamento' }) }),
+  paymentMethod: z.nativeEnum(PaymentMethod, { error: () => ({ message: 'Selecione a forma de pagamento' }) }),
   items: z.array(itemSchema).min(1, 'Adicione ao menos um item'),
   notes: z.string().optional(),
 });
@@ -51,9 +50,7 @@ function formatCurrency(value: number): string {
 
 export function NewPurchasePage() {
   const navigate = useNavigate();
-  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loadingData, setLoadingData] = useState(true);
+  const { suppliers, products, loading: loadingData, error: loadError } = usePurchaseFormData();
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const {
@@ -67,7 +64,7 @@ export function NewPurchasePage() {
     resolver: zodResolver(schema),
     defaultValues: {
       supplierId: '',
-      paymentMethod: 'CASH',
+      paymentMethod: PaymentMethod.CASH,
       items: [{ productId: '', quantity: 1, unitPrice: 0 }],
       notes: '',
     },
@@ -75,25 +72,6 @@ export function NewPurchasePage() {
 
   const { fields, append, remove } = useFieldArray({ control, name: 'items' });
   const watchedItems = watch('items');
-
-  useEffect(() => {
-    const load = async () => {
-      setLoadingData(true);
-      try {
-        const [suppliersResult, productsResult] = await Promise.all([
-          suppliersService.list(1, 200),
-          productsService.list(),
-        ]);
-        setSuppliers(suppliersResult.data);
-        setProducts(productsResult);
-      } catch {
-        setSubmitError('Erro ao carregar dados. Recarregue a página.');
-      } finally {
-        setLoadingData(false);
-      }
-    };
-    load();
-  }, []);
 
   const handleProductChange = (index: number, productId: string) => {
     const product = products.find((p) => p.id === productId);
@@ -146,7 +124,9 @@ export function NewPurchasePage() {
         </CButton>
       </div>
 
-      {submitError && <CAlert color="danger" className="mb-3">{submitError}</CAlert>}
+      {(loadError || submitError) && (
+        <CAlert color="danger" className="mb-3">{loadError ?? submitError}</CAlert>
+      )}
 
       <form onSubmit={handleSubmit(onSubmit)}>
         <CCard className="mb-4">

@@ -24,9 +24,15 @@ export class PurchasesService {
     const schemaName = this.getSchemaName(tenantId);
     const qr = this.dataSource.createQueryRunner();
     await qr.connect();
+    await qr.startTransaction();
     try {
-      await qr.query(`SET search_path TO "${schemaName}", public`);
-      return await fn(qr.manager, qr);
+      await qr.query(`SET LOCAL search_path TO "${schemaName}", public`);
+      const result = await fn(qr.manager, qr);
+      await qr.commitTransaction();
+      return result;
+    } catch (err) {
+      await qr.rollbackTransaction();
+      throw err;
     } finally {
       await qr.release();
     }
@@ -62,7 +68,9 @@ export class PurchasesService {
       if (!session) throw new BadRequestException('Abra o caixa antes de registrar uma compra.');
 
       // 2. Calculate total
-      const totalAmount = dto.items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
+      const totalAmount = Math.round(
+        dto.items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0) * 100
+      ) / 100;
 
       // 3. Create purchase
       const purchase = purchaseRepo.create({
@@ -78,7 +86,7 @@ export class PurchasesService {
 
       // 4. Create purchase_items + stock_movements (IN)
       for (const item of dto.items) {
-        const subtotal = item.quantity * item.unitPrice;
+        const subtotal = Math.round(item.quantity * item.unitPrice * 100) / 100;
         await itemRepo.save(
           itemRepo.create({
             purchaseId: savedPurchase.id,

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   CAlert,
@@ -14,7 +14,7 @@ import {
 } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
 import { cilPlus } from '@coreui/icons';
-import { purchasesService, type Purchase } from '../../../services/recycling/purchases.service';
+import { usePurchases } from '../../../hooks/recycling/usePurchases';
 
 const PAYMENT_METHOD_LABELS: Record<string, string> = {
   CASH: 'Dinheiro',
@@ -38,28 +38,9 @@ function formatCurrency(value: number): string {
 
 export function PurchasesPage() {
   const navigate = useNavigate();
-  const [purchases, setPurchases] = useState<Purchase[]>([]);
-  const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const limit = 20;
-
-  const loadPurchases = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const result = await purchasesService.list(page, limit);
-      setPurchases(result.data);
-      setTotal(result.total);
-    } catch {
-      setError('Erro ao carregar compras.');
-    } finally {
-      setLoading(false);
-    }
-  }, [page]);
-
-  useEffect(() => { loadPurchases(); }, [loadPurchases]);
+  const { purchases, total, loading, error } = usePurchases(page, limit);
 
   return (
     <>

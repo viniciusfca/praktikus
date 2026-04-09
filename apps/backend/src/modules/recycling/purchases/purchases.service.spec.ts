@@ -17,6 +17,9 @@ const mockTxRepo = { create: jest.fn(), save: jest.fn() };
 
 const mockQueryRunner = {
   connect: jest.fn().mockResolvedValue(undefined),
+  startTransaction: jest.fn().mockResolvedValue(undefined),
+  commitTransaction: jest.fn().mockResolvedValue(undefined),
+  rollbackTransaction: jest.fn().mockResolvedValue(undefined),
   query: jest.fn().mockResolvedValue(undefined),
   manager: {
     getRepository: jest.fn((entity) => {
@@ -49,6 +52,24 @@ describe('PurchasesService', () => {
       if (entity === StockMovementEntity) return mockMovementRepo;
       if (entity === CashSessionEntity) return mockSessionRepo;
       return mockTxRepo;
+    });
+  });
+
+  describe('list', () => {
+    it('should return paginated purchases', async () => {
+      const mockQb = {
+        orderBy: jest.fn().mockReturnThis(),
+        skip: jest.fn().mockReturnThis(),
+        take: jest.fn().mockReturnThis(),
+        getManyAndCount: jest.fn().mockResolvedValue([[{ id: 'p1' }], 1]),
+      };
+      mockPurchaseRepo.createQueryBuilder.mockReturnValue(mockQb);
+
+      const result = await service.list(TENANT, 1, 20);
+      expect(result.total).toBe(1);
+      expect(result.page).toBe(1);
+      expect(result.limit).toBe(20);
+      expect(result.data).toHaveLength(1);
     });
   });
 
