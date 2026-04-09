@@ -13,6 +13,8 @@ import { EmployeeFormPage } from './pages/recycling/employees/EmployeeFormPage';
 import { EmployeePermissionsPage } from './pages/recycling/employees/EmployeePermissionsPage';
 import { ProductsPage } from './pages/recycling/products/ProductsPage';
 import { ProductFormPage } from './pages/recycling/products/ProductFormPage';
+import { SuppliersPage } from './pages/recycling/suppliers/SuppliersPage';
+import { SupplierFormPage } from './pages/recycling/suppliers/SupplierFormPage';
 import { DashboardPage } from './pages/workshop/DashboardPage';
 import { CustomersPage } from './pages/workshop/customers/CustomersPage';
 import { CustomerFormPage } from './pages/workshop/customers/CustomerFormPage';
@@ -88,6 +90,9 @@ function App() {
             <Route path="products" element={<ProductsPage />} />
             <Route path="products/new" element={<ProductFormPage />} />
             <Route path="products/:id/edit" element={<ProductFormPage />} />
+            <Route path="suppliers" element={<SuppliersPage />} />
+            <Route path="suppliers/new" element={<SupplierFormPage />} />
+            <Route path="suppliers/:id/edit" element={<SupplierFormPage />} />
           </Route>
         </Routes>
     </AppThemeProvider>
