@@ -21,6 +21,12 @@ describe('StockService', () => {
     jest.clearAllMocks();
   });
 
+  describe('getSchemaName security', () => {
+    it('should throw on invalid tenantId', async () => {
+      await expect(service.getBalances('../../evil')).rejects.toThrow('Invalid tenantId');
+    });
+  });
+
   describe('getBalances', () => {
     it('should return stock balance per product using SUM of movements', async () => {
       mockQueryRunner.query
