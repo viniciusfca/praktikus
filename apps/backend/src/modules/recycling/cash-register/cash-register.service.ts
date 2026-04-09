@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { DataSource, EntityManager } from 'typeorm';
 import { CashSessionEntity, CashSessionStatus } from './cash-session.entity';
 import { CashTransactionEntity } from './cash-transaction.entity';
@@ -57,33 +57,43 @@ export class CashRegisterService {
   }
 
   async close(tenantId: string, closedBy: string): Promise<CashSessionEntity> {
-    const schemaName = this.getSchemaName(tenantId);
     return this.withSchema(tenantId, async (manager, qr) => {
       const sessionRepo = manager.getRepository(CashSessionEntity);
+      const schemaName = this.getSchemaName(tenantId);
 
-      const session = await sessionRepo.findOne({ where: { status: CashSessionStatus.OPEN } });
-      if (!session) throw new BadRequestException('Não há sessão de caixa aberta.');
+      await qr.startTransaction();
+      try {
+        const session = await sessionRepo.findOne({ where: { status: CashSessionStatus.OPEN } });
+        if (!session) {
+          throw new BadRequestException('Não há sessão de caixa aberta.');
+        }
 
-      const [cashInResult] = await qr.query(
-        `SELECT COALESCE(SUM(amount), 0) as sum FROM "${schemaName}".cash_transactions WHERE cash_session_id = $1 AND type = 'IN' AND payment_method = 'CASH'`,
-        [session.id]
-      );
-      const [cashOutResult] = await qr.query(
-        `SELECT COALESCE(SUM(amount), 0) as sum FROM "${schemaName}".cash_transactions WHERE cash_session_id = $1 AND type = 'OUT' AND payment_method = 'CASH'`,
-        [session.id]
-      );
+        const [cashInResult] = await qr.query(
+          `SELECT COALESCE(SUM(amount), 0) as sum FROM "${schemaName}".cash_transactions WHERE cash_session_id = $1 AND type = 'IN' AND payment_method = 'CASH'`,
+          [session.id],
+        );
+        const [cashOutResult] = await qr.query(
+          `SELECT COALESCE(SUM(amount), 0) as sum FROM "${schemaName}".cash_transactions WHERE cash_session_id = $1 AND type = 'OUT' AND payment_method = 'CASH'`,
+          [session.id],
+        );
 
-      const cashIn = Number(cashInResult.sum);
-      const cashOut = Number(cashOutResult.sum);
-      const closingBalance = Number(session.openingBalance) + cashIn - cashOut;
+        const cashIn = Number(cashInResult.sum);
+        const cashOut = Number(cashOutResult.sum);
+        const closingBalance = Number(session.openingBalance) + cashIn - cashOut;
 
-      Object.assign(session, {
-        closedBy,
-        closedAt: new Date(),
-        closingBalance,
-        status: CashSessionStatus.CLOSED,
-      });
-      return sessionRepo.save(session);
+        Object.assign(session, {
+          closedBy,
+          closedAt: new Date(),
+          closingBalance,
+          status: CashSessionStatus.CLOSED,
+        });
+        const saved = await sessionRepo.save(session);
+        await qr.commitTransaction();
+        return saved;
+      } catch (err) {
+        await qr.rollbackTransaction();
+        throw err;
+      }
     });
   }
 
@@ -117,9 +127,14 @@ export class CashRegisterService {
 
   async getTransactions(tenantId: string, sessionId: string): Promise<CashTransactionEntity[]> {
     return this.withSchema(tenantId, async (manager) => {
+      const sessionRepo = manager.getRepository(CashSessionEntity);
       const txRepo = manager.getRepository(CashTransactionEntity);
+
+      const session = await sessionRepo.findOne({ where: { id: sessionId } });
+      if (!session) throw new NotFoundException('Sessão não encontrada.');
+
       return txRepo.find({
-        where: { cashSessionId: sessionId },
+        where: { cashSessionId: session.id },
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         order: { createdAt: 'ASC' } as any,
       });

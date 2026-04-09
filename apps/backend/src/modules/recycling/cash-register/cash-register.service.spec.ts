@@ -1,15 +1,18 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { CashRegisterService } from './cash-register.service';
 import { CashSessionEntity, CashSessionStatus } from './cash-session.entity';
 import { CashTransactionEntity, TransactionType, PaymentMethod } from './cash-transaction.entity';
 
 const mockSessionRepo = { findOne: jest.fn(), create: jest.fn(), save: jest.fn() };
-const mockTxRepo = { create: jest.fn(), save: jest.fn() };
+const mockTxRepo = { create: jest.fn(), save: jest.fn(), find: jest.fn() };
 
 const mockQueryRunner = {
   connect: jest.fn().mockResolvedValue(undefined),
+  startTransaction: jest.fn().mockResolvedValue(undefined),
+  commitTransaction: jest.fn().mockResolvedValue(undefined),
+  rollbackTransaction: jest.fn().mockResolvedValue(undefined),
   query: jest.fn().mockResolvedValue(undefined),
   manager: {
     getRepository: jest.fn((entity) => {
@@ -80,24 +83,24 @@ describe('CashRegisterService', () => {
       const openSession = { id: 's1', openingBalance: 100, status: CashSessionStatus.OPEN };
       mockSessionRepo.findOne.mockResolvedValue(openSession);
 
-      // First query is SET search_path (returns undefined from beforeEach mock),
-      // then two COUNT queries for CASH IN and CASH OUT
-      mockQueryRunner.query
-        .mockResolvedValueOnce(undefined) // SET search_path
-        .mockResolvedValueOnce([{ sum: '200.00' }]) // CASH IN
-        .mockResolvedValueOnce([{ sum: '50.00' }]);  // CASH OUT
+      mockQueryRunner.query.mockImplementation(async (sql: string) => {
+        if (sql.includes('SET search_path')) return undefined;
+        if (sql.includes("type = 'IN'")) return [{ sum: '200.00' }];
+        if (sql.includes("type = 'OUT'")) return [{ sum: '50.00' }];
+        return undefined;
+      });
 
-      const closedSession = {
+      mockSessionRepo.save.mockResolvedValue({
         ...openSession,
         status: CashSessionStatus.CLOSED,
         closingBalance: 250,
-        closedBy: OPERATOR,
-      };
-      mockSessionRepo.save.mockResolvedValue(closedSession);
+      });
 
       const result = await service.close(TENANT, OPERATOR);
       expect(result.closingBalance).toBe(250);
       expect(result.status).toBe(CashSessionStatus.CLOSED);
+      expect(mockQueryRunner.startTransaction).toHaveBeenCalled();
+      expect(mockQueryRunner.commitTransaction).toHaveBeenCalled();
     });
   });
 
@@ -142,6 +145,22 @@ describe('CashRegisterService', () => {
         description: 'Entrada manual',
       });
       expect(result).toEqual(tx);
+    });
+  });
+
+  describe('getTransactions', () => {
+    it('should throw NotFoundException when session not found', async () => {
+      mockSessionRepo.findOne.mockResolvedValue(null);
+      await expect(service.getTransactions(TENANT, 'non-existent-id')).rejects.toThrow(NotFoundException);
+    });
+
+    it('should return transactions for a valid session', async () => {
+      const session = { id: 's1', status: CashSessionStatus.OPEN };
+      mockSessionRepo.findOne.mockResolvedValue(session);
+      const txs = [{ id: 't1', cashSessionId: 's1', type: TransactionType.IN, amount: 50 }];
+      mockTxRepo.find.mockResolvedValue(txs);
+      const result = await service.getTransactions(TENANT, 's1');
+      expect(result).toHaveLength(1);
     });
   });
 });

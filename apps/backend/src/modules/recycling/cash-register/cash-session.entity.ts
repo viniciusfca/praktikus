@@ -1,9 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import { CashSessionStatus } from '@praktikus/shared';
 
-export enum CashSessionStatus {
-  OPEN = 'OPEN',
-  CLOSED = 'CLOSED',
-}
+export { CashSessionStatus };
 
 @Entity({ name: 'cash_sessions' })
 export class CashSessionEntity {

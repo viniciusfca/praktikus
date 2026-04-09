@@ -1,15 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn } from 'typeorm';
+import { TransactionType, PaymentMethod } from '@praktikus/shared';
 
-export enum TransactionType {
-  IN = 'IN',
-  OUT = 'OUT',
-}
-
-export enum PaymentMethod {
-  CASH = 'CASH',
-  PIX = 'PIX',
-  CARD = 'CARD',
-}
+export { TransactionType, PaymentMethod };
 
 @Entity({ name: 'cash_transactions' })
 export class CashTransactionEntity {
