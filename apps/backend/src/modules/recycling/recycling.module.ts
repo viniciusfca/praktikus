@@ -8,8 +8,9 @@ import { PurchasesModule } from './purchases/purchases.module';
 import { StockModule } from './stock/stock.module';
 import { BuyersModule } from './buyers/buyers.module';
 import { SalesModule } from './sales/sales.module';
+import { ReportsModule } from './reports/reports.module';
 
 @Module({
-  imports: [EmployeesModule, UnitsModule, ProductsModule, SuppliersModule, CashRegisterModule, PurchasesModule, StockModule, BuyersModule, SalesModule],
+  imports: [EmployeesModule, UnitsModule, ProductsModule, SuppliersModule, CashRegisterModule, PurchasesModule, StockModule, BuyersModule, SalesModule, ReportsModule],
 })
 export class RecyclingModule {}

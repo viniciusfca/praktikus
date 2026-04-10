@@ -23,6 +23,7 @@ import { BuyersPage } from './pages/recycling/buyers/BuyersPage';
 import { BuyerFormPage } from './pages/recycling/buyers/BuyerFormPage';
 import { SalesPage } from './pages/recycling/sales/SalesPage';
 import { NewSalePage } from './pages/recycling/sales/NewSalePage';
+import { RecyclingReportsPage } from './pages/recycling/reports/ReportsPage';
 import { DashboardPage } from './pages/workshop/DashboardPage';
 import { CustomersPage } from './pages/workshop/customers/CustomersPage';
 import { CustomerFormPage } from './pages/workshop/customers/CustomerFormPage';
@@ -110,6 +111,7 @@ function App() {
             <Route path="buyers/:id/edit" element={<BuyerFormPage />} />
             <Route path="sales" element={<SalesPage />} />
             <Route path="sales/new" element={<NewSalePage />} />
+            <Route path="reports" element={<RecyclingReportsPage />} />
           </Route>
         </Routes>
     </AppThemeProvider>
