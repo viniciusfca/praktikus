@@ -21,8 +21,12 @@ describe('RecyclingReportsService', () => {
     jest.clearAllMocks();
   });
 
-  it('should throw on invalid tenantId', async () => {
+  it('should throw on invalid tenantId (getDashboardSummary)', async () => {
     await expect(service.getDashboardSummary('bad-id')).rejects.toThrow('Invalid tenantId');
+  });
+
+  it('should throw on invalid tenantId (getPurchasesByPeriod)', async () => {
+    await expect(service.getPurchasesByPeriod('bad-id', '2026-04-01', '2026-04-30')).rejects.toThrow('Invalid tenantId');
   });
 
   describe('getDashboardSummary', () => {

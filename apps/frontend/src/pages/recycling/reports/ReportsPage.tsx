@@ -1,4 +1,3 @@
-import { useState, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -21,7 +20,7 @@ import {
   CTableHeaderCell,
   CTableRow,
 } from '@coreui/react';
-import { reportsService, PurchasePeriodEntry } from '../../../services/recycling/reports.service';
+import { usePurchasesByPeriod } from '../../../hooks/recycling/useReports';
 
 const periodSchema = z.object({
   startDate: z.string().min(1, 'Data inicial obrigatória'),
@@ -49,29 +48,16 @@ function formatDate(iso: string | Date): string {
 
 export function RecyclingReportsPage() {
   const defaults = getLast30Days();
-  const [rows, setRows] = useState<PurchasePeriodEntry[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [searched, setSearched] = useState(false);
+  const { rows, loading, error, searched, fetch: fetchReport } = usePurchasesByPeriod();
 
   const { register, handleSubmit, formState: { errors } } = useForm<PeriodForm>({
     resolver: zodResolver(periodSchema),
     defaultValues: defaults,
   });
 
-  const onSubmit = useCallback(async (data: PeriodForm) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const result = await reportsService.getPurchasesByPeriod(data.startDate, data.endDate);
-      setRows(result);
-      setSearched(true);
-    } catch {
-      setError('Erro ao carregar relatório');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const onSubmit = (data: PeriodForm) => {
+    fetchReport(data.startDate, data.endDate);
+  };
 
   const periodTotal = rows.reduce((sum, r) => sum + r.total, 0);
   const periodCount = rows.reduce((sum, r) => sum + r.count, 0);

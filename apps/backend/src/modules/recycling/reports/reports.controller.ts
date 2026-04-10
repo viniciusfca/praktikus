@@ -5,6 +5,7 @@ import { Roles } from '../../core/auth/roles.decorator';
 import { UserRole } from '../../core/auth/user.entity';
 import { AuthUser } from '../../core/auth/jwt.strategy';
 import { RecyclingReportsService } from './reports.service';
+import { PeriodQueryDto } from './dto/period-query.dto';
 
 interface RequestWithUser extends Request {
   user: AuthUser;
@@ -25,9 +26,8 @@ export class ReportsController {
   @Roles(UserRole.OWNER)
   getPurchasesByPeriod(
     @Request() req: RequestWithUser,
-    @Query('startDate') startDate: string,
-    @Query('endDate') endDate: string,
+    @Query() query: PeriodQueryDto,
   ) {
-    return this.reportsService.getPurchasesByPeriod(req.user.tenantId, startDate, endDate);
+    return this.reportsService.getPurchasesByPeriod(req.user.tenantId, query.startDate, query.endDate);
   }
 }
