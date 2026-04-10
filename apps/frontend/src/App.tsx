@@ -19,6 +19,10 @@ import { CashRegisterPage } from './pages/recycling/cash-register/CashRegisterPa
 import { PurchasesPage } from './pages/recycling/purchases/PurchasesPage';
 import { NewPurchasePage } from './pages/recycling/purchases/NewPurchasePage';
 import { StockPage } from './pages/recycling/stock/StockPage';
+import { BuyersPage } from './pages/recycling/buyers/BuyersPage';
+import { BuyerFormPage } from './pages/recycling/buyers/BuyerFormPage';
+import { SalesPage } from './pages/recycling/sales/SalesPage';
+import { NewSalePage } from './pages/recycling/sales/NewSalePage';
 import { DashboardPage } from './pages/workshop/DashboardPage';
 import { CustomersPage } from './pages/workshop/customers/CustomersPage';
 import { CustomerFormPage } from './pages/workshop/customers/CustomerFormPage';
@@ -101,6 +105,11 @@ function App() {
             <Route path="purchases" element={<PurchasesPage />} />
             <Route path="purchases/new" element={<NewPurchasePage />} />
             <Route path="stock" element={<StockPage />} />
+            <Route path="buyers" element={<BuyersPage />} />
+            <Route path="buyers/new" element={<BuyerFormPage />} />
+            <Route path="buyers/:id/edit" element={<BuyerFormPage />} />
+            <Route path="sales" element={<SalesPage />} />
+            <Route path="sales/new" element={<NewSalePage />} />
           </Route>
         </Routes>
     </AppThemeProvider>
