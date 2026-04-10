@@ -78,9 +78,11 @@ describe('BuyersService', () => {
 
   it('should throw ConflictException when deleting buyer with sales', async () => {
     mockBuyerRepo.findOne.mockResolvedValue({ id: 'b1', name: 'Empresa A' });
-    mockQueryRunner.query
-      .mockResolvedValueOnce(undefined) // SET LOCAL search_path
-      .mockResolvedValueOnce([{ count: '3' }]); // sales count
+    mockQueryRunner.query.mockImplementation(async (sql: string) => {
+      if (sql.includes('SET LOCAL')) return undefined;
+      if (sql.includes('COUNT')) return [{ count: '3' }];
+      return undefined;
+    });
     await expect(service.delete(TENANT, 'b1')).rejects.toThrow(ConflictException);
   });
 });
