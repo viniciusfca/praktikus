@@ -15,6 +15,8 @@ import {
 } from '@coreui/react';
 import { authService } from '../../services/auth.service';
 import { useAuthStore } from '../../store/auth.store';
+import { jwtDecode } from 'jwt-decode';
+import type { JwtUser } from '../../store/auth.store';
 
 const schema = z.object({
   email: z.string().email('E-mail inválido'),
@@ -39,7 +41,12 @@ export function LoginPage() {
     try {
       const tokens = await authService.login(data);
       setTokens(tokens);
-      navigate('/workshop/dashboard');
+      const decoded = jwtDecode<JwtUser>(tokens.access_token);
+      if (decoded.tenant_segment === 'RECYCLING') {
+        navigate('/recycling/dashboard');
+      } else {
+        navigate('/workshop/dashboard');
+      }
     } catch (err: unknown) {
       const msg = (err as any)?.response?.data?.message;
       setError(msg ?? 'Erro ao fazer login.');

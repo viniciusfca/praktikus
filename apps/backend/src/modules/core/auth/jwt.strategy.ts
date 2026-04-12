@@ -6,6 +6,7 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 import { Repository } from 'typeorm';
 import { UserEntity } from './user.entity';
 import { TenantStatus } from '../tenancy/tenant.entity';
+import { TenantSegment } from '@praktikus/shared';
 
 export interface JwtPayload {
   sub: string;
@@ -14,6 +15,7 @@ export interface JwtPayload {
   name?: string;
   email?: string;
   tenant_status?: string;
+  tenant_segment?: TenantSegment;
   iat?: number;
   exp?: number;
 }
@@ -24,6 +26,7 @@ export interface AuthUser {
   role: string;
   email: string;
   tenantStatus: TenantStatus;
+  tenantSegment: TenantSegment;
 }
 
 @Injectable()
@@ -51,6 +54,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       role: payload.role,
       email: user.email,
       tenantStatus: (payload.tenant_status as TenantStatus) ?? TenantStatus.ACTIVE,
+      tenantSegment: payload.tenant_segment ?? TenantSegment.WORKSHOP,
     };
   }
 }

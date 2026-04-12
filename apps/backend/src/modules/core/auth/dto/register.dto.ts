@@ -6,8 +6,10 @@ import {
   Matches,
   IsOptional,
   ValidateNested,
+  IsEnum,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import { TenantSegment } from '@praktikus/shared';
 
 export class AddressDto {
   @IsString()
@@ -63,4 +65,8 @@ export class RegisterDto {
 
   @IsString()
   ownerName: string;
+
+  @IsOptional()
+  @IsEnum(TenantSegment)
+  segment?: TenantSegment;
 }

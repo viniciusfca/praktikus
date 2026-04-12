@@ -8,6 +8,7 @@ export interface RegisterPayload {
   password: string;
   ownerName: string;
   telefone?: string;
+  segment?: 'WORKSHOP' | 'RECYCLING';
 }
 
 export interface LoginPayload {
@@ -23,6 +24,11 @@ export interface AuthTokens {
 export const authService = {
   async register(payload: RegisterPayload): Promise<AuthTokens> {
     const { data } = await api.post<AuthTokens>('/auth/register', payload);
+    return data;
+  },
+
+  async registerRecycling(payload: Omit<RegisterPayload, 'segment'>): Promise<AuthTokens> {
+    const { data } = await api.post<AuthTokens>('/auth/register/recycling', payload);
     return data;
   },
 

@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource, EntityManager } from 'typeorm';
 import { TenantEntity, TenantStatus } from './tenant.entity';
+import { TenantSegment } from '@praktikus/shared';
 import { createTenantTablesSql } from '../../../database/tenant-migrations/create-tenant-tables';
 
 interface CreateTenantInput {
@@ -10,6 +11,7 @@ interface CreateTenantInput {
   nomeFantasia: string;
   telefone?: string;
   endereco?: TenantEntity['endereco'];
+  segment?: TenantSegment;
 }
 
 @Injectable()
@@ -48,6 +50,7 @@ export class TenancyService {
       status: TenantStatus.TRIAL,
       trialEndsAt,
       billingAnchorDate: new Date(),
+      segment: input.segment ?? TenantSegment.WORKSHOP,
     });
 
     const saved = await this.tenantRepo.save(tenant);
@@ -55,7 +58,7 @@ export class TenancyService {
     saved.schemaName = schemaName;
     const updated = await this.tenantRepo.save(saved);
 
-    await this.provisionSchema(schemaName);
+    await this.provisionSchema(schemaName, input.segment ?? TenantSegment.WORKSHOP);
 
     return updated;
   }
@@ -78,6 +81,7 @@ export class TenancyService {
       status: TenantStatus.TRIAL,
       trialEndsAt,
       billingAnchorDate: new Date(),
+      segment: input.segment ?? TenantSegment.WORKSHOP,
     });
 
     const saved = await manager.save(tenant);
@@ -86,12 +90,12 @@ export class TenancyService {
     saved.schemaName = schemaName;
     await manager.save(saved);
 
-    await this.provisionSchema(schemaName);
+    await this.provisionSchema(schemaName, input.segment ?? TenantSegment.WORKSHOP);
 
     return saved;
   }
 
-  private async provisionSchema(schemaName: string): Promise<void> {
+  private async provisionSchema(schemaName: string, segment: TenantSegment): Promise<void> {
     if (!/^[a-z0-9_]+$/.test(schemaName)) {
       throw new Error(`Invalid schema name: ${schemaName}`);
     }
@@ -99,7 +103,7 @@ export class TenancyService {
     await qr.connect();
     try {
       await qr.query(`CREATE SCHEMA IF NOT EXISTS "${schemaName}"`);
-      for (const sql of createTenantTablesSql(schemaName)) {
+      for (const sql of createTenantTablesSql(schemaName, segment)) {
         await qr.query(sql);
       }
     } finally {

@@ -5,6 +5,7 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { TenantSegment } from '@praktikus/shared';
 
 export enum TenantStatus {
   TRIAL = 'TRIAL',
@@ -63,6 +64,12 @@ export class TenantEntity {
 
   @Column({ name: 'billing_anchor_date', type: 'date', nullable: true })
   billingAnchorDate: Date | null;
+
+  @Column({
+    type: 'varchar',
+    default: TenantSegment.WORKSHOP,
+  })
+  segment: TenantSegment;
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;
