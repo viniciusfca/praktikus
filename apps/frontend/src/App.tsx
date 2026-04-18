@@ -12,7 +12,6 @@ import { EmployeesPage } from './pages/recycling/employees/EmployeesPage';
 import { EmployeeFormPage } from './pages/recycling/employees/EmployeeFormPage';
 import { EmployeePermissionsPage } from './pages/recycling/employees/EmployeePermissionsPage';
 import { ProductsPage } from './pages/recycling/products/ProductsPage';
-import { ProductFormPage } from './pages/recycling/products/ProductFormPage';
 import { SuppliersPage } from './pages/recycling/suppliers/SuppliersPage';
 import { CashRegisterPage } from './pages/recycling/cash-register/CashRegisterPage';
 import { PurchasesPage } from './pages/recycling/purchases/PurchasesPage';
@@ -96,8 +95,6 @@ function App() {
             <Route path="employees/new" element={<EmployeeFormPage />} />
             <Route path="employees/:id/permissions" element={<EmployeePermissionsPage />} />
             <Route path="products" element={<ProductsPage />} />
-            <Route path="products/new" element={<ProductFormPage />} />
-            <Route path="products/:id/edit" element={<ProductFormPage />} />
             <Route path="suppliers" element={<SuppliersPage />} />
             <Route path="cash-register" element={<CashRegisterPage />} />
             <Route path="purchases" element={<PurchasesPage />} />
