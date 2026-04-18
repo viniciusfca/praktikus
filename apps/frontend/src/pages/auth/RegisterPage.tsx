@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
@@ -15,6 +15,7 @@ import {
 } from '@coreui/react';
 import { authService } from '../../services/auth.service';
 import { useAuthStore } from '../../store/auth.store';
+import { stripDigits, formatCnpj, formatPhone } from '../../utils/masks';
 
 const step1Schema = z.object({
   cnpj: z.string().regex(/^\d{14}$/, 'CNPJ deve conter 14 dígitos numéricos'),
@@ -128,11 +129,20 @@ export function RegisterPage() {
             <form onSubmit={form1.handleSubmit(onStep1Submit)} noValidate>
               <div className="mb-3">
                 <CFormLabel>CNPJ</CFormLabel>
-                <CFormInput
-                  placeholder="Apenas números (14 dígitos)"
-                  aria-label="CNPJ"
-                  {...form1.register('cnpj')}
-                  invalid={!!form1.formState.errors.cnpj}
+                <Controller
+                  control={form1.control}
+                  name="cnpj"
+                  render={({ field }) => (
+                    <CFormInput
+                      placeholder="00.000.000/0000-00"
+                      aria-label="CNPJ"
+                      value={formatCnpj(field.value || '')}
+                      onChange={(e) => field.onChange(stripDigits(e.target.value))}
+                      onBlur={field.onBlur}
+                      ref={field.ref}
+                      invalid={!!form1.formState.errors.cnpj}
+                    />
+                  )}
                 />
                 {form1.formState.errors.cnpj && (
                   <CFormFeedback invalid>{form1.formState.errors.cnpj.message}</CFormFeedback>
@@ -162,7 +172,20 @@ export function RegisterPage() {
               </div>
               <div className="mb-4">
                 <CFormLabel>Telefone</CFormLabel>
-                <CFormInput {...form1.register('telefone')} />
+                <Controller
+                  control={form1.control}
+                  name="telefone"
+                  render={({ field }) => (
+                    <CFormInput
+                      placeholder="(00) 00000-0000"
+                      aria-label="Telefone"
+                      value={formatPhone(field.value || '')}
+                      onChange={(e) => field.onChange(stripDigits(e.target.value))}
+                      onBlur={field.onBlur}
+                      ref={field.ref}
+                    />
+                  )}
+                />
               </div>
               <CButton type="submit" color="primary" className="w-100">
                 Próximo
