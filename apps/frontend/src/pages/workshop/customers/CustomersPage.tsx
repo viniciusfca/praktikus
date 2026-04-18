@@ -3,10 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   CAlert,
   CButton,
-  CCard,
   CFormInput,
-  CPagination,
-  CPaginationItem,
   CSpinner,
   CTable,
   CTableBody,
@@ -16,8 +13,41 @@ import {
   CTableRow,
 } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
-import { cilPlus, cilSearch, cilPen, cilTrash } from '@coreui/icons';
+import { cilPlus, cilSearch, cilPen, cilTrash, cilCloudUpload, cilUser } from '@coreui/icons';
+import { PageHead } from '../../../components/PageHead';
 import { customersService, type Customer } from '../../../services/customers.service';
+
+function getInitials(name: string): string {
+  return name
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0].toUpperCase())
+    .join('');
+}
+
+function CustomerAvatar({ name }: { name: string }) {
+  return (
+    <div
+      aria-hidden
+      style={{
+        width: 30,
+        height: 30,
+        borderRadius: 999,
+        background: 'rgba(52,142,145,0.12)',
+        color: 'var(--cui-primary)',
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: 11.5,
+        fontWeight: 600,
+        flexShrink: 0,
+      }}
+    >
+      {getInitials(name)}
+    </div>
+  );
+}
 
 export function CustomersPage() {
   const navigate = useNavigate();
@@ -60,51 +90,106 @@ export function CustomersPage() {
   };
 
   const totalPages = Math.ceil(total / rowsPerPage) || 1;
+  const shownFrom = total === 0 ? 0 : page * rowsPerPage + 1;
+  const shownTo = Math.min((page + 1) * rowsPerPage, total);
 
   return (
     <>
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h5 className="fw-bold mb-0">Clientes</h5>
-        <CButton color="primary" size="sm" onClick={() => navigate('/workshop/customers/new')}>
-          <CIcon icon={cilPlus} className="me-1" />
-          Novo Cliente
-        </CButton>
-      </div>
-
-      <CFormInput
-        placeholder="Buscar por nome ou CPF/CNPJ"
-        value={search}
-        onChange={(e) => { setSearch(e.target.value); setPage(0); }}
-        className="mb-3"
-        style={{ maxWidth: 360 }}
-        size="sm"
+      <PageHead
+        title="Clientes"
+        subtitle={total > 0 ? `${total} ${total === 1 ? 'cliente' : 'clientes'} cadastrados` : 'Gerencie sua base de clientes'}
+        actions={
+          <>
+            <CButton color="secondary" variant="outline" style={{ borderRadius: 8, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <CIcon icon={cilCloudUpload} size="sm" /> Importar
+            </CButton>
+            <CButton color="primary" style={{ borderRadius: 8, display: 'inline-flex', alignItems: 'center', gap: 6 }} onClick={() => navigate('/workshop/customers/new')}>
+              <CIcon icon={cilPlus} size="sm" /> Novo cliente
+            </CButton>
+          </>
+        }
       />
 
       {error && <CAlert color="danger" className="mb-3">{error}</CAlert>}
 
-      <CCard>
-        <CTable hover responsive>
+      <div className="pk-table-card">
+        <div className="pk-table-toolbar">
+          <div style={{ position: 'relative', flex: 1, maxWidth: 360 }}>
+            <CIcon
+              icon={cilSearch}
+              style={{
+                position: 'absolute',
+                left: 12,
+                top: '50%',
+                transform: 'translateY(-50%)',
+                color: 'var(--cui-secondary-color)',
+                pointerEvents: 'none',
+                width: 14,
+                height: 14,
+              }}
+            />
+            <CFormInput
+              placeholder="Buscar por nome, CPF/CNPJ ou WhatsApp..."
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setPage(0); }}
+              style={{ paddingLeft: 36 }}
+              size="sm"
+              aria-label="Buscar clientes"
+            />
+          </div>
+        </div>
+
+        <CTable hover responsive className="mb-0">
           <CTableHead>
             <CTableRow>
               <CTableHeaderCell>Nome</CTableHeaderCell>
-              <CTableHeaderCell>CPF/CNPJ</CTableHeaderCell>
-              <CTableHeaderCell>WhatsApp</CTableHeaderCell>
-              <CTableHeaderCell className="text-end">Ações</CTableHeaderCell>
+              <CTableHeaderCell>CPF / CNPJ</CTableHeaderCell>
+              <CTableHeaderCell>Contato</CTableHeaderCell>
+              <CTableHeaderCell style={{ textAlign: 'right' }}>Ações</CTableHeaderCell>
             </CTableRow>
           </CTableHead>
           <CTableBody>
             {loading ? (
               <CTableRow>
-                <CTableDataCell colSpan={4} className="text-center py-3">
-                  <CSpinner size="sm" />
+                <CTableDataCell colSpan={4} className="text-center py-4">
+                  <CSpinner size="sm" color="primary" />
+                </CTableDataCell>
+              </CTableRow>
+            ) : customers.length === 0 ? (
+              <CTableRow>
+                <CTableDataCell colSpan={4} className="text-center py-5">
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+                    <div style={{
+                      width: 44, height: 44, borderRadius: 12,
+                      background: 'rgba(52,142,145,0.1)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      <CIcon icon={cilUser} size="lg" style={{ color: 'var(--cui-primary)' }} />
+                    </div>
+                    <div style={{ fontWeight: 600, color: 'var(--cui-body-color)' }}>Nenhum cliente encontrado</div>
+                    <div style={{ fontSize: 13, color: 'var(--cui-secondary-color)' }}>
+                      {search ? 'Tente ajustar sua busca.' : 'Cadastre o primeiro cliente para começar.'}
+                    </div>
+                  </div>
                 </CTableDataCell>
               </CTableRow>
             ) : customers.map((c) => (
               <CTableRow key={c.id}>
-                <CTableDataCell>{c.nome}</CTableDataCell>
-                <CTableDataCell>{c.cpfCnpj}</CTableDataCell>
-                <CTableDataCell>{c.whatsapp ?? '—'}</CTableDataCell>
-                <CTableDataCell className="text-end">
+                <CTableDataCell>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <CustomerAvatar name={c.nome} />
+                    <span style={{ fontWeight: 500, color: 'var(--cui-body-color)' }}>{c.nome}</span>
+                  </div>
+                </CTableDataCell>
+                <CTableDataCell style={{ fontVariantNumeric: 'tabular-nums', color: 'var(--cui-secondary-color)', fontSize: 12.5 }}>
+                  {c.cpfCnpj}
+                </CTableDataCell>
+                <CTableDataCell>
+                  <div style={{ fontSize: 12.5, color: 'var(--cui-body-color)' }}>
+                    {c.whatsapp ?? '—'}
+                  </div>
+                </CTableDataCell>
+                <CTableDataCell style={{ textAlign: 'right' }}>
                   <CButton
                     color="secondary"
                     variant="ghost"
@@ -138,23 +223,48 @@ export function CustomersPage() {
           </CTableBody>
         </CTable>
 
-        <div className="d-flex align-items-center gap-2 px-3 py-2 border-top">
-          <select
-            className="form-select form-select-sm"
-            style={{ width: 80 }}
-            value={rowsPerPage}
-            onChange={(e) => { setRowsPerPage(Number(e.target.value)); setPage(0); }}
-          >
-            {[10, 20, 50].map((n) => <option key={n} value={n}>{n}</option>)}
-          </select>
-          <small className="text-secondary">por página</small>
-          <CPagination className="ms-auto mb-0" size="sm">
-            <CPaginationItem disabled={page === 0} onClick={() => setPage((p) => p - 1)}>‹</CPaginationItem>
-            <CPaginationItem active>{page + 1} / {totalPages}</CPaginationItem>
-            <CPaginationItem disabled={page + 1 >= totalPages} onClick={() => setPage((p) => p + 1)}>›</CPaginationItem>
-          </CPagination>
+        <div className="pk-table-footer">
+          <span>
+            {total > 0 ? `Mostrando ${shownFrom}–${shownTo} de ${total}` : 'Nenhum registro'}
+          </span>
+          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10 }}>
+            <select
+              className="form-select form-select-sm"
+              style={{ width: 72 }}
+              value={rowsPerPage}
+              onChange={(e) => { setRowsPerPage(Number(e.target.value)); setPage(0); }}
+              aria-label="Itens por página"
+            >
+              {[10, 20, 50].map((n) => <option key={n} value={n}>{n}</option>)}
+            </select>
+            <div style={{ display: 'flex', gap: 4 }}>
+              <CButton
+                color="secondary"
+                variant="outline"
+                size="sm"
+                disabled={page === 0}
+                onClick={() => setPage((p) => p - 1)}
+                aria-label="Página anterior"
+              >
+                ‹
+              </CButton>
+              <span style={{ display: 'inline-flex', alignItems: 'center', padding: '0 10px', fontWeight: 500, color: 'var(--cui-body-color)' }}>
+                {page + 1} / {totalPages}
+              </span>
+              <CButton
+                color="secondary"
+                variant="outline"
+                size="sm"
+                disabled={page + 1 >= totalPages}
+                onClick={() => setPage((p) => p + 1)}
+                aria-label="Próxima página"
+              >
+                ›
+              </CButton>
+            </div>
+          </div>
         </div>
-      </CCard>
+      </div>
     </>
   );
 }

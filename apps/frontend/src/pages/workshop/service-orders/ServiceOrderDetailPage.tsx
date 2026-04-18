@@ -2,10 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   CAlert,
-  CBadge,
   CButton,
-  CCard,
-  CCardBody,
   CFormInput,
   CFormLabel,
   CFormSelect,
@@ -25,7 +22,15 @@ import {
   CTooltip,
 } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
-import { cilArrowLeft, cilCopy } from '@coreui/icons';
+import {
+  cilArrowLeft,
+  cilCopy,
+  cilPlus,
+  cilCheck,
+  cilCloudDownload,
+  cilShareBoxed,
+  cilTrash,
+} from '@coreui/icons';
 import {
   serviceOrdersApi, soItemsServicesApi, soItemsPartsApi,
   type ServiceOrderDetail, type SoStatus,
@@ -37,15 +42,12 @@ import { catalogServicesApi, catalogPartsApi, type CatalogService, type CatalogP
 import { pdf } from '@react-pdf/renderer';
 import { OsPdf } from '../../../components/OsPdf';
 import { companyService as companiesService, type CompanyProfile } from '../../../services/company.service';
+import { SoStatusBadge, PaymentBadge } from '../../../components/SoStatusBadge';
 
-// ---------- helpers ----------
+// ── Helpers ──────────────────────────────────────────────────────────────────
 const STATUS_LABEL: Record<SoStatus, string> = {
-  ORCAMENTO: 'Orçamento', APROVADO: 'Aprovado', EM_EXECUCAO: 'Em Execução',
-  AGUARDANDO_PECA: 'Aguard. Peça', FINALIZADA: 'Finalizada', ENTREGUE: 'Entregue',
-};
-const STATUS_COLOR: Record<SoStatus, string> = {
-  ORCAMENTO: 'secondary', APROVADO: 'info', EM_EXECUCAO: 'primary',
-  AGUARDANDO_PECA: 'warning', FINALIZADA: 'secondary', ENTREGUE: 'success',
+  ORCAMENTO: 'Orçamento', APROVADO: 'Aprovado', EM_EXECUCAO: 'Em execução',
+  AGUARDANDO_PECA: 'Aguard. peça', FINALIZADA: 'Finalizada', ENTREGUE: 'Entregue',
 };
 const NEXT_STATUSES: Partial<Record<SoStatus, SoStatus[]>> = {
   ORCAMENTO: ['APROVADO'],
@@ -54,9 +56,58 @@ const NEXT_STATUSES: Partial<Record<SoStatus, SoStatus[]>> = {
   AGUARDANDO_PECA: ['EM_EXECUCAO'],
   FINALIZADA: ['ENTREGUE'],
 };
-const fmt = (n: number) => `R$ ${Number(n).toFixed(2)}`;
+const fmt = (n: number) => `R$ ${Number(n).toFixed(2).replace('.', ',')}`;
 
-// ---------- AddServiceDialog ----------
+const labelStyle = { fontWeight: 500, fontSize: 13 };
+
+// ── Card wrapper ─────────────────────────────────────────────────────────────
+function Card({
+  children,
+  header,
+  padding = 20,
+}: {
+  children: React.ReactNode;
+  header?: React.ReactNode;
+  padding?: number | string;
+}) {
+  return (
+    <div
+      style={{
+        background: 'var(--cui-card-bg)',
+        border: '1px solid var(--cui-border-color)',
+        borderRadius: 14,
+        overflow: 'hidden',
+      }}
+    >
+      {header && (
+        <div
+          style={{
+            padding: '14px 20px',
+            borderBottom: '1px solid var(--cui-border-color)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 12,
+          }}
+        >
+          {header}
+        </div>
+      )}
+      <div style={{ padding: typeof padding === 'number' ? padding : padding }}>{children}</div>
+    </div>
+  );
+}
+
+function CardTitle({ title, desc }: { title: string; desc?: string }) {
+  return (
+    <div>
+      <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--cui-body-color)' }}>{title}</div>
+      {desc && <div style={{ fontSize: 12.5, color: 'var(--cui-secondary-color)', marginTop: 2 }}>{desc}</div>}
+    </div>
+  );
+}
+
+// ── Add dialogs ──────────────────────────────────────────────────────────────
 interface AddServiceDialogProps {
   open: boolean;
   soId: string;
@@ -95,11 +146,11 @@ function AddServiceDialog({ open, soId, services, onClose, onSaved }: AddService
 
   return (
     <CModal visible={open} onClose={onClose} size="sm">
-      <CModalHeader><CModalTitle>Adicionar Serviço</CModalTitle></CModalHeader>
+      <CModalHeader><CModalTitle>Adicionar serviço</CModalTitle></CModalHeader>
       <CModalBody>
         <div className="d-flex flex-column gap-3">
           <div>
-            <CFormLabel>Serviço</CFormLabel>
+            <CFormLabel style={labelStyle}>Serviço</CFormLabel>
             <CFormSelect
               value={serviceId}
               onChange={(e) => {
@@ -114,28 +165,29 @@ function AddServiceDialog({ open, soId, services, onClose, onSaved }: AddService
             </CFormSelect>
           </div>
           <div>
-            <CFormLabel>Nome do Serviço</CFormLabel>
+            <CFormLabel style={labelStyle}>Nome do serviço</CFormLabel>
             <CFormInput value={nome} onChange={(e) => setNome(e.target.value)} />
           </div>
           <div>
-            <CFormLabel>Valor (R$)</CFormLabel>
+            <CFormLabel style={labelStyle}>Valor (R$)</CFormLabel>
             <CFormInput type="number" value={valor} onChange={(e) => setValor(e.target.value)} />
           </div>
           <div>
-            <CFormLabel>ID do Mecânico (opcional)</CFormLabel>
+            <CFormLabel style={labelStyle}>ID do mecânico (opcional)</CFormLabel>
             <CFormInput value={mecanicoId} onChange={(e) => setMecanicoId(e.target.value)} />
           </div>
         </div>
       </CModalBody>
       <CModalFooter>
-        <CButton color="secondary" onClick={onClose}>Cancelar</CButton>
-        <CButton color="primary" onClick={handleSave} disabled={saving}>Adicionar</CButton>
+        <CButton color="secondary" variant="outline" onClick={onClose}>Cancelar</CButton>
+        <CButton color="primary" onClick={handleSave} disabled={saving}>
+          {saving ? <CSpinner size="sm" /> : 'Adicionar'}
+        </CButton>
       </CModalFooter>
     </CModal>
   );
 }
 
-// ---------- AddPartDialog ----------
 interface AddPartDialogProps {
   open: boolean;
   soId: string;
@@ -174,11 +226,11 @@ function AddPartDialog({ open, soId, parts, onClose, onSaved }: AddPartDialogPro
 
   return (
     <CModal visible={open} onClose={onClose} size="sm">
-      <CModalHeader><CModalTitle>Adicionar Peça</CModalTitle></CModalHeader>
+      <CModalHeader><CModalTitle>Adicionar peça</CModalTitle></CModalHeader>
       <CModalBody>
         <div className="d-flex flex-column gap-3">
           <div>
-            <CFormLabel>Peça</CFormLabel>
+            <CFormLabel style={labelStyle}>Peça</CFormLabel>
             <CFormSelect
               value={partId}
               onChange={(e) => {
@@ -193,28 +245,44 @@ function AddPartDialog({ open, soId, parts, onClose, onSaved }: AddPartDialogPro
             </CFormSelect>
           </div>
           <div>
-            <CFormLabel>Nome da Peça</CFormLabel>
+            <CFormLabel style={labelStyle}>Nome da peça</CFormLabel>
             <CFormInput value={nome} onChange={(e) => setNome(e.target.value)} />
           </div>
-          <div>
-            <CFormLabel>Quantidade</CFormLabel>
-            <CFormInput type="number" value={quantidade} onChange={(e) => setQuantidade(e.target.value)} />
-          </div>
-          <div>
-            <CFormLabel>Valor Unitário (R$)</CFormLabel>
-            <CFormInput type="number" value={valorUnitario} onChange={(e) => setValorUnitario(e.target.value)} />
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div>
+              <CFormLabel style={labelStyle}>Quantidade</CFormLabel>
+              <CFormInput type="number" value={quantidade} onChange={(e) => setQuantidade(e.target.value)} />
+            </div>
+            <div>
+              <CFormLabel style={labelStyle}>Valor unitário (R$)</CFormLabel>
+              <CFormInput type="number" value={valorUnitario} onChange={(e) => setValorUnitario(e.target.value)} />
+            </div>
           </div>
         </div>
       </CModalBody>
       <CModalFooter>
-        <CButton color="secondary" onClick={onClose}>Cancelar</CButton>
-        <CButton color="primary" onClick={handleSave} disabled={saving}>Adicionar</CButton>
+        <CButton color="secondary" variant="outline" onClick={onClose}>Cancelar</CButton>
+        <CButton color="primary" onClick={handleSave} disabled={saving}>
+          {saving ? <CSpinner size="sm" /> : 'Adicionar'}
+        </CButton>
       </CModalFooter>
     </CModal>
   );
 }
 
-// ---------- main page ----------
+// ── Summary row ──────────────────────────────────────────────────────────────
+function SummaryRow({ label, value, bold, big, muted }: { label: string; value: string; bold?: boolean; big?: boolean; muted?: boolean }) {
+  return (
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: big ? 16 : 13.5 }}>
+      <span style={{ color: muted ? 'var(--cui-secondary-color)' : 'var(--cui-secondary-color)' }}>{label}</span>
+      <span style={{ fontWeight: bold ? 700 : 500, fontVariantNumeric: 'tabular-nums', color: 'var(--cui-body-color)' }}>
+        {value}
+      </span>
+    </div>
+  );
+}
+
+// ── Main page ────────────────────────────────────────────────────────────────
 export function ServiceOrderDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -381,7 +449,7 @@ export function ServiceOrderDetailPage() {
   };
 
   if (loading) return (
-    <div className="d-flex justify-content-center mt-4">
+    <div className="d-flex justify-content-center py-5">
       <CSpinner color="primary" />
     </div>
   );
@@ -397,209 +465,330 @@ export function ServiceOrderDetailPage() {
       ? approvalLink ?? `${window.location.origin}/quotes/${so.approvalToken}`
       : null;
 
+  const osNumber = `#OS-${so.id.slice(0, 8).toUpperCase()}`;
+  const createdAtFmt = new Date(so.createdAt).toLocaleString('pt-BR');
+
   return (
     <>
-      {/* Header */}
-      <div className="d-flex align-items-center gap-2 flex-wrap mb-3">
-        <CButton color="secondary" variant="ghost" size="sm" onClick={() => navigate('/workshop/service-orders')}>
-          <CIcon icon={cilArrowLeft} />
-        </CButton>
-        <h5 className="fw-bold mb-0 me-auto">Ordem de Serviço</h5>
-        <CBadge color={STATUS_COLOR[so.status]}>{STATUS_LABEL[so.status]}</CBadge>
-        <CBadge
-          color={so.statusPagamento === 'PAGO' ? 'success' : 'secondary'}
-          style={{ cursor: isOwner ? 'pointer' : 'default', border: '1px solid currentColor', background: 'transparent' }}
-          onClick={isOwner ? handleTogglePayment : undefined}
+      {/* ── Page head ─────────────────────────────────────────────────── */}
+      <div style={{ marginBottom: 20 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8, flexWrap: 'wrap' }}>
+          <CButton color="secondary" variant="outline" size="sm" onClick={() => navigate('/workshop/service-orders')} style={{ padding: '4px 10px', borderRadius: 8 }}>
+            <CIcon icon={cilArrowLeft} size="sm" />
+          </CButton>
+          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: 'var(--cui-secondary-color)', fontWeight: 600 }}>
+            {osNumber}
+          </span>
+          <SoStatusBadge status={so.status} />
+          <span onClick={isOwner ? handleTogglePayment : undefined} style={{ cursor: isOwner ? 'pointer' : 'default' }}>
+            <PaymentBadge status={so.statusPagamento} />
+          </span>
+        </div>
+
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            justifyContent: 'space-between',
+            gap: 20,
+            flexWrap: 'wrap',
+          }}
         >
-          {so.statusPagamento}
-        </CBadge>
-        {nextStatuses.map((s) => (
-          <CButton key={s} color="secondary" variant="outline" size="sm" onClick={() => handleTransition(s)}>
-            → {STATUS_LABEL[s]}
-          </CButton>
-        ))}
-        {so.status === 'ORCAMENTO' && (
-          <CButton color="primary" size="sm" onClick={handleGenerateLink}>
-            {so.approvalToken ? 'Gerar novo link' : 'Gerar link de aprovação'}
-          </CButton>
-        )}
-        <CButton color="secondary" variant="outline" size="sm" onClick={handleDownloadPdf} disabled={!empresa}>
-          Baixar PDF
-        </CButton>
+          <div>
+            <h1 style={{ margin: 0, fontSize: 22, fontWeight: 600, letterSpacing: '-0.02em', color: 'var(--cui-body-color)' }}>
+              Ordem de serviço{customer ? ` — ${customer.nome}` : ''}
+            </h1>
+            <p style={{ margin: '4px 0 0', fontSize: 13.5, color: 'var(--cui-secondary-color)' }}>
+              {vehicle ? `${vehicle.placa} · ${vehicle.marca} ${vehicle.modelo}` : '—'}
+              {so.kmEntrada ? ` · ${so.kmEntrada} km` : ''}
+              {' · criada em '}{createdAtFmt}
+            </p>
+          </div>
+
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', flexShrink: 0 }}>
+            {so.status === 'ORCAMENTO' && (
+              <CButton color="secondary" variant="outline" size="sm" onClick={handleGenerateLink} style={{ borderRadius: 8, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                <CIcon icon={cilShareBoxed} size="sm" />
+                {so.approvalToken ? 'Novo link' : 'Link de aprovação'}
+              </CButton>
+            )}
+            <CButton color="secondary" variant="outline" size="sm" onClick={handleDownloadPdf} disabled={!empresa} style={{ borderRadius: 8, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <CIcon icon={cilCloudDownload} size="sm" /> PDF
+            </CButton>
+            {nextStatuses.map((s, i) => (
+              <CButton
+                key={s}
+                color="primary"
+                variant={i === 0 ? undefined : 'outline'}
+                size="sm"
+                onClick={() => handleTransition(s)}
+                style={{ borderRadius: 8, display: 'inline-flex', alignItems: 'center', gap: 6 }}
+              >
+                <CIcon icon={cilCheck} size="sm" />
+                {STATUS_LABEL[s]}
+              </CButton>
+            ))}
+          </div>
+        </div>
       </div>
 
-      {/* Dados */}
-      <CCard className="mb-3">
-        <CCardBody>
-          <div className="fw-semibold mb-2">Dados</div>
-          <div>Cliente: {customer?.nome ?? so.clienteId}</div>
-          <div>Veículo: {vehicle ? `${vehicle.placa} — ${vehicle.modelo}` : so.veiculoId}</div>
-          {so.appointmentId && <div>Agendamento: {so.appointmentId}</div>}
-          <small className="text-secondary">
-            Criado em: {new Date(so.createdAt).toLocaleString('pt-BR')}
-          </small>
-        </CCardBody>
-      </CCard>
+      {/* ── Grid 2fr / 1fr ────────────────────────────────────────────── */}
+      <div
+        style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1fr)', gap: 16 }}
+        className="pk-dashboard-grid"
+      >
+        {/* Left column ─────────────────────────────────────────────── */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
-      {/* Checklist */}
-      <CCard className="mb-3">
-        <CCardBody>
-          <div className="fw-semibold mb-3">Checklist de Entrada</div>
-          <div className="d-flex gap-3 flex-wrap mb-3">
-            <div style={{ flex: '1 1 180px' }}>
-              <CFormLabel>KM de Entrada</CFormLabel>
-              <CFormInput size="sm" value={km} onChange={(e) => setKm(e.target.value)} disabled={isFinal} />
+          {/* Checklist */}
+          <Card header={<CardTitle title="Checklist de entrada" desc="Dados do veículo na chegada" />}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 14 }}>
+              <div>
+                <CFormLabel style={labelStyle}>KM de entrada</CFormLabel>
+                <CFormInput value={km} onChange={(e) => setKm(e.target.value)} disabled={isFinal} />
+              </div>
+              <div>
+                <CFormLabel style={labelStyle}>Combustível</CFormLabel>
+                <CFormInput value={combustivel} onChange={(e) => setCombustivel(e.target.value)} disabled={isFinal} placeholder="Ex: 1/2 tanque" />
+              </div>
             </div>
-            <div style={{ flex: '1 1 180px' }}>
-              <CFormLabel>Combustível</CFormLabel>
-              <CFormInput size="sm" value={combustivel} onChange={(e) => setCombustivel(e.target.value)} disabled={isFinal} />
+            <div>
+              <CFormLabel style={labelStyle}>Observações / avarias</CFormLabel>
+              <CFormTextarea
+                rows={3}
+                value={observacoes}
+                onChange={(e) => setObservacoes(e.target.value)}
+                disabled={isFinal}
+                placeholder="Ruídos, avarias visíveis, queixas do cliente..."
+              />
             </div>
-          </div>
-          <div className="mb-3">
-            <CFormLabel>Observações / Avarias</CFormLabel>
-            <CFormTextarea
-              rows={3}
-              value={observacoes}
-              onChange={(e) => setObservacoes(e.target.value)}
-              disabled={isFinal}
-            />
-          </div>
-          {!isFinal && (
-            <CButton color="secondary" variant="outline" size="sm" onClick={handleSaveChecklist} disabled={savingChecklist}>
-              {savingChecklist ? 'Salvando...' : 'Salvar Checklist'}
-            </CButton>
-          )}
-        </CCardBody>
-      </CCard>
-
-      {/* Serviços */}
-      <CCard className="mb-3">
-        <CCardBody>
-          <div className="d-flex justify-content-between align-items-center mb-2">
-            <div className="fw-semibold">Serviços</div>
             {!isFinal && (
-              <CButton color="secondary" variant="ghost" size="sm" onClick={() => setAddServiceOpen(true)}>
-                + Adicionar
-              </CButton>
-            )}
-          </div>
-          <CTable small responsive>
-            <CTableHead>
-              <CTableRow>
-                <CTableHeaderCell>Serviço</CTableHeaderCell>
-                <CTableHeaderCell>Mecânico</CTableHeaderCell>
-                <CTableHeaderCell className="text-end">Valor</CTableHeaderCell>
-                {!isFinal && <CTableHeaderCell />}
-              </CTableRow>
-            </CTableHead>
-            <CTableBody>
-              {so.itemsServices.map((item) => (
-                <CTableRow key={item.id}>
-                  <CTableDataCell>{item.nomeServico}</CTableDataCell>
-                  <CTableDataCell>{item.mecanicoId ?? '—'}</CTableDataCell>
-                  <CTableDataCell className="text-end">{fmt(item.valor)}</CTableDataCell>
-                  {!isFinal && (
-                    <CTableDataCell className="text-end">
-                      <CButton color="danger" variant="ghost" size="sm" onClick={() => handleRemoveService(item.id)}>Remover</CButton>
-                    </CTableDataCell>
-                  )}
-                </CTableRow>
-              ))}
-              {so.itemsServices.length === 0 && (
-                <CTableRow>
-                  <CTableDataCell colSpan={isFinal ? 3 : 4} className="text-center text-secondary">Nenhum serviço.</CTableDataCell>
-                </CTableRow>
-              )}
-            </CTableBody>
-          </CTable>
-        </CCardBody>
-      </CCard>
-
-      {/* Peças */}
-      <CCard className="mb-3">
-        <CCardBody>
-          <div className="d-flex justify-content-between align-items-center mb-2">
-            <div className="fw-semibold">Peças</div>
-            {!isFinal && (
-              <CButton color="secondary" variant="ghost" size="sm" onClick={() => setAddPartOpen(true)}>
-                + Adicionar
-              </CButton>
-            )}
-          </div>
-          <CTable small responsive>
-            <CTableHead>
-              <CTableRow>
-                <CTableHeaderCell>Peça</CTableHeaderCell>
-                <CTableHeaderCell className="text-end">Qtd</CTableHeaderCell>
-                <CTableHeaderCell className="text-end">Valor Unit.</CTableHeaderCell>
-                <CTableHeaderCell className="text-end">Subtotal</CTableHeaderCell>
-                {!isFinal && <CTableHeaderCell />}
-              </CTableRow>
-            </CTableHead>
-            <CTableBody>
-              {so.itemsParts.map((item) => (
-                <CTableRow key={item.id}>
-                  <CTableDataCell>{item.nomePeca}</CTableDataCell>
-                  <CTableDataCell className="text-end">{item.quantidade}</CTableDataCell>
-                  <CTableDataCell className="text-end">{fmt(item.valorUnitario)}</CTableDataCell>
-                  <CTableDataCell className="text-end">{fmt(Number(item.valorUnitario) * item.quantidade)}</CTableDataCell>
-                  {!isFinal && (
-                    <CTableDataCell className="text-end">
-                      <CButton color="danger" variant="ghost" size="sm" onClick={() => handleRemovePart(item.id)}>Remover</CButton>
-                    </CTableDataCell>
-                  )}
-                </CTableRow>
-              ))}
-              {so.itemsParts.length === 0 && (
-                <CTableRow>
-                  <CTableDataCell colSpan={isFinal ? 4 : 5} className="text-center text-secondary">Nenhuma peça.</CTableDataCell>
-                </CTableRow>
-              )}
-            </CTableBody>
-          </CTable>
-        </CCardBody>
-      </CCard>
-
-      {/* Total */}
-      <CCard className="mb-3">
-        <CCardBody>
-          <div className="fw-semibold mb-2">Total</div>
-          <hr className="my-2" />
-          <div className="d-flex justify-content-between"><span>Serviços</span><span>{fmt(totalServices)}</span></div>
-          <div className="d-flex justify-content-between"><span>Peças</span><span>{fmt(totalParts)}</span></div>
-          <hr className="my-2" />
-          <div className="d-flex justify-content-between fw-bold fs-5">
-            <span>Total</span><span>{fmt(total)}</span>
-          </div>
-        </CCardBody>
-      </CCard>
-
-      {/* Aprovação */}
-      {approvalDisplayLink && (
-        <CCard className="mb-3">
-          <CCardBody>
-            <div className="fw-semibold mb-2">Link de Aprovação</div>
-            {so.approvalExpiresAt && (
-              <CAlert color="info" className="mb-2">
-                Token ativo até {new Date(so.approvalExpiresAt).toLocaleString('pt-BR')}
-              </CAlert>
-            )}
-            <div className="d-flex gap-2 align-items-center mb-2">
-              <CButton color="secondary" variant="outline" size="sm" onClick={handleGenerateLink}>
-                Gerar novo link
-              </CButton>
-              <CTooltip content={copied ? 'Copiado!' : 'Copiar link'}>
-                <CButton color="secondary" variant="ghost" size="sm" onClick={() => handleCopy(approvalDisplayLink)}>
-                  <CIcon icon={cilCopy} />
+              <div style={{ marginTop: 12, display: 'flex', justifyContent: 'flex-end' }}>
+                <CButton color="primary" variant="outline" size="sm" onClick={handleSaveChecklist} disabled={savingChecklist} style={{ borderRadius: 8 }}>
+                  {savingChecklist ? <CSpinner size="sm" /> : 'Salvar checklist'}
                 </CButton>
-              </CTooltip>
+              </div>
+            )}
+          </Card>
+
+          {/* Serviços */}
+          <Card
+            padding={0}
+            header={
+              <>
+                <CardTitle title="Serviços" desc="Mão de obra aplicada" />
+                {!isFinal && (
+                  <CButton
+                    color="primary"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setAddServiceOpen(true)}
+                    style={{ borderRadius: 8, display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                  >
+                    <CIcon icon={cilPlus} size="sm" /> Adicionar
+                  </CButton>
+                )}
+              </>
+            }
+          >
+            <CTable hover responsive className="mb-0">
+              <CTableHead>
+                <CTableRow>
+                  <CTableHeaderCell>Serviço</CTableHeaderCell>
+                  <CTableHeaderCell>Mecânico</CTableHeaderCell>
+                  <CTableHeaderCell style={{ textAlign: 'right' }}>Valor</CTableHeaderCell>
+                  {!isFinal && <CTableHeaderCell style={{ width: 48 }} />}
+                </CTableRow>
+              </CTableHead>
+              <CTableBody>
+                {so.itemsServices.map((item) => (
+                  <CTableRow key={item.id}>
+                    <CTableDataCell style={{ fontWeight: 500 }}>{item.nomeServico}</CTableDataCell>
+                    <CTableDataCell style={{ color: 'var(--cui-secondary-color)', fontSize: 13 }}>
+                      {item.mecanicoId ?? '—'}
+                    </CTableDataCell>
+                    <CTableDataCell style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums', fontWeight: 600 }}>
+                      {fmt(item.valor)}
+                    </CTableDataCell>
+                    {!isFinal && (
+                      <CTableDataCell style={{ textAlign: 'right' }}>
+                        <CButton color="danger" variant="ghost" size="sm" onClick={() => handleRemoveService(item.id)} title="Remover">
+                          <CIcon icon={cilTrash} />
+                        </CButton>
+                      </CTableDataCell>
+                    )}
+                  </CTableRow>
+                ))}
+                {so.itemsServices.length === 0 && (
+                  <CTableRow>
+                    <CTableDataCell colSpan={isFinal ? 3 : 4} className="text-center py-4" style={{ color: 'var(--cui-secondary-color)', fontSize: 13 }}>
+                      Nenhum serviço adicionado.
+                    </CTableDataCell>
+                  </CTableRow>
+                )}
+              </CTableBody>
+            </CTable>
+          </Card>
+
+          {/* Peças */}
+          <Card
+            padding={0}
+            header={
+              <>
+                <CardTitle title="Peças" desc="Consumíveis e componentes" />
+                {!isFinal && (
+                  <CButton
+                    color="primary"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setAddPartOpen(true)}
+                    style={{ borderRadius: 8, display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                  >
+                    <CIcon icon={cilPlus} size="sm" /> Adicionar
+                  </CButton>
+                )}
+              </>
+            }
+          >
+            <CTable hover responsive className="mb-0">
+              <CTableHead>
+                <CTableRow>
+                  <CTableHeaderCell>Peça</CTableHeaderCell>
+                  <CTableHeaderCell style={{ textAlign: 'right' }}>Qtd</CTableHeaderCell>
+                  <CTableHeaderCell style={{ textAlign: 'right' }}>Valor unit.</CTableHeaderCell>
+                  <CTableHeaderCell style={{ textAlign: 'right' }}>Subtotal</CTableHeaderCell>
+                  {!isFinal && <CTableHeaderCell style={{ width: 48 }} />}
+                </CTableRow>
+              </CTableHead>
+              <CTableBody>
+                {so.itemsParts.map((item) => (
+                  <CTableRow key={item.id}>
+                    <CTableDataCell style={{ fontWeight: 500 }}>{item.nomePeca}</CTableDataCell>
+                    <CTableDataCell style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
+                      {item.quantidade}
+                    </CTableDataCell>
+                    <CTableDataCell style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums', color: 'var(--cui-secondary-color)' }}>
+                      {fmt(item.valorUnitario)}
+                    </CTableDataCell>
+                    <CTableDataCell style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums', fontWeight: 600 }}>
+                      {fmt(Number(item.valorUnitario) * item.quantidade)}
+                    </CTableDataCell>
+                    {!isFinal && (
+                      <CTableDataCell style={{ textAlign: 'right' }}>
+                        <CButton color="danger" variant="ghost" size="sm" onClick={() => handleRemovePart(item.id)} title="Remover">
+                          <CIcon icon={cilTrash} />
+                        </CButton>
+                      </CTableDataCell>
+                    )}
+                  </CTableRow>
+                ))}
+                {so.itemsParts.length === 0 && (
+                  <CTableRow>
+                    <CTableDataCell colSpan={isFinal ? 4 : 5} className="text-center py-4" style={{ color: 'var(--cui-secondary-color)', fontSize: 13 }}>
+                      Nenhuma peça adicionada.
+                    </CTableDataCell>
+                  </CTableRow>
+                )}
+              </CTableBody>
+            </CTable>
+          </Card>
+        </div>
+
+        {/* Right column (sticky) ───────────────────────────────────── */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16, position: 'sticky', top: 72, height: 'fit-content' }}>
+          <Card header={<CardTitle title="Resumo" />}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <SummaryRow label="Serviços" value={fmt(totalServices)} />
+              <SummaryRow label="Peças" value={fmt(totalParts)} />
+              <div style={{ height: 1, background: 'var(--cui-border-color)', margin: '6px 0' }} />
+              <SummaryRow label="Total" value={fmt(total)} bold big />
+              {so.statusPagamento !== 'PAGO' && isOwner && (
+                <CButton color="primary" onClick={handleTogglePayment} style={{ borderRadius: 8, marginTop: 8, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                  <CIcon icon={cilCheck} size="sm" /> Registrar pagamento
+                </CButton>
+              )}
+              {so.statusPagamento === 'PAGO' && (
+                <div style={{ padding: 10, borderRadius: 8, background: 'rgba(22, 163, 74, 0.08)', color: '#15803d', fontSize: 12.5, fontWeight: 600, textAlign: 'center', marginTop: 8 }}>
+                  ✓ Pagamento confirmado
+                </div>
+              )}
             </div>
-            <small className="text-secondary" style={{ wordBreak: 'break-all' }}>
-              {approvalDisplayLink}
-            </small>
-          </CCardBody>
-        </CCard>
-      )}
+          </Card>
+
+          {/* Dados */}
+          <Card header={<CardTitle title="Informações" />}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 13 }}>
+              <div>
+                <div style={{ fontSize: 11, color: 'var(--cui-secondary-color)', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600, marginBottom: 2 }}>
+                  Cliente
+                </div>
+                <div style={{ fontWeight: 500, color: 'var(--cui-body-color)' }}>{customer?.nome ?? so.clienteId}</div>
+                {customer?.cpfCnpj && (
+                  <div style={{ color: 'var(--cui-secondary-color)', fontVariantNumeric: 'tabular-nums', fontSize: 12 }}>{customer.cpfCnpj}</div>
+                )}
+              </div>
+              <div>
+                <div style={{ fontSize: 11, color: 'var(--cui-secondary-color)', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600, marginBottom: 2 }}>
+                  Veículo
+                </div>
+                <div style={{ fontWeight: 500, color: 'var(--cui-body-color)' }}>
+                  {vehicle ? `${vehicle.marca} ${vehicle.modelo}` : so.veiculoId}
+                </div>
+                {vehicle && (
+                  <div style={{ color: 'var(--cui-secondary-color)', fontSize: 12 }}>
+                    <span style={{ fontFamily: "'JetBrains Mono', monospace" }}>{vehicle.placa}</span>
+                    {' · '}{vehicle.ano}
+                  </div>
+                )}
+              </div>
+              {so.appointmentId && (
+                <div>
+                  <div style={{ fontSize: 11, color: 'var(--cui-secondary-color)', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600, marginBottom: 2 }}>
+                    Agendamento
+                  </div>
+                  <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12 }}>{so.appointmentId}</div>
+                </div>
+              )}
+            </div>
+          </Card>
+
+          {/* Approval link */}
+          {approvalDisplayLink && (
+            <Card header={<CardTitle title="Link de aprovação" />}>
+              {so.approvalExpiresAt && (
+                <div style={{ fontSize: 12, color: 'var(--cui-secondary-color)', marginBottom: 10 }}>
+                  Ativo até {new Date(so.approvalExpiresAt).toLocaleString('pt-BR')}
+                </div>
+              )}
+              <div
+                style={{
+                  padding: 10,
+                  background: 'var(--cui-card-cap-bg)',
+                  border: '1px solid var(--cui-border-color)',
+                  borderRadius: 8,
+                  fontSize: 11.5,
+                  fontFamily: "'JetBrains Mono', monospace",
+                  wordBreak: 'break-all',
+                  color: 'var(--cui-secondary-color)',
+                  marginBottom: 10,
+                }}
+              >
+                {approvalDisplayLink}
+              </div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <CTooltip content={copied ? 'Copiado!' : 'Copiar link'}>
+                  <CButton color="primary" size="sm" onClick={() => handleCopy(approvalDisplayLink)} style={{ borderRadius: 8, flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                    <CIcon icon={cilCopy} size="sm" /> {copied ? 'Copiado!' : 'Copiar'}
+                  </CButton>
+                </CTooltip>
+                <CButton color="secondary" variant="outline" size="sm" onClick={handleGenerateLink} style={{ borderRadius: 8 }}>
+                  Novo
+                </CButton>
+              </div>
+            </Card>
+          )}
+        </div>
+      </div>
 
       <AddServiceDialog
         open={addServiceOpen}
