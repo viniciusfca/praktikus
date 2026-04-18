@@ -16,10 +16,17 @@ export function SubscriptionTab() {
   const [profile, setProfile] = useState<CompanyProfile | null>(null);
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [trialDaysLeft, setTrialDaysLeft] = useState<number | null>(null);
 
   useEffect(() => {
     companyService.getProfile()
-      .then(setProfile)
+      .then((p) => {
+        setProfile(p);
+        if (p.status === 'TRIAL' && p.trialEndsAt) {
+          const diff = new Date(p.trialEndsAt).getTime() - Date.now();
+          setTrialDaysLeft(Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24))));
+        }
+      })
       .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, []);
@@ -42,12 +49,6 @@ export function SubscriptionTab() {
       : profile.status === 'OVERDUE'
         ? 'Vencimento em atraso'
         : 'Próxima cobrança';
-
-  let trialDaysLeft: number | null = null;
-  if (profile.status === 'TRIAL' && profile.trialEndsAt) {
-    const diff = new Date(profile.trialEndsAt).getTime() - Date.now();
-    trialDaysLeft = Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
-  }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 720 }}>
