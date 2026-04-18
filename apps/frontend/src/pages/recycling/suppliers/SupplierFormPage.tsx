@@ -30,7 +30,7 @@ const schema = z.object({
   state: z.string().max(2, 'UF deve ter 2 caracteres').optional(),
   zip: z.string().optional(),
 }).superRefine((data, ctx) => {
-  if (data.documentType && data.documentType !== '') {
+  if (data.documentType) {
     if (!data.document) {
       ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Documento é obrigatório quando o tipo é selecionado', path: ['document'] });
     } else if (data.documentType === 'CPF' && !/^\d{11}$/.test(data.document)) {
@@ -92,7 +92,7 @@ export function SupplierFormPage() {
     const payload = {
       name: data.name,
       document: data.document && data.documentType ? data.document : null,
-      documentType: (data.documentType && data.documentType !== '' ? data.documentType : null) as 'CPF' | 'CNPJ' | null,
+      documentType: (data.documentType ? data.documentType : null) as 'CPF' | 'CNPJ' | null,
       phone: data.phone || null,
       address: hasAddress ? {
         street: data.street ?? '',
@@ -148,7 +148,7 @@ export function SupplierFormPage() {
                 </CFormSelect>
                 {errors.documentType && <CFormFeedback invalid>{errors.documentType.message}</CFormFeedback>}
               </CCol>
-              {documentType && documentType !== '' && (
+              {documentType && (
                 <CCol md={8}>
                   <CFormLabel>
                     {documentType === 'CPF' ? 'CPF (11 dígitos)' : 'CNPJ (14 dígitos)'}

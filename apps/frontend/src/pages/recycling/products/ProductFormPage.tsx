@@ -20,7 +20,7 @@ import { unitsService, type Unit } from '../../../services/recycling/units.servi
 const schema = z.object({
   name: z.string().min(1, 'Nome é obrigatório'),
   unitId: z.string().uuid('Selecione uma unidade válida'),
-  pricePerUnit: z.coerce.number().positive('Preço deve ser maior que zero'),
+  pricePerUnit: z.number().positive('Preço deve ser maior que zero'),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -121,7 +121,7 @@ export function ProductFormPage() {
                 type="number"
                 step="0.0001"
                 min="0"
-                {...register('pricePerUnit')}
+                {...register('pricePerUnit', { valueAsNumber: true })}
                 invalid={!!errors.pricePerUnit}
               />
               {errors.pricePerUnit && <CFormFeedback invalid>{errors.pricePerUnit.message}</CFormFeedback>}

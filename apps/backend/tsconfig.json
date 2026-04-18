@@ -10,10 +10,7 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "strictPropertyInitialization": false,
-    "paths": {
-      "@praktikus/shared": ["../../packages/shared/src"],
-      "@praktikus/shared/*": ["../../packages/shared/src/*"]
-    }
+    "paths": {}
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "test"]

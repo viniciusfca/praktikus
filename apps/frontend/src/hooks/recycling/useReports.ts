@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { reportsService, DashboardSummary, PurchasePeriodEntry } from '../../services/recycling/reports.service';
+import { reportsService, type DashboardSummary, type PurchasePeriodEntry } from '../../services/recycling/reports.service';
 
 export function useDashboardSummary() {
   const [summary, setSummary] = useState<DashboardSummary | null>(null);

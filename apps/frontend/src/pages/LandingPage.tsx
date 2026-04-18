@@ -6,6 +6,14 @@ const segments = [
     title: 'Oficina Mecânica',
     description: 'Gestão completa de OS, agendamentos e clientes para oficinas e auto centers.',
     available: true,
+    registerPath: '/register',
+  },
+  {
+    icon: '♻️',
+    title: 'Recicláveis',
+    description: 'Gestão de compras, estoque, caixa e vendas para recicladoras.',
+    available: true,
+    registerPath: '/register/recycling',
   },
   {
     icon: '🏥',
@@ -65,7 +73,7 @@ export function LandingPage() {
                   <p className="text-secondary small mb-3">{seg.description}</p>
                   <div className="mt-auto">
                     {seg.available ? (
-                      <CButton color="primary" href="/register">Começar grátis</CButton>
+                      <CButton color="primary" href={seg.registerPath ?? '/register'}>Começar grátis</CButton>
                     ) : (
                       <CButton color="secondary" variant="outline" disabled>Em breve</CButton>
                     )}

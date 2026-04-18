@@ -31,8 +31,8 @@ import { stockService, type StockBalance } from '../../../services/recycling/sto
 
 const itemSchema = z.object({
   productId: z.string().uuid('Selecione um produto'),
-  quantity: z.number({ invalid_type_error: 'Quantidade deve ser um número' }).positive('Quantidade deve ser positiva'),
-  unitPrice: z.number({ invalid_type_error: 'Preço deve ser um número' }).positive('Preço deve ser positivo').max(999999.9999, 'Preço máximo excedido'),
+  quantity: z.number().positive('Quantidade deve ser positiva'),
+  unitPrice: z.number().positive('Preço deve ser positivo').max(999999.9999, 'Preço máximo excedido'),
 });
 
 const schema = z.object({

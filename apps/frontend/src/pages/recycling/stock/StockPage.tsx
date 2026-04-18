@@ -12,7 +12,7 @@ import {
   CTableRow,
 } from '@coreui/react';
 import { useStock, useProductMovements } from '../../../hooks/recycling/useStock';
-import { StockBalance } from '../../../services/recycling/stock.service';
+import type { StockBalance } from '../../../services/recycling/stock.service';
 
 function MovementTypeLabel({ type }: { type: string }) {
   return (

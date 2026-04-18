@@ -32,7 +32,7 @@ import {
 const transactionSchema = z.object({
   type: z.enum(['IN', 'OUT']),
   paymentMethod: z.enum(['CASH', 'PIX', 'CARD']),
-  amount: z.coerce.number().positive('O valor deve ser positivo.'),
+  amount: z.number().positive('O valor deve ser positivo.'),
   description: z.string().optional(),
 });
 
@@ -282,7 +282,7 @@ export function CashRegisterPage() {
                     type="number"
                     step="0.01"
                     min="0.01"
-                    {...register('amount')}
+                    {...register('amount', { valueAsNumber: true })}
                     invalid={!!errors.amount}
                   />
                   {errors.amount && (

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { stockService, StockBalance, StockMovement } from '../../services/recycling/stock.service';
+import { stockService, type StockBalance, type StockMovement } from '../../services/recycling/stock.service';
 
 export function useStock() {
   const [balances, setBalances] = useState<StockBalance[]>([]);
