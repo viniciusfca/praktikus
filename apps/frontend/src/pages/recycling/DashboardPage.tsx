@@ -387,6 +387,7 @@ export function RecyclingDashboardPage() {
               </div>
             ) : (
               <Line
+                height={240}
                 data={{
                   labels: chartData.labels,
                   datasets: [
@@ -394,23 +395,12 @@ export function RecyclingDashboardPage() {
                       label: 'Compras (R$)',
                       data: chartData.values,
                       borderColor: '#348E91',
-                      backgroundColor: (ctx) => {
-                        const chart = ctx.chart;
-                        const { ctx: c, chartArea } = chart;
-                        if (!chartArea) return 'rgba(52,142,145,0.15)';
-                        const gradient = c.createLinearGradient(
-                          0,
-                          chartArea.top,
-                          0,
-                          chartArea.bottom,
-                        );
-                        gradient.addColorStop(0, 'rgba(52,142,145,0.32)');
-                        gradient.addColorStop(1, 'rgba(52,142,145,0.02)');
-                        return gradient;
-                      },
+                      backgroundColor: 'rgba(52,142,145,0.18)',
                       fill: true,
                       tension: 0.35,
-                      pointRadius: 0,
+                      pointRadius: 2,
+                      pointBackgroundColor: '#348E91',
+                      pointBorderWidth: 0,
                       pointHoverRadius: 5,
                       pointHoverBackgroundColor: '#348E91',
                       pointHoverBorderColor: '#fff',
