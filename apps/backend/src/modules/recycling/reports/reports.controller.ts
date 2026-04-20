@@ -6,6 +6,7 @@ import { UserRole } from '../../core/auth/user.entity';
 import { AuthUser } from '../../core/auth/jwt.strategy';
 import { RecyclingReportsService } from './reports.service';
 import { PeriodQueryDto } from './dto/period-query.dto';
+import { TopMaterialsQueryDto } from './dto/top-materials-query.dto';
 
 interface RequestWithUser extends Request {
   user: AuthUser;
@@ -29,5 +30,15 @@ export class ReportsController {
     @Query() query: PeriodQueryDto,
   ) {
     return this.reportsService.getPurchasesByPeriod(req.user.tenantId, query.startDate, query.endDate);
+  }
+
+  @Get('top-materials')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.OWNER)
+  getTopMaterials(
+    @Request() req: RequestWithUser,
+    @Query() query: TopMaterialsQueryDto,
+  ) {
+    return this.reportsService.getTopMaterials(req.user.tenantId, query.month, query.limit);
   }
 }
