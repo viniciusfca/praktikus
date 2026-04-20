@@ -34,4 +34,9 @@ export class ReportsController {
   ) {
     return this.reportsService.getTopMaterials(req.user.tenantId, query.month, query.limit);
   }
+
+  @Get('sales-summary')
+  getSalesSummary(@Request() req: RequestWithUser) {
+    return this.reportsService.getSalesSummary(req.user.tenantId);
+  }
 }
