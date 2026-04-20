@@ -30,10 +30,15 @@ describe('RecyclingReportsService', () => {
   });
 
   describe('getDashboardSummary', () => {
-    it('should return today totals and cash session info', async () => {
+    it('should return today totals, monthly total and cash session info', async () => {
       mockQueryRunner.query.mockImplementation(async (sql: string) => {
         if (sql.includes('SET LOCAL')) return undefined;
-        if (sql.includes('purchases') && sql.includes('CURRENT_DATE')) return [{ total_today: '1500.00', purchases_count: '5' }];
+        if (sql.includes('CURRENT_DATE') && sql.includes('total_today')) {
+          return [{ total_today: '1500.00', purchases_count: '5' }];
+        }
+        if (sql.includes("date_trunc('month'") && sql.includes('total_month')) {
+          return [{ total_month: '14820.00', purchases_count_month: '42' }];
+        }
         if (sql.includes('cash_sessions')) return [{ status: 'OPEN', opening_balance: '200.00' }];
         return [];
       });
@@ -41,20 +46,27 @@ describe('RecyclingReportsService', () => {
       const result = await service.getDashboardSummary(TENANT);
       expect(result.totalPurchasedToday).toBe(1500);
       expect(result.purchasesCountToday).toBe(5);
-      expect(result.cashSession).toBeDefined();
+      expect(result.totalPurchasedMonth).toBe(14820);
+      expect(result.purchasesCountMonth).toBe(42);
       expect(result.cashSession?.openingBalance).toBe(200);
     });
 
     it('should return null cashSession when no open session', async () => {
       mockQueryRunner.query.mockImplementation(async (sql: string) => {
         if (sql.includes('SET LOCAL')) return undefined;
-        if (sql.includes('purchases') && sql.includes('CURRENT_DATE')) return [{ total_today: '0.00', purchases_count: '0' }];
+        if (sql.includes('CURRENT_DATE') && sql.includes('total_today')) {
+          return [{ total_today: '0.00', purchases_count: '0' }];
+        }
+        if (sql.includes("date_trunc('month'") && sql.includes('total_month')) {
+          return [{ total_month: '0.00', purchases_count_month: '0' }];
+        }
         if (sql.includes('cash_sessions')) return [];
         return [];
       });
 
       const result = await service.getDashboardSummary(TENANT);
       expect(result.cashSession).toBeNull();
+      expect(result.totalPurchasedMonth).toBe(0);
     });
   });
 

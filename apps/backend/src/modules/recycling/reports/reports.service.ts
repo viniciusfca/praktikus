@@ -28,16 +28,27 @@ export class RecyclingReportsService {
   async getDashboardSummary(tenantId: string): Promise<{
     totalPurchasedToday: number;
     purchasesCountToday: number;
+    totalPurchasedMonth: number;
+    purchasesCountMonth: number;
     cashSession: { status: string; openingBalance: number } | null;
   }> {
     const schemaName = this.getSchemaName(tenantId);
     return this.withQueryRunner(tenantId, async (qr) => {
-      const [purchaseSummary] = await qr.query(`
+      const [today] = await qr.query(`
         SELECT
           COALESCE(SUM(total_amount), 0) as total_today,
           COUNT(*) as purchases_count
         FROM "${schemaName}".purchases
         WHERE DATE(purchased_at) = CURRENT_DATE
+      `);
+
+      const [month] = await qr.query(`
+        SELECT
+          COALESCE(SUM(total_amount), 0) as total_month,
+          COUNT(*) as purchases_count_month
+        FROM "${schemaName}".purchases
+        WHERE purchased_at >= date_trunc('month', CURRENT_DATE)
+          AND purchased_at < date_trunc('month', CURRENT_DATE) + interval '1 month'
       `);
 
       const cashSessions = await qr.query(`
@@ -48,8 +59,10 @@ export class RecyclingReportsService {
       `);
 
       return {
-        totalPurchasedToday: Number(purchaseSummary.total_today),
-        purchasesCountToday: Number(purchaseSummary.purchases_count),
+        totalPurchasedToday: Number(today.total_today),
+        purchasesCountToday: Number(today.purchases_count),
+        totalPurchasedMonth: Number(month.total_month),
+        purchasesCountMonth: Number(month.purchases_count_month),
         cashSession: cashSessions.length > 0
           ? { status: cashSessions[0].status, openingBalance: Number(cashSessions[0].opening_balance) }
           : null,
