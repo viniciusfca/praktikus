@@ -6,6 +6,9 @@ import {
 } from '@coreui/react';
 import { purchasesService, type PurchaseDetail } from '../../../services/recycling/purchases.service';
 import { PaymentBadge } from '../../../components/recycling/PaymentBadge';
+import { PurchasePdf } from '../../../components/recycling/PurchasePdf';
+import { downloadPdf } from '../../../utils/downloadPdf';
+import { companyService } from '../../../services/company.service';
 
 function formatCurrency(value: number): string {
   return Number(value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -50,6 +53,30 @@ export function PurchaseDetailModal({
   const [detail, setDetail] = useState<PurchaseDetail | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [printing, setPrinting] = useState(false);
+
+  const handlePrint = async () => {
+    if (!detail) return;
+    setPrinting(true);
+    setError(null);
+    try {
+      let nomeFantasia = 'Praktikus';
+      try {
+        const company = await companyService.getProfile();
+        nomeFantasia = company.nomeFantasia;
+      } catch {
+        /* fallback to 'Praktikus' */
+      }
+      await downloadPdf(
+        <PurchasePdf purchase={detail} empresa={{ nomeFantasia }} />,
+        `Compra-${detail.id.slice(0, 8).toUpperCase()}.pdf`,
+      );
+    } catch {
+      setError('Erro ao gerar PDF.');
+    } finally {
+      setPrinting(false);
+    }
+  };
 
   useEffect(() => {
     if (!purchaseId) { setDetail(null); return; }
@@ -171,6 +198,15 @@ export function PurchaseDetailModal({
         )}
       </CModalBody>
       <CModalFooter>
+        <CButton
+          color="primary"
+          variant="outline"
+          onClick={handlePrint}
+          disabled={!detail || printing}
+          style={{ marginRight: 'auto', minWidth: 130 }}
+        >
+          {printing ? <CSpinner size="sm" /> : 'Imprimir PDF'}
+        </CButton>
         <CButton color="secondary" variant="outline" onClick={onClose}>Fechar</CButton>
       </CModalFooter>
     </CModal>
