@@ -29,6 +29,9 @@ export class EmployeePermissionsEntity {
   @Column({ name: 'can_register_sales', default: true })
   canRegisterSales: boolean;
 
+  @Column({ name: 'can_manage_coletas', default: true })
+  canManageColetas: boolean;
+
   @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' })
   updatedAt: Date;
 }

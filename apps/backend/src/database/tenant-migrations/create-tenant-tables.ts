@@ -210,7 +210,27 @@ export function createTenantTablesSql(schemaName: string, segment: TenantSegment
       can_view_reports BOOLEAN NOT NULL DEFAULT false,
       can_register_purchases BOOLEAN NOT NULL DEFAULT true,
       can_register_sales BOOLEAN NOT NULL DEFAULT true,
+      can_manage_coletas BOOLEAN NOT NULL DEFAULT true,
       updated_at TIMESTAMPTZ DEFAULT NOW()
+    )`,
+    `CREATE TABLE IF NOT EXISTS "${schemaName}".coletas (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      supplier_id UUID NOT NULL REFERENCES "${schemaName}".suppliers(id) ON DELETE RESTRICT,
+      employee_id UUID,
+      scheduled_at TIMESTAMPTZ NOT NULL,
+      status VARCHAR NOT NULL DEFAULT 'AGENDADA',
+      notes VARCHAR,
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      updated_at TIMESTAMPTZ DEFAULT NOW()
+    )`,
+    `CREATE INDEX IF NOT EXISTS idx_coletas_scheduled_at ON "${schemaName}".coletas(scheduled_at)`,
+    `CREATE INDEX IF NOT EXISTS idx_coletas_status ON "${schemaName}".coletas(status)`,
+    `CREATE TABLE IF NOT EXISTS "${schemaName}".coleta_comments (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      coleta_id UUID NOT NULL REFERENCES "${schemaName}".coletas(id) ON DELETE CASCADE,
+      texto VARCHAR NOT NULL,
+      created_by_id UUID NOT NULL,
+      created_at TIMESTAMPTZ DEFAULT NOW()
     )`,
   ];
 
