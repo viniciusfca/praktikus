@@ -42,16 +42,83 @@ export class PurchasesService {
     tenantId: string,
     page: number,
     limit: number,
-  ): Promise<{ data: PurchaseEntity[]; total: number; page: number; limit: number }> {
-    return this.withSchema(tenantId, async (manager) => {
-      const repo = manager.getRepository(PurchaseEntity);
-      const [data, total] = await repo
-        .createQueryBuilder('p')
-        .orderBy('p.purchasedAt', 'DESC')
-        .skip((page - 1) * limit)
-        .take(limit)
-        .getManyAndCount();
-      return { data, total, page, limit };
+  ): Promise<{
+    data: Array<{
+      id: string;
+      purchasedAt: string;
+      supplierId: string;
+      supplierName: string;
+      paymentMethod: string;
+      total: number;
+      itemCount: number;
+      firstProductName: string | null;
+      totalKg: number;
+      notes: string | null;
+    }>;
+    total: number;
+    page: number;
+    limit: number;
+  }> {
+    const schemaName = this.getSchemaName(tenantId);
+    const offset = (page - 1) * limit;
+    return this.withSchema(tenantId, async (_manager, qr) => {
+      const rows = await qr.query(
+        `
+      SELECT
+        p.id,
+        p.purchased_at,
+        p.supplier_id,
+        p.payment_method,
+        p.total_amount,
+        p.notes,
+        s.name as supplier_name,
+        COALESCE(agg.item_count, 0) as item_count,
+        COALESCE(agg.total_kg, 0) as total_kg,
+        agg.first_product_name
+      FROM "${schemaName}".purchases p
+      LEFT JOIN "${schemaName}".suppliers s ON s.id = p.supplier_id
+      LEFT JOIN LATERAL (
+        SELECT
+          COUNT(*) as item_count,
+          COALESCE(SUM(pi.quantity), 0) as total_kg,
+          (
+            SELECT pr.name
+            FROM "${schemaName}".purchase_items pi2
+            JOIN "${schemaName}".products pr ON pr.id = pi2.product_id
+            WHERE pi2.purchase_id = p.id
+            LIMIT 1
+          ) as first_product_name
+        FROM "${schemaName}".purchase_items pi
+        WHERE pi.purchase_id = p.id
+      ) agg ON TRUE
+      ORDER BY p.purchased_at DESC
+      LIMIT $1 OFFSET $2
+      `,
+        [limit, offset],
+      );
+
+      const [{ count }] = await qr.query(
+        `SELECT COUNT(*) as count FROM "${schemaName}".purchases`,
+      );
+
+      return {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        data: rows.map((r: any) => ({
+          id: r.id,
+          purchasedAt: new Date(r.purchased_at).toISOString(),
+          supplierId: r.supplier_id,
+          supplierName: r.supplier_name ?? '',
+          paymentMethod: r.payment_method,
+          total: Number(r.total_amount),
+          itemCount: Number(r.item_count),
+          firstProductName: r.first_product_name ?? null,
+          totalKg: Number(r.total_kg),
+          notes: r.notes,
+        })),
+        total: Number(count),
+        page,
+        limit,
+      };
     });
   }
 

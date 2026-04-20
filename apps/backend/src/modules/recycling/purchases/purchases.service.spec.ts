@@ -56,20 +56,47 @@ describe('PurchasesService', () => {
   });
 
   describe('list', () => {
-    it('should return paginated purchases', async () => {
-      const mockQb = {
-        orderBy: jest.fn().mockReturnThis(),
-        skip: jest.fn().mockReturnThis(),
-        take: jest.fn().mockReturnThis(),
-        getManyAndCount: jest.fn().mockResolvedValue([[{ id: 'p1' }], 1]),
-      };
-      mockPurchaseRepo.createQueryBuilder.mockReturnValue(mockQb);
+    it('should return enriched purchases with supplier name, total and material summary', async () => {
+      mockQueryRunner.query.mockImplementation(async (sql: string) => {
+        if (sql.includes('SET LOCAL')) return undefined;
+        if (sql.includes('COUNT(*) as count')) return [{ count: '1' }];
+        if (sql.includes('FROM "tenant_')) {
+          return [
+            {
+              id: 'purchase1',
+              purchased_at: new Date('2026-04-18T10:42:00Z'),
+              supplier_id: 'supplier1',
+              payment_method: 'CASH',
+              total_amount: '480.00',
+              notes: null,
+              supplier_name: 'Sucata Santa Lúcia',
+              item_count: '2',
+              total_kg: '120.0000',
+              first_product_name: 'PET',
+            },
+          ];
+        }
+        return [];
+      });
 
       const result = await service.list(TENANT, 1, 20);
       expect(result.total).toBe(1);
-      expect(result.page).toBe(1);
-      expect(result.limit).toBe(20);
       expect(result.data).toHaveLength(1);
+      expect(result.data[0]).toMatchObject({
+        id: 'purchase1',
+        supplierId: 'supplier1',
+        supplierName: 'Sucata Santa Lúcia',
+        paymentMethod: 'CASH',
+        total: 480,
+        itemCount: 2,
+        totalKg: 120,
+        firstProductName: 'PET',
+        notes: null,
+      });
+    });
+
+    it('should throw on invalid tenantId', async () => {
+      await expect(service.list('bad-id', 1, 20)).rejects.toThrow('Invalid tenantId');
     });
   });
 
