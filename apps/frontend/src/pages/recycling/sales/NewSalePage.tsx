@@ -22,6 +22,10 @@ import {
 import CIcon from '@coreui/icons-react';
 import { cilPlus, cilTrash, cilArrowLeft, cilWarning } from '@coreui/icons';
 import { salesService } from '../../../services/recycling/sales.service';
+import { PrintPromptModal } from '../../../components/PrintPromptModal';
+import { SalePdf } from '../../../components/recycling/SalePdf';
+import { downloadPdf } from '../../../utils/downloadPdf';
+import { companyService } from '../../../services/company.service';
 import { buyersService, type Buyer } from '../../../services/recycling/buyers.service';
 import { productsService, type Product } from '../../../services/recycling/products.service';
 import { stockService, type StockBalance } from '../../../services/recycling/stock.service';
@@ -139,6 +143,7 @@ export function NewSalePage() {
   const [loadingData, setLoadingData] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [newSaleId, setNewSaleId] = useState<string | null>(null);
 
   useEffect(() => {
     Promise.all([
@@ -200,7 +205,7 @@ export function NewSalePage() {
   const onSubmit = async (data: FormData) => {
     setSubmitError(null);
     try {
-      await salesService.create({
+      const created = await salesService.create({
         buyerId: data.buyerId,
         items: data.items.map((item) => ({
           productId: item.productId,
@@ -209,12 +214,30 @@ export function NewSalePage() {
         })),
         notes: data.notes || undefined,
       });
-      navigate('/recycling/sales');
+      setNewSaleId(created.id);
     } catch (err: unknown) {
       const anyErr = err as { response?: { data?: { message?: string | string[] } } };
       const msg = anyErr?.response?.data?.message;
       setSubmitError(Array.isArray(msg) ? msg.join(', ') : (msg ?? 'Erro ao registrar venda.'));
     }
+  };
+
+  const handlePrintNewSale = async () => {
+    if (!newSaleId) return;
+    const [detail, company] = await Promise.all([
+      salesService.getById(newSaleId),
+      companyService.getProfile().catch(() => ({ nomeFantasia: 'Praktikus' })),
+    ]);
+    await downloadPdf(
+      <SalePdf sale={detail} empresa={{ nomeFantasia: company.nomeFantasia }} />,
+      `Venda-${detail.id.slice(0, 8).toUpperCase()}.pdf`,
+    );
+    navigate('/recycling/sales');
+  };
+
+  const handleClosePrompt = () => {
+    setNewSaleId(null);
+    navigate('/recycling/sales');
   };
 
   if (loadingData) {
@@ -529,6 +552,13 @@ export function NewSalePage() {
           </div>
         </div>
       </form>
+      <PrintPromptModal
+        open={newSaleId !== null}
+        title="Venda registrada"
+        message="Deseja imprimir o comprovante?"
+        onPrint={handlePrintNewSale}
+        onClose={handleClosePrompt}
+      />
     </div>
   );
 }
