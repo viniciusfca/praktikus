@@ -35,6 +35,7 @@ import {
   cilSun,
   cilMoon,
   cilAccountLogout,
+  cilTruck,
 } from '@coreui/icons';
 import { useAuthStore } from '../store/auth.store';
 import { useThemeMode } from '../theme/ThemeProvider';
@@ -50,6 +51,7 @@ const navItems: Array<{ label: string; icon: any; path: string; ownerOnly: boole
   { label: 'Compras', icon: cilBasket, path: '/recycling/purchases', ownerOnly: false },
   { label: 'Estoque', icon: cilLayers, path: '/recycling/stock', ownerOnly: false },
   { label: 'Vendas', icon: cilCart, path: '/recycling/sales', ownerOnly: false },
+  { label: 'Coletas', icon: cilTruck, path: '/recycling/coletas', ownerOnly: false },
   { label: 'Fornecedores', icon: cilPeople, path: '/recycling/suppliers', ownerOnly: false },
   { label: 'Compradores', icon: cilFactory, path: '/recycling/buyers', ownerOnly: true },
   { label: 'Produtos', icon: cilList, path: '/recycling/products', ownerOnly: true },

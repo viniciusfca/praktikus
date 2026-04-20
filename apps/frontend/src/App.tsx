@@ -20,6 +20,7 @@ import { StockPage } from './pages/recycling/stock/StockPage';
 import { BuyersPage } from './pages/recycling/buyers/BuyersPage';
 import { SalesPage } from './pages/recycling/sales/SalesPage';
 import { NewSalePage } from './pages/recycling/sales/NewSalePage';
+import { ColetasPage } from './pages/recycling/coletas/ColetasPage';
 import { RecyclingReportsPage } from './pages/recycling/reports/ReportsPage';
 import { SettingsPage as RecyclingSettingsPage } from './pages/recycling/settings/SettingsPage';
 import { DashboardPage } from './pages/workshop/DashboardPage';
@@ -103,6 +104,7 @@ function App() {
             <Route path="buyers" element={<BuyersPage />} />
             <Route path="sales" element={<SalesPage />} />
             <Route path="sales/new" element={<NewSalePage />} />
+            <Route path="coletas" element={<ColetasPage />} />
             <Route path="reports" element={<RecyclingReportsPage />} />
             <Route path="settings" element={<RecyclingSettingsPage />} />
           </Route>
