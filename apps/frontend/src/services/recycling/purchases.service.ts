@@ -3,24 +3,40 @@ import { PaymentMethod } from '@praktikus/shared';
 
 export { PaymentMethod };
 
-export interface PurchaseItem {
+export interface PurchaseListItem {
   id: string;
-  productId: string;
-  quantity: number;
-  unitPrice: number;
-  subtotal: number;
+  purchasedAt: string;
+  supplierId: string;
+  supplierName: string;
+  paymentMethod: PaymentMethod;
+  total: number;
+  itemCount: number;
+  firstProductName: string | null;
+  totalKg: number;
+  notes: string | null;
 }
 
-export interface Purchase {
+export interface PurchaseDetail {
   id: string;
-  supplierId: string;
-  operatorId: string;
-  cashSessionId: string | null;
-  paymentMethod: PaymentMethod;
-  totalAmount: number;
   purchasedAt: string;
+  supplier: {
+    id: string;
+    name: string;
+    document: string | null;
+    documentType: 'CPF' | 'CNPJ' | null;
+  };
+  operator: { id: string; name: string };
+  paymentMethod: PaymentMethod;
   notes: string | null;
-  createdAt: string;
+  total: number;
+  items: Array<{
+    id: string;
+    productId: string;
+    productName: string;
+    quantity: number;
+    unitPrice: number;
+    subtotal: number;
+  }>;
 }
 
 export interface CreatePurchasePayload {
@@ -31,12 +47,16 @@ export interface CreatePurchasePayload {
 }
 
 export const purchasesService = {
-  async list(page = 1, limit = 20): Promise<{ data: Purchase[]; total: number; page: number; limit: number }> {
+  async list(page = 1, limit = 20): Promise<{ data: PurchaseListItem[]; total: number; page: number; limit: number }> {
     const { data } = await api.get('/recycling/purchases', { params: { page, limit } });
     return data;
   },
-  async create(payload: CreatePurchasePayload): Promise<Purchase> {
-    const { data } = await api.post<Purchase>('/recycling/purchases', payload);
+  async getById(id: string): Promise<PurchaseDetail> {
+    const { data } = await api.get<PurchaseDetail>(`/recycling/purchases/${id}`);
+    return data;
+  },
+  async create(payload: CreatePurchasePayload): Promise<{ id: string }> {
+    const { data } = await api.post<{ id: string }>('/recycling/purchases', payload);
     return data;
   },
 };

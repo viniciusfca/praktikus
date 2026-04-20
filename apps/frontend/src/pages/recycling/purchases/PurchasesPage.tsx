@@ -358,7 +358,7 @@ export function PurchasesPage() {
                         color: 'var(--cui-body-color)',
                       }}
                     >
-                      {formatCurrency(p.totalAmount)}
+                      {formatCurrency(p.total)}
                     </CTableDataCell>
                   </CTableRow>
                 );
