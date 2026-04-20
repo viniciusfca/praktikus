@@ -242,4 +242,44 @@ export class RecyclingReportsService {
       };
     });
   }
+
+  async getPurchasesSummary(tenantId: string): Promise<{
+    today: { total: number; count: number };
+    week: { total: number; count: number };
+    month: { total: number; count: number };
+  }> {
+    const schemaName = this.getSchemaName(tenantId);
+    return this.withQueryRunner(tenantId, async (qr) => {
+      const [today] = await qr.query(`
+        SELECT
+          COALESCE(SUM(total_amount), 0) as total,
+          COUNT(*) as count
+        FROM "${schemaName}".purchases
+        WHERE DATE(purchased_at) = CURRENT_DATE
+      `);
+
+      const [week] = await qr.query(`
+        SELECT
+          COALESCE(SUM(total_amount), 0) as total,
+          COUNT(*) as count
+        FROM "${schemaName}".purchases
+        WHERE purchased_at >= CURRENT_DATE - interval '7 days'
+      `);
+
+      const [month] = await qr.query(`
+        SELECT
+          COALESCE(SUM(total_amount), 0) as total,
+          COUNT(*) as count
+        FROM "${schemaName}".purchases
+        WHERE purchased_at >= date_trunc('month', CURRENT_DATE)
+          AND purchased_at < date_trunc('month', CURRENT_DATE) + interval '1 month'
+      `);
+
+      return {
+        today: { total: Number(today.total), count: Number(today.count) },
+        week: { total: Number(week.total), count: Number(week.count) },
+        month: { total: Number(month.total), count: Number(month.count) },
+      };
+    });
+  }
 }

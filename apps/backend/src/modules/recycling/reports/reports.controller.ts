@@ -39,4 +39,9 @@ export class ReportsController {
   getSalesSummary(@Request() req: RequestWithUser) {
     return this.reportsService.getSalesSummary(req.user.tenantId);
   }
+
+  @Get('purchases-summary')
+  getPurchasesSummary(@Request() req: RequestWithUser) {
+    return this.reportsService.getPurchasesSummary(req.user.tenantId);
+  }
 }
