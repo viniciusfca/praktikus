@@ -9,7 +9,7 @@ import { StockMovementEntity, MovementType } from './stock-movement.entity';
 import { CashSessionEntity } from '../cash-register/cash-session.entity';
 import { CashTransactionEntity } from '../cash-register/cash-transaction.entity';
 
-const mockPurchaseRepo = { create: jest.fn(), save: jest.fn(), createQueryBuilder: jest.fn() };
+const mockPurchaseRepo = { create: jest.fn(), save: jest.fn() };
 const mockItemRepo = { create: jest.fn(), save: jest.fn() };
 const mockMovementRepo = { create: jest.fn(), save: jest.fn() };
 const mockSessionRepo = { findOne: jest.fn() };
@@ -59,6 +59,9 @@ describe('PurchasesService', () => {
     it('should return enriched purchases with supplier name, total and material summary', async () => {
       mockQueryRunner.query.mockImplementation(async (sql: string) => {
         if (sql.includes('SET LOCAL')) return undefined;
+        // The main SELECT contains 'FROM "tenant_"' but not 'COUNT(*) as count'.
+        // The count query contains both. Check the count query first so the main
+        // SELECT falls through to the data branch.
         if (sql.includes('COUNT(*) as count')) return [{ count: '1' }];
         if (sql.includes('FROM "tenant_')) {
           return [
