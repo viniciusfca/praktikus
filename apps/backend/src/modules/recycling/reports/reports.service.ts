@@ -68,6 +68,7 @@ export class RecyclingReportsService {
             COALESCE(SUM(CASE WHEN type = 'OUT' THEN amount ELSE 0 END), 0) as total_out
           FROM "${schemaName}".cash_transactions
           WHERE cash_session_id = $1
+            AND payment_method = 'CASH'
         `, [session.id]);
         const current = opening + Number(tx.total_in) - Number(tx.total_out);
         cashSession = { status: session.status, openingBalance: opening, currentBalance: current };
