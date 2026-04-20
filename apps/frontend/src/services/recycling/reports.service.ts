@@ -17,6 +17,12 @@ export interface PurchasePeriodEntry {
   count: number;
 }
 
+export interface SalesSummary {
+  today: { total: number; count: number };
+  week: { total: number; count: number };
+  month: { total: number; count: number };
+}
+
 export const reportsService = {
   async getDashboardSummary(): Promise<DashboardSummary> {
     const { data } = await api.get<DashboardSummary>('/recycling/reports/dashboard');
@@ -32,6 +38,10 @@ export const reportsService = {
     const { data } = await api.get<TopMaterial[]>('/recycling/reports/top-materials', {
       params: { ...(month ? { month } : {}), limit },
     });
+    return data;
+  },
+  async getSalesSummary(): Promise<SalesSummary> {
+    const { data } = await api.get<SalesSummary>('/recycling/reports/sales-summary');
     return data;
   },
 };
