@@ -39,7 +39,7 @@ import { useAuthStore } from '../../../store/auth.store';
 import { customersService, type Customer } from '../../../services/customers.service';
 import { vehiclesService, type Vehicle } from '../../../services/vehicles.service';
 import { catalogServicesApi, catalogPartsApi, type CatalogService, type CatalogPart } from '../../../services/catalog.service';
-import { pdf } from '@react-pdf/renderer';
+import { downloadPdf } from '../../../utils/downloadPdf';
 import { OsPdf } from '../../../components/OsPdf';
 import { companyService as companiesService, type CompanyProfile } from '../../../services/company.service';
 import { SoStatusBadge, SoPaymentBadge } from '../../../components/SoStatusBadge';
@@ -407,22 +407,15 @@ export function ServiceOrderDetailPage() {
   const handleDownloadPdf = async () => {
     if (!so || !empresa || !customer || !vehicle) return;
     try {
-      const blob = await pdf(
+      await downloadPdf(
         <OsPdf
           so={so}
           empresa={{ nomeFantasia: empresa.nomeFantasia }}
           cliente={{ nome: customer.nome, cpfCnpj: customer.cpfCnpj }}
           veiculo={{ placa: vehicle.placa, marca: vehicle.marca, modelo: vehicle.modelo, ano: vehicle.ano }}
         />,
-      ).toBlob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `OS-${so.id.slice(0, 8).toUpperCase()}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+        `OS-${so.id.slice(0, 8).toUpperCase()}.pdf`,
+      );
     } catch {
       setError('Erro ao gerar PDF.');
     }
