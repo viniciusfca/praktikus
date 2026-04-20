@@ -51,6 +51,49 @@ describe('SalesService', () => {
       .rejects.toThrow('Invalid tenantId');
   });
 
+  describe('list', () => {
+    it('should return enriched sales with buyer name, total and material summary', async () => {
+      mockQueryRunner.query.mockImplementation(async (sql: string) => {
+        if (sql.includes('SET LOCAL')) return undefined;
+        if (sql.includes('COUNT(*) as count')) return [{ count: '1' }];
+        if (sql.includes('FROM "tenant_')) {
+          return [
+            {
+              id: 'sale1',
+              sold_at: new Date('2026-04-18T10:42:00Z'),
+              buyer_id: 'buyer1',
+              notes: null,
+              buyer_name: 'MGLU Recicla',
+              total: '680.00',
+              item_count: '1',
+              total_kg: '80.0000',
+              first_product_name: 'Alumínio',
+            },
+          ];
+        }
+        return [];
+      });
+
+      const result = await service.list(TENANT, 1, 20);
+      expect(result.total).toBe(1);
+      expect(result.data).toHaveLength(1);
+      expect(result.data[0]).toMatchObject({
+        id: 'sale1',
+        buyerId: 'buyer1',
+        buyerName: 'MGLU Recicla',
+        total: 680,
+        itemCount: 1,
+        totalKg: 80,
+        firstProductName: 'Alumínio',
+        notes: null,
+      });
+    });
+
+    it('should throw on invalid tenantId', async () => {
+      await expect(service.list('bad-id', 1, 20)).rejects.toThrow('Invalid tenantId');
+    });
+  });
+
   describe('create', () => {
     it('should throw BadRequestException when stock is insufficient', async () => {
       mockQueryRunner.query.mockImplementation(async (sql: string) => {

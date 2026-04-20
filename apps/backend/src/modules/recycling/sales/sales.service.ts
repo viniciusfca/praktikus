@@ -39,16 +39,81 @@ export class SalesService {
     tenantId: string,
     page: number,
     limit: number,
-  ): Promise<{ data: SaleEntity[]; total: number; page: number; limit: number }> {
-    return this.withSchema(tenantId, async (manager) => {
-      const repo = manager.getRepository(SaleEntity);
-      const [data, total] = await repo
-        .createQueryBuilder('s')
-        .orderBy('s.soldAt', 'DESC')
-        .skip((page - 1) * limit)
-        .take(limit)
-        .getManyAndCount();
-      return { data, total, page, limit };
+  ): Promise<{
+    data: Array<{
+      id: string;
+      soldAt: string;
+      buyerId: string;
+      buyerName: string;
+      total: number;
+      itemCount: number;
+      firstProductName: string | null;
+      totalKg: number;
+      notes: string | null;
+    }>;
+    total: number;
+    page: number;
+    limit: number;
+  }> {
+    const schemaName = this.getSchemaName(tenantId);
+    const offset = (page - 1) * limit;
+    return this.withSchema(tenantId, async (_manager, qr) => {
+      const rows = await qr.query(
+        `
+        SELECT
+          s.id,
+          s.sold_at,
+          s.buyer_id,
+          s.notes,
+          b.name as buyer_name,
+          COALESCE(agg.total, 0) as total,
+          COALESCE(agg.item_count, 0) as item_count,
+          COALESCE(agg.total_kg, 0) as total_kg,
+          agg.first_product_name
+        FROM "${schemaName}".sales s
+        LEFT JOIN "${schemaName}".buyers b ON b.id = s.buyer_id
+        LEFT JOIN LATERAL (
+          SELECT
+            COALESCE(SUM(si.subtotal), 0) as total,
+            COUNT(*) as item_count,
+            COALESCE(SUM(si.quantity), 0) as total_kg,
+            (
+              SELECT p.name
+              FROM "${schemaName}".sale_items si2
+              JOIN "${schemaName}".products p ON p.id = si2.product_id
+              WHERE si2.sale_id = s.id
+              LIMIT 1
+            ) as first_product_name
+          FROM "${schemaName}".sale_items si
+          WHERE si.sale_id = s.id
+        ) agg ON TRUE
+        ORDER BY s.sold_at DESC
+        LIMIT $1 OFFSET $2
+        `,
+        [limit, offset],
+      );
+
+      const [{ count }] = await qr.query(
+        `SELECT COUNT(*) as count FROM "${schemaName}".sales`,
+      );
+
+      return {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        data: rows.map((r: any) => ({
+          id: r.id,
+          soldAt: new Date(r.sold_at).toISOString(),
+          buyerId: r.buyer_id,
+          buyerName: r.buyer_name ?? '',
+          total: Number(r.total),
+          itemCount: Number(r.item_count),
+          firstProductName: r.first_product_name ?? null,
+          totalKg: Number(r.total_kg),
+          notes: r.notes,
+        })),
+        total: Number(count),
+        page,
+        limit,
+      };
     });
   }
 
