@@ -14,7 +14,7 @@ import {
 import CIcon from '@coreui/icons-react';
 import { cilPlus, cilSearch, cilCloudDownload, cilNotes } from '@coreui/icons';
 import { PageHead } from '../../../components/PageHead';
-import { SoStatusBadge, PaymentBadge } from '../../../components/SoStatusBadge';
+import { SoStatusBadge, SoPaymentBadge } from '../../../components/SoStatusBadge';
 import { serviceOrdersApi, type ServiceOrder, type SoStatus } from '../../../services/service-orders.service';
 import { CreateServiceOrderDialog } from './CreateServiceOrderDialog';
 
@@ -217,7 +217,7 @@ export function ServiceOrdersPage() {
                   <SoStatusBadge status={so.status} />
                 </CTableDataCell>
                 <CTableDataCell>
-                  <PaymentBadge status={so.statusPagamento} />
+                  <SoPaymentBadge status={so.statusPagamento} />
                 </CTableDataCell>
                 <CTableDataCell style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums', color: 'var(--cui-secondary-color)' }}>
                   {so.kmEntrada ?? '—'}

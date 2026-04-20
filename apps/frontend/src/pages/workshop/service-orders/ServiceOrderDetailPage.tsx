@@ -42,7 +42,7 @@ import { catalogServicesApi, catalogPartsApi, type CatalogService, type CatalogP
 import { pdf } from '@react-pdf/renderer';
 import { OsPdf } from '../../../components/OsPdf';
 import { companyService as companiesService, type CompanyProfile } from '../../../services/company.service';
-import { SoStatusBadge, PaymentBadge } from '../../../components/SoStatusBadge';
+import { SoStatusBadge, SoPaymentBadge } from '../../../components/SoStatusBadge';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 const STATUS_LABEL: Record<SoStatus, string> = {
@@ -481,7 +481,7 @@ export function ServiceOrderDetailPage() {
           </span>
           <SoStatusBadge status={so.status} />
           <span onClick={isOwner ? handleTogglePayment : undefined} style={{ cursor: isOwner ? 'pointer' : 'default' }}>
-            <PaymentBadge status={so.statusPagamento} />
+            <SoPaymentBadge status={so.statusPagamento} />
           </span>
         </div>
 

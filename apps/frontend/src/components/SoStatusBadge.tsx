@@ -34,7 +34,7 @@ export function SoStatusBadge({ status }: { status: SoStatus }) {
   );
 }
 
-export function PaymentBadge({ status }: { status: 'PAGO' | 'PENDENTE' | string }) {
+export function SoPaymentBadge({ status }: { status: 'PAGO' | 'PENDENTE' | string }) {
   const paid = status === 'PAGO';
   return (
     <span
