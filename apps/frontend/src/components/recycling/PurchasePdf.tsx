@@ -1,5 +1,6 @@
 import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer';
 import type { PurchaseDetail } from '../../services/recycling/purchases.service';
+import { formatDocumentWithType } from '../../utils/formatDocument';
 
 export interface PurchasePdfProps {
   purchase: PurchaseDetail;
@@ -14,17 +15,6 @@ const PAYMENT_LABEL: Record<string, string> = {
   PIX: 'PIX',
   CARD: 'Cartão',
 };
-
-function formatDocument(doc: string | null, type: 'CPF' | 'CNPJ' | null): string | null {
-  if (!doc) return null;
-  if (type === 'CPF' && doc.length === 11) {
-    return `CPF ${doc.slice(0, 3)}.${doc.slice(3, 6)}.${doc.slice(6, 9)}-${doc.slice(9)}`;
-  }
-  if ((type === 'CNPJ' || !type) && doc.length === 14) {
-    return `CNPJ ${doc.slice(0, 2)}.${doc.slice(2, 5)}.${doc.slice(5, 8)}/${doc.slice(8, 12)}-${doc.slice(12)}`;
-  }
-  return doc;
-}
 
 const TEAL = '#348E91';
 const PETROL = '#1C5052';
@@ -123,7 +113,7 @@ export function PurchasePdf({ purchase, empresa }: PurchasePdfProps) {
   const docNumber = `#${purchase.id.slice(0, 8).toUpperCase()}`;
   const emittedDate = new Date(purchase.purchasedAt).toLocaleDateString('pt-BR');
   const registeredAt = new Date(purchase.purchasedAt).toLocaleString('pt-BR');
-  const supplierDoc = formatDocument(purchase.supplier.document, purchase.supplier.documentType);
+  const supplierDoc = formatDocumentWithType(purchase.supplier.document, purchase.supplier.documentType);
   const paymentLabel = PAYMENT_LABEL[purchase.paymentMethod] ?? purchase.paymentMethod;
 
   return (
