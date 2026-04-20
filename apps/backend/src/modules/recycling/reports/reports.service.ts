@@ -83,4 +83,87 @@ export class RecyclingReportsService {
       }));
     });
   }
+
+  async getTopMaterials(
+    tenantId: string,
+    month?: string,
+    limit: number = 5,
+  ): Promise<Array<{
+    productId: string;
+    name: string;
+    volumeKg: number;
+    avgPricePerKg: number;
+    changePct: number | null;
+  }>> {
+    const schemaName = this.getSchemaName(tenantId);
+    return this.withQueryRunner(tenantId, async (qr) => {
+      const safeLimit = Math.max(1, Math.min(20, Math.floor(limit)));
+
+      const monthStartExpr = month
+        ? `'${month}-01'::date`
+        : `date_trunc('month', CURRENT_DATE)`;
+      const monthEndExpr = month
+        ? `('${month}-01'::date + interval '1 month')`
+        : `(date_trunc('month', CURRENT_DATE) + interval '1 month')`;
+      const prevMonthStartExpr = month
+        ? `('${month}-01'::date - interval '1 month')`
+        : `(date_trunc('month', CURRENT_DATE) - interval '1 month')`;
+      const prevMonthEndExpr = month
+        ? `'${month}-01'::date`
+        : `date_trunc('month', CURRENT_DATE)`;
+
+      const currentRows: Array<{
+        product_id: string;
+        name: string;
+        volume_kg: string;
+        avg_price: string;
+      }> = await qr.query(`
+        SELECT
+          p.id as product_id,
+          p.name as name,
+          SUM(pi.quantity) as volume_kg,
+          CASE WHEN SUM(pi.quantity) > 0
+               THEN SUM(pi.subtotal) / SUM(pi.quantity)
+               ELSE 0
+          END as avg_price
+        FROM "${schemaName}".purchase_items pi
+        JOIN "${schemaName}".purchases pu ON pu.id = pi.purchase_id
+        JOIN "${schemaName}".products p ON p.id = pi.product_id
+        WHERE pu.purchased_at >= ${monthStartExpr}
+          AND pu.purchased_at < ${monthEndExpr}
+        GROUP BY p.id, p.name
+        ORDER BY SUM(pi.quantity) DESC
+        LIMIT ${safeLimit}
+      `);
+
+      if (currentRows.length === 0) return [];
+
+      const prevRows: Array<{ product_id: string; volume_kg: string }> = await qr.query(`
+        SELECT pi.product_id as product_id, SUM(pi.quantity) as volume_kg
+        FROM "${schemaName}".purchase_items pi
+        JOIN "${schemaName}".purchases pu ON pu.id = pi.purchase_id
+        WHERE pu.purchased_at >= ${prevMonthStartExpr}
+          AND pu.purchased_at < ${prevMonthEndExpr}
+          AND pi.product_id = ANY($1)
+        GROUP BY pi.product_id
+      `, [currentRows.map((r) => r.product_id)]);
+
+      const prevMap = new Map(prevRows.map((r) => [r.product_id, Number(r.volume_kg)]));
+
+      return currentRows.map((r) => {
+        const current = Number(r.volume_kg);
+        const prev = prevMap.get(r.product_id);
+        const changePct = prev && prev > 0
+          ? Math.round(((current - prev) / prev) * 1000) / 10
+          : null;
+        return {
+          productId: r.product_id,
+          name: r.name,
+          volumeKg: current,
+          avgPricePerKg: Number(r.avg_price),
+          changePct,
+        };
+      });
+    });
+  }
 }

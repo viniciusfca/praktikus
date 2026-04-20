@@ -71,4 +71,60 @@ describe('RecyclingReportsService', () => {
       expect(result[0].count).toBe(3);
     });
   });
+
+  describe('getTopMaterials', () => {
+    it('should throw on invalid tenantId', async () => {
+      await expect(service.getTopMaterials('bad-id')).rejects.toThrow('Invalid tenantId');
+    });
+
+    it('should return top materials for current month with change vs previous', async () => {
+      mockQueryRunner.query.mockImplementation(async (sql: string) => {
+        if (sql.includes('SET LOCAL')) return undefined;
+        if (sql.includes("date_trunc('month', CURRENT_DATE) - interval")) {
+          return [
+            { product_id: 'p1', volume_kg: '720.0000' },
+          ];
+        }
+        if (sql.includes("date_trunc('month', CURRENT_DATE)")) {
+          return [
+            { product_id: 'p1', name: 'Alumínio', volume_kg: '820.0000', avg_price: '8.5000' },
+            { product_id: 'p2', name: 'PET', volume_kg: '640.0000', avg_price: '2.2000' },
+          ];
+        }
+        return [];
+      });
+
+      const result = await service.getTopMaterials(TENANT);
+      expect(result).toHaveLength(2);
+      expect(result[0].productId).toBe('p1');
+      expect(result[0].volumeKg).toBe(820);
+      expect(result[0].avgPricePerKg).toBe(8.5);
+      expect(result[0].changePct).toBeCloseTo(13.9, 1);
+      expect(result[1].changePct).toBeNull();
+    });
+
+    it('should accept explicit month parameter', async () => {
+      const queries: string[] = [];
+      mockQueryRunner.query.mockImplementation(async (sql: string) => {
+        queries.push(sql);
+        if (sql.includes('SET LOCAL')) return undefined;
+        return [];
+      });
+
+      await service.getTopMaterials(TENANT, '2026-03', 10);
+      const monthQuery = queries.find((q) => q.includes("'2026-03-01'"));
+      expect(monthQuery).toBeDefined();
+      expect(queries.some((q) => q.includes('LIMIT 10'))).toBe(true);
+    });
+
+    it('should return empty array when no purchases in month', async () => {
+      mockQueryRunner.query.mockImplementation(async (sql: string) => {
+        if (sql.includes('SET LOCAL')) return undefined;
+        return [];
+      });
+
+      const result = await service.getTopMaterials(TENANT);
+      expect(result).toEqual([]);
+    });
+  });
 });
