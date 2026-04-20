@@ -1,8 +1,13 @@
 import { api } from '../api';
+import type { TopMaterial } from '@praktikus/shared';
+
+export type { TopMaterial };
 
 export interface DashboardSummary {
   totalPurchasedToday: number;
   purchasesCountToday: number;
+  totalPurchasedMonth: number;
+  purchasesCountMonth: number;
   cashSession: { status: string; openingBalance: number } | null;
 }
 
@@ -20,6 +25,12 @@ export const reportsService = {
   async getPurchasesByPeriod(startDate: string, endDate: string): Promise<PurchasePeriodEntry[]> {
     const { data } = await api.get<PurchasePeriodEntry[]>('/recycling/reports/purchases', {
       params: { startDate, endDate },
+    });
+    return data;
+  },
+  async getTopMaterials(month?: string, limit = 5): Promise<TopMaterial[]> {
+    const { data } = await api.get<TopMaterial[]>('/recycling/reports/top-materials', {
+      params: { ...(month ? { month } : {}), limit },
     });
     return data;
   },
