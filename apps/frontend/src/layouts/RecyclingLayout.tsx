@@ -53,8 +53,8 @@ const navItems: Array<{ label: string; icon: any; path: string; ownerOnly: boole
   { label: 'Vendas', icon: cilCart, path: '/recycling/sales', ownerOnly: false },
   { label: 'Coletas', icon: cilTruck, path: '/recycling/coletas', ownerOnly: false },
   { label: 'Fornecedores', icon: cilPeople, path: '/recycling/suppliers', ownerOnly: false },
-  { label: 'Compradores', icon: cilFactory, path: '/recycling/buyers', ownerOnly: true },
-  { label: 'Produtos', icon: cilList, path: '/recycling/products', ownerOnly: true },
+  { label: 'Compradores', icon: cilFactory, path: '/recycling/buyers', ownerOnly: false },
+  { label: 'Produtos', icon: cilList, path: '/recycling/products', ownerOnly: false },
   { label: 'Funcionários', icon: cilGroup, path: '/recycling/employees', ownerOnly: true },
   { label: 'Configurações', icon: cilSettings, path: '/recycling/settings', ownerOnly: true },
 ];
