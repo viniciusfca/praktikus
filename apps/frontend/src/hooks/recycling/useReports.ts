@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { reportsService, type DashboardSummary, type PurchasePeriodEntry } from '../../services/recycling/reports.service';
+import { reportsService, type DashboardSummary, type PurchasePeriodEntry, type TopMaterial } from '../../services/recycling/reports.service';
 
 export function useDashboardSummary() {
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
@@ -37,4 +37,23 @@ export function usePurchasesByPeriod() {
   }, []);
 
   return { rows, loading, error, searched, fetch };
+}
+
+export function useTopMaterials(month?: string, limit = 5) {
+  const [materials, setMaterials] = useState<TopMaterial[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const refetch = useCallback(() => {
+    setLoading(true);
+    setError(null);
+    reportsService.getTopMaterials(month, limit)
+      .then(setMaterials)
+      .catch(() => setError('Erro ao carregar top materiais'))
+      .finally(() => setLoading(false));
+  }, [month, limit]);
+
+  useEffect(() => { refetch(); }, [refetch]);
+
+  return { materials, loading, error, refetch };
 }
