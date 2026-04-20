@@ -86,6 +86,45 @@ describe('RecyclingReportsService', () => {
     });
   });
 
+  describe('getSalesSummary', () => {
+    it('should throw on invalid tenantId', async () => {
+      await expect(service.getSalesSummary('bad-id')).rejects.toThrow('Invalid tenantId');
+    });
+
+    it('should return totals for today, week and month', async () => {
+      mockQueryRunner.query.mockImplementation(async (sql: string) => {
+        if (sql.includes('SET LOCAL')) return undefined;
+        if (sql.includes('DATE(s.sold_at) = CURRENT_DATE')) {
+          return [{ total: '680.00', count: '1' }];
+        }
+        if (sql.includes("CURRENT_DATE - interval '7 days'")) {
+          return [{ total: '1690.00', count: '4' }];
+        }
+        if (sql.includes("date_trunc('month'")) {
+          return [{ total: '22540.00', count: '52' }];
+        }
+        return [];
+      });
+
+      const result = await service.getSalesSummary(TENANT);
+      expect(result.today).toEqual({ total: 680, count: 1 });
+      expect(result.week).toEqual({ total: 1690, count: 4 });
+      expect(result.month).toEqual({ total: 22540, count: 52 });
+    });
+
+    it('should return zeros when no sales', async () => {
+      mockQueryRunner.query.mockImplementation(async (sql: string) => {
+        if (sql.includes('SET LOCAL')) return undefined;
+        return [{ total: '0.00', count: '0' }];
+      });
+
+      const result = await service.getSalesSummary(TENANT);
+      expect(result.today).toEqual({ total: 0, count: 0 });
+      expect(result.week).toEqual({ total: 0, count: 0 });
+      expect(result.month).toEqual({ total: 0, count: 0 });
+    });
+  });
+
   describe('getTopMaterials', () => {
     it('should throw on invalid tenantId', async () => {
       await expect(service.getTopMaterials('bad-id')).rejects.toThrow('Invalid tenantId');

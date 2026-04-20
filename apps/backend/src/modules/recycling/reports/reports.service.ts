@@ -193,4 +193,47 @@ export class RecyclingReportsService {
       });
     });
   }
+
+  async getSalesSummary(tenantId: string): Promise<{
+    today: { total: number; count: number };
+    week: { total: number; count: number };
+    month: { total: number; count: number };
+  }> {
+    const schemaName = this.getSchemaName(tenantId);
+    return this.withQueryRunner(tenantId, async (qr) => {
+      const [today] = await qr.query(`
+        SELECT
+          COALESCE(SUM(si.subtotal), 0) as total,
+          COUNT(DISTINCT s.id) as count
+        FROM "${schemaName}".sales s
+        JOIN "${schemaName}".sale_items si ON si.sale_id = s.id
+        WHERE DATE(s.sold_at) = CURRENT_DATE
+      `);
+
+      const [week] = await qr.query(`
+        SELECT
+          COALESCE(SUM(si.subtotal), 0) as total,
+          COUNT(DISTINCT s.id) as count
+        FROM "${schemaName}".sales s
+        JOIN "${schemaName}".sale_items si ON si.sale_id = s.id
+        WHERE s.sold_at >= CURRENT_DATE - interval '7 days'
+      `);
+
+      const [month] = await qr.query(`
+        SELECT
+          COALESCE(SUM(si.subtotal), 0) as total,
+          COUNT(DISTINCT s.id) as count
+        FROM "${schemaName}".sales s
+        JOIN "${schemaName}".sale_items si ON si.sale_id = s.id
+        WHERE s.sold_at >= date_trunc('month', CURRENT_DATE)
+          AND s.sold_at < date_trunc('month', CURRENT_DATE) + interval '1 month'
+      `);
+
+      return {
+        today: { total: Number(today.total), count: Number(today.count) },
+        week: { total: Number(week.total), count: Number(week.count) },
+        month: { total: Number(month.total), count: Number(month.count) },
+      };
+    });
+  }
 }
