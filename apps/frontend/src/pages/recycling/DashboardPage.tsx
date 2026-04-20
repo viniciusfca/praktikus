@@ -544,7 +544,7 @@ export function RecyclingDashboardPage() {
           value={cashOpen ? 'Aberto' : 'Fechado'}
           sub={
             cashOpen
-              ? `Abertura: ${formatCurrency(summary?.cashSession?.openingBalance ?? 0)}`
+              ? `Saldo: ${formatCurrency(summary?.cashSession?.currentBalance ?? 0)}`
               : 'Abra a sessão para operar'
           }
           icon={cilCash}
@@ -729,7 +729,7 @@ export function RecyclingDashboardPage() {
                   fontWeight: 600,
                 }}
               >
-                {cashOpen ? 'Saldo de abertura' : 'Caixa inativo'}
+                {cashOpen ? 'Saldo atual' : 'Caixa inativo'}
               </div>
               <div
                 style={{
@@ -741,7 +741,7 @@ export function RecyclingDashboardPage() {
                 }}
               >
                 {cashOpen
-                  ? formatCurrency(summary?.cashSession?.openingBalance ?? 0)
+                  ? formatCurrency(summary?.cashSession?.currentBalance ?? 0)
                   : '—'}
               </div>
               <div style={{ fontSize: 12, color: 'var(--cui-secondary-color)', marginTop: 2 }}>

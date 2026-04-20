@@ -30,7 +30,7 @@ export class RecyclingReportsService {
     purchasesCountToday: number;
     totalPurchasedMonth: number;
     purchasesCountMonth: number;
-    cashSession: { status: string; openingBalance: number } | null;
+    cashSession: { status: string; openingBalance: number; currentBalance: number } | null;
   }> {
     const schemaName = this.getSchemaName(tenantId);
     return this.withQueryRunner(tenantId, async (qr) => {
@@ -52,20 +52,33 @@ export class RecyclingReportsService {
       `);
 
       const cashSessions = await qr.query(`
-        SELECT status, opening_balance
+        SELECT id, status, opening_balance
         FROM "${schemaName}".cash_sessions
         WHERE status = 'OPEN'
         LIMIT 1
       `);
+
+      let cashSession: { status: string; openingBalance: number; currentBalance: number } | null = null;
+      if (cashSessions.length > 0) {
+        const session = cashSessions[0];
+        const opening = Number(session.opening_balance);
+        const [tx] = await qr.query(`
+          SELECT
+            COALESCE(SUM(CASE WHEN type = 'IN'  THEN amount ELSE 0 END), 0) as total_in,
+            COALESCE(SUM(CASE WHEN type = 'OUT' THEN amount ELSE 0 END), 0) as total_out
+          FROM "${schemaName}".cash_transactions
+          WHERE cash_session_id = $1
+        `, [session.id]);
+        const current = opening + Number(tx.total_in) - Number(tx.total_out);
+        cashSession = { status: session.status, openingBalance: opening, currentBalance: current };
+      }
 
       return {
         totalPurchasedToday: Number(today.total_today),
         purchasesCountToday: Number(today.purchases_count),
         totalPurchasedMonth: Number(month.total_month),
         purchasesCountMonth: Number(month.purchases_count_month),
-        cashSession: cashSessions.length > 0
-          ? { status: cashSessions[0].status, openingBalance: Number(cashSessions[0].opening_balance) }
-          : null,
+        cashSession,
       };
     });
   }

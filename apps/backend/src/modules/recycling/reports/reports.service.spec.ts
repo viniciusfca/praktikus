@@ -30,7 +30,7 @@ describe('RecyclingReportsService', () => {
   });
 
   describe('getDashboardSummary', () => {
-    it('should return today totals, monthly total and cash session info', async () => {
+    it('should return today totals, monthly total and cash session info with current balance', async () => {
       mockQueryRunner.query.mockImplementation(async (sql: string) => {
         if (sql.includes('SET LOCAL')) return undefined;
         if (sql.includes('CURRENT_DATE') && sql.includes('total_today')) {
@@ -39,7 +39,8 @@ describe('RecyclingReportsService', () => {
         if (sql.includes("date_trunc('month'") && sql.includes('total_month')) {
           return [{ total_month: '14820.00', purchases_count_month: '42' }];
         }
-        if (sql.includes('cash_sessions')) return [{ status: 'OPEN', opening_balance: '200.00' }];
+        if (sql.includes('cash_sessions')) return [{ id: 'sess1', status: 'OPEN', opening_balance: '200.00' }];
+        if (sql.includes('cash_transactions')) return [{ total_in: '800.00', total_out: '340.00' }];
         return [];
       });
 
@@ -49,6 +50,7 @@ describe('RecyclingReportsService', () => {
       expect(result.totalPurchasedMonth).toBe(14820);
       expect(result.purchasesCountMonth).toBe(42);
       expect(result.cashSession?.openingBalance).toBe(200);
+      expect(result.cashSession?.currentBalance).toBe(660);
     });
 
     it('should return null cashSession when no open session', async () => {

@@ -8,7 +8,7 @@ export interface DashboardSummary {
   purchasesCountToday: number;
   totalPurchasedMonth: number;
   purchasesCountMonth: number;
-  cashSession: { status: string; openingBalance: number } | null;
+  cashSession: { status: string; openingBalance: number; currentBalance: number } | null;
 }
 
 export interface PurchasePeriodEntry {
