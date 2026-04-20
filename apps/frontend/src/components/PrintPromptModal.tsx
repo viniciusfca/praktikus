@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   CModal, CModalBody, CModalFooter, CModalHeader, CModalTitle,
   CButton, CSpinner, CAlert,
@@ -21,6 +21,14 @@ export function PrintPromptModal({
 }: PrintPromptModalProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const isMounted = useRef(true);
+
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (open) {
@@ -35,9 +43,9 @@ export function PrintPromptModal({
     try {
       await onPrint();
     } catch {
-      setError('Erro ao gerar PDF.');
+      if (isMounted.current) setError('Erro ao gerar PDF.');
     } finally {
-      setLoading(false);
+      if (isMounted.current) setLoading(false);
     }
   };
 
@@ -69,7 +77,7 @@ export function PrintPromptModal({
         >
           {loading ? <CSpinner size="sm" /> : 'Imprimir PDF'}
         </CButton>
-        <CButton color="secondary" variant="outline" onClick={onClose} disabled={loading}>
+        <CButton color="secondary" variant="outline" onClick={onClose}>
           Fechar
         </CButton>
       </CModalFooter>
