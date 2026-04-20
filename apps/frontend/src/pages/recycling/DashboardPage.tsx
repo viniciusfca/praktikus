@@ -22,7 +22,7 @@ import {
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
 import { useAuthStore } from '../../store/auth.store';
-import { useDashboardSummary, usePurchasesByPeriod } from '../../hooks/recycling/useReports';
+import { useDashboardSummary, usePurchasesByPeriod, useTopMaterials } from '../../hooks/recycling/useReports';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Filler, Tooltip, Legend);
 
@@ -201,6 +201,104 @@ function PeriodTabs({ value, onChange }: { value: Period; onChange: (p: Period) 
   );
 }
 
+// ── Top Materials ────────────────────────────────────────────────────────────
+
+const BAR_COLORS = ['#348E91', '#1f6b6e', '#0f4e51', '#8bb9bb', '#2aa198'];
+
+function TopMaterialsCard({
+  materials,
+  loading,
+  onSeeStock,
+}: {
+  materials: Array<{ productId: string; name: string; volumeKg: number; avgPricePerKg: number; changePct: number | null }>;
+  loading: boolean;
+  onSeeStock: () => void;
+}) {
+  const maxVolume = materials.reduce((m, r) => Math.max(m, r.volumeKg), 0) || 1;
+  return (
+    <Card padding={0}>
+      <CardHeader
+        title="Top materiais"
+        desc="volume comprado no mês"
+        action={
+          <button
+            type="button"
+            onClick={onSeeStock}
+            style={{
+              border: 0,
+              background: 'transparent',
+              color: 'var(--cui-primary)',
+              fontSize: 12.5,
+              fontWeight: 600,
+              cursor: 'pointer',
+              fontFamily: 'inherit',
+            }}
+          >
+            Ver estoque →
+          </button>
+        }
+      />
+      <div style={{ padding: '0 20px 20px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+        {loading && (
+          <div style={{ display: 'flex', justifyContent: 'center', padding: 20 }}>
+            <CSpinner size="sm" color="primary" />
+          </div>
+        )}
+        {!loading && materials.length === 0 && (
+          <div style={{ color: 'var(--cui-secondary-color)', fontSize: 13, padding: '12px 0' }}>
+            Sem compras no mês ainda — registre uma compra para ver o ranking.
+          </div>
+        )}
+        {!loading && materials.map((m, idx) => {
+          const pct = Math.round((m.volumeKg / maxVolume) * 100);
+          const delta = m.changePct;
+          const deltaColor =
+            delta === null ? 'var(--cui-secondary-color)'
+            : delta >= 0 ? '#16a34a' : '#dc2626';
+          const deltaLabel =
+            delta === null ? '—'
+            : `${delta >= 0 ? '+' : ''}${delta.toFixed(1)}%`;
+          return (
+            <div key={m.productId}>
+              <div
+                style={{
+                  height: 3,
+                  width: `${pct}%`,
+                  background: BAR_COLORS[idx % BAR_COLORS.length],
+                  borderRadius: 2,
+                  marginBottom: 6,
+                }}
+              />
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'baseline',
+                  justifyContent: 'space-between',
+                  gap: 10,
+                  fontSize: 13,
+                }}
+              >
+                <div style={{ fontWeight: 600, color: 'var(--cui-body-color)', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {m.name}
+                </div>
+                <div style={{ color: 'var(--cui-secondary-color)', fontVariantNumeric: 'tabular-nums' }}>
+                  {Number(m.avgPricePerKg).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}/kg
+                </div>
+                <div style={{ fontWeight: 700, fontVariantNumeric: 'tabular-nums', minWidth: 60, textAlign: 'right' }}>
+                  {Math.round(m.volumeKg)} kg
+                </div>
+                <div style={{ color: deltaColor, fontWeight: 600, fontSize: 12, minWidth: 48, textAlign: 'right' }}>
+                  {deltaLabel}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </Card>
+  );
+}
+
 // ── Main ────────────────────────────────────────────────────────────────────
 
 export function RecyclingDashboardPage() {
@@ -219,6 +317,7 @@ export function RecyclingDashboardPage() {
 
   const { summary, loading, error } = useDashboardSummary();
   const { rows, loading: chartLoading, fetch } = usePurchasesByPeriod();
+  const { materials: topMaterials, loading: topLoading } = useTopMaterials(undefined, 5);
   const [period, setPeriod] = useState<Period>('30d');
 
   useEffect(() => {
@@ -308,9 +407,9 @@ export function RecyclingDashboardPage() {
         }}
       >
         <KpiCard
-          label="Compras (hoje)"
-          value={formatCurrency(summary?.totalPurchasedToday ?? 0)}
-          sub={`${summary?.purchasesCountToday ?? 0} ${(summary?.purchasesCountToday ?? 0) === 1 ? 'operação' : 'operações'}`}
+          label="Compras (mês)"
+          value={formatCurrency(summary?.totalPurchasedMonth ?? 0)}
+          sub={`${summary?.purchasesCountMonth ?? 0} ${(summary?.purchasesCountMonth ?? 0) === 1 ? 'operação' : 'operações'}`}
           icon={cilBasket}
           tone="neutral"
         />
@@ -541,6 +640,21 @@ export function RecyclingDashboardPage() {
             </CButton>
           </div>
         </Card>
+      </div>
+
+      {/* ── Top materials row ─────────────────────────────────────────────────── */}
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'minmax(0, 1fr)',
+          gap: 16,
+        }}
+      >
+        <TopMaterialsCard
+          materials={topMaterials}
+          loading={topLoading}
+          onSeeStock={() => navigate('/recycling/stock')}
+        />
       </div>
     </div>
   );
