@@ -85,6 +85,40 @@ describe('ColetasService', () => {
     });
   });
 
+  describe('update', () => {
+    it('allows field updates on AGENDADA coleta', async () => {
+      coletaRepo.findOne.mockResolvedValue({
+        id: 'c1', status: ColetaStatus.AGENDADA, supplierId: 'sup1',
+        employeeId: null, scheduledAt: new Date(), notes: null,
+      });
+      supplierRepo.findOne.mockResolvedValue({ id: 'sup2' });
+      coletaRepo.save.mockResolvedValue({
+        id: 'c1', supplierId: 'sup2', status: ColetaStatus.AGENDADA,
+      });
+
+      const result = await service.update(TENANT, 'c1', { supplierId: 'sup2' } as any);
+      expect(result.supplierId).toBe('sup2');
+    });
+
+    it('rejects update on CONCLUIDA coleta', async () => {
+      coletaRepo.findOne.mockResolvedValue({ id: 'c1', status: ColetaStatus.CONCLUIDA });
+      await expect(service.update(TENANT, 'c1', { notes: 'new note' } as any))
+        .rejects.toThrow(BadRequestException);
+    });
+
+    it('rejects update on CANCELADA coleta', async () => {
+      coletaRepo.findOne.mockResolvedValue({ id: 'c1', status: ColetaStatus.CANCELADA });
+      await expect(service.update(TENANT, 'c1', { scheduledAt: '2026-05-01T10:00:00Z' } as any))
+        .rejects.toThrow(BadRequestException);
+    });
+
+    it('404 if coleta not found', async () => {
+      coletaRepo.findOne.mockResolvedValue(null);
+      await expect(service.update(TENANT, 'x', { notes: 'n' } as any))
+        .rejects.toThrow(NotFoundException);
+    });
+  });
+
   describe('updateStatus', () => {
     it('allows AGENDADA → CONCLUIDA', async () => {
       coletaRepo.findOne.mockResolvedValue({ id: 'c1', status: ColetaStatus.AGENDADA });

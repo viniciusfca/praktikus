@@ -112,6 +112,10 @@ export class ColetasService {
       const item = await repo.findOne({ where: { id } });
       if (!item) throw new NotFoundException('Coleta não encontrada.');
 
+      if (item.status !== ColetaStatus.AGENDADA) {
+        throw new BadRequestException('Só é possível editar coletas AGENDADAS.');
+      }
+
       if (dto.supplierId) await this.assertSupplier(qr, dto.supplierId);
       if (dto.employeeId) await this.assertEmployee(qr, tenantId, dto.employeeId);
 
