@@ -13,7 +13,7 @@ import {
   CTableRow,
 } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
-import { cilPlus, cilSearch, cilCart, cilArrowTop, cilEyeOpen } from '@coreui/icons';
+import { cilPlus, cilSearch, cilCart, cilArrowTop } from '@coreui/icons';
 import { useSales } from '../../../hooks/recycling/useSales';
 import { useSalesSummary } from '../../../hooks/recycling/useReports';
 import { SaleDetailModal } from './SaleDetailModal';
@@ -225,19 +225,18 @@ export function SalesPage() {
               <CTableHeaderCell>Comprador</CTableHeaderCell>
               <CTableHeaderCell>Material</CTableHeaderCell>
               <CTableHeaderCell style={{ textAlign: 'right' }}>Total</CTableHeaderCell>
-              <CTableHeaderCell style={{ width: 60, textAlign: 'center' }}> </CTableHeaderCell>
             </CTableRow>
           </CTableHead>
           <CTableBody>
             {loading ? (
               <CTableRow>
-                <CTableDataCell colSpan={6} className="text-center py-4">
+                <CTableDataCell colSpan={5} className="text-center py-4">
                   <CSpinner size="sm" color="primary" />
                 </CTableDataCell>
               </CTableRow>
             ) : filtered.length === 0 ? (
               <CTableRow>
-                <CTableDataCell colSpan={6} className="text-center py-5">
+                <CTableDataCell colSpan={5} className="text-center py-5">
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
                     <div style={{
                       width: 44, height: 44, borderRadius: 12,
@@ -299,22 +298,6 @@ export function SalesPage() {
                     color: 'var(--cui-primary)',
                   }}>
                     {formatCurrency(s.total)}
-                  </CTableDataCell>
-                  <CTableDataCell style={{ textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
-                    <button
-                      type="button"
-                      onClick={() => setSelectedId(s.id)}
-                      aria-label="Ver detalhes"
-                      style={{
-                        border: 0,
-                        background: 'transparent',
-                        color: 'var(--cui-secondary-color)',
-                        cursor: 'pointer',
-                        padding: 4,
-                      }}
-                    >
-                      <CIcon icon={cilEyeOpen} size="sm" />
-                    </button>
                   </CTableDataCell>
                 </CTableRow>
               ))
