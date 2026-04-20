@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Query, Request, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, Request, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../../core/auth/jwt-auth.guard';
 import { AuthUser } from '../../core/auth/jwt.strategy';
 import { EmployeePermissionsGuard, RequirePermission } from '../employees/employee-permissions.guard';
@@ -22,6 +22,12 @@ export class PurchasesController {
     @Query('limit') limit = '20',
   ) {
     return this.purchasesService.list(req.user.tenantId, Number(page), Number(limit));
+  }
+
+  @Get(':id')
+  @RequirePermission('canViewStock')
+  getById(@Request() req: RequestWithUser, @Param('id') id: string) {
+    return this.purchasesService.getById(req.user.tenantId, id);
   }
 
   @Post()

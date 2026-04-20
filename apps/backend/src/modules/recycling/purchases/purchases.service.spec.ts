@@ -209,4 +209,67 @@ describe('PurchasesService', () => {
       );
     });
   });
+
+  describe('getById', () => {
+    it('should throw NotFoundException when purchase does not exist', async () => {
+      mockQueryRunner.query.mockImplementation(async (sql: string) => {
+        if (sql.includes('SET LOCAL')) return undefined;
+        if (sql.includes('FROM "tenant_') && sql.includes('purchases p')) return [];
+        return [];
+      });
+
+      const { NotFoundException } = await import('@nestjs/common');
+      await expect(service.getById(TENANT, 'missing')).rejects.toThrow(NotFoundException);
+    });
+
+    it('should return full purchase detail with items, supplier and operator', async () => {
+      mockQueryRunner.query.mockImplementation(async (sql: string) => {
+        if (sql.includes('SET LOCAL')) return undefined;
+        if (sql.includes('FROM "tenant_') && sql.includes('purchases p') && sql.includes('LEFT JOIN')) {
+          return [{
+            id: 'purchase1',
+            purchased_at: new Date('2026-04-18T10:42:00Z'),
+            payment_method: 'PIX',
+            notes: 'Entregue em 3 sacos',
+            supplier_id: 'supplier1',
+            supplier_name: 'Sucata Santa Lúcia',
+            supplier_document: '12345678000199',
+            supplier_document_type: 'CNPJ',
+            operator_id: 'op1',
+            operator_name: 'Vini Silva',
+          }];
+        }
+        if (sql.includes('purchase_items pi')) {
+          return [
+            {
+              id: 'item1',
+              product_id: 'p1',
+              product_name: 'PET',
+              quantity: '120.0000',
+              unit_price: '4.0000',
+              subtotal: '480.00',
+            },
+          ];
+        }
+        return [];
+      });
+
+      const result = await service.getById(TENANT, 'purchase1');
+      expect(result.id).toBe('purchase1');
+      expect(result.supplier.name).toBe('Sucata Santa Lúcia');
+      expect(result.supplier.document).toBe('12345678000199');
+      expect(result.supplier.documentType).toBe('CNPJ');
+      expect(result.operator.name).toBe('Vini Silva');
+      expect(result.paymentMethod).toBe('PIX');
+      expect(result.items).toHaveLength(1);
+      expect(result.items[0]).toMatchObject({
+        productId: 'p1',
+        productName: 'PET',
+        quantity: 120,
+        unitPrice: 4,
+        subtotal: 480,
+      });
+      expect(result.total).toBe(480);
+    });
+  });
 });

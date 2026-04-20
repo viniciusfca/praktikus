@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { DataSource, EntityManager } from 'typeorm';
 import { CashSessionStatus, TransactionType } from '@praktikus/shared';
 import { PurchaseEntity } from './purchase.entity';
@@ -189,6 +189,94 @@ export class PurchasesService {
       );
 
       return savedPurchase;
+    });
+  }
+
+  async getById(
+    tenantId: string,
+    id: string,
+  ): Promise<{
+    id: string;
+    purchasedAt: string;
+    supplier: { id: string; name: string; document: string | null; documentType: 'CPF' | 'CNPJ' | null };
+    operator: { id: string; name: string };
+    paymentMethod: string;
+    notes: string | null;
+    total: number;
+    items: Array<{
+      id: string;
+      productId: string;
+      productName: string;
+      quantity: number;
+      unitPrice: number;
+      subtotal: number;
+    }>;
+  }> {
+    const schemaName = this.getSchemaName(tenantId);
+    return this.withSchema(tenantId, async (_manager, qr) => {
+      const rows = await qr.query(
+        `
+      SELECT
+        p.id, p.purchased_at, p.payment_method, p.notes,
+        s.id as supplier_id, s.name as supplier_name,
+        s.document as supplier_document, s.document_type as supplier_document_type,
+        u.id as operator_id, u.name as operator_name
+      FROM "${schemaName}".purchases p
+      LEFT JOIN "${schemaName}".suppliers s ON s.id = p.supplier_id
+      LEFT JOIN public.users u ON u.id = p.operator_id
+      WHERE p.id = $1
+      `,
+        [id],
+      );
+      if (rows.length === 0) throw new NotFoundException('Compra não encontrada.');
+      const row = rows[0];
+
+      const items = await qr.query(
+        `
+      SELECT
+        pi.id, pi.product_id, pi.quantity, pi.unit_price, pi.subtotal,
+        pr.name as product_name
+      FROM "${schemaName}".purchase_items pi
+      JOIN "${schemaName}".products pr ON pr.id = pi.product_id
+      WHERE pi.purchase_id = $1
+      ORDER BY pi.created_at ASC
+      `,
+        [id],
+      );
+
+      let total = 0;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const mappedItems = items.map((it: any) => {
+        const subtotal = Number(it.subtotal);
+        total += subtotal;
+        return {
+          id: it.id,
+          productId: it.product_id,
+          productName: it.product_name,
+          quantity: Number(it.quantity),
+          unitPrice: Number(it.unit_price),
+          subtotal,
+        };
+      });
+
+      return {
+        id: row.id,
+        purchasedAt: new Date(row.purchased_at).toISOString(),
+        supplier: {
+          id: row.supplier_id ?? '',
+          name: row.supplier_name ?? '',
+          document: row.supplier_document ?? null,
+          documentType: row.supplier_document_type ?? null,
+        },
+        operator: {
+          id: row.operator_id ?? '',
+          name: row.operator_name ?? '',
+        },
+        paymentMethod: row.payment_method,
+        notes: row.notes,
+        total,
+        items: mappedItems,
+      };
     });
   }
 }
