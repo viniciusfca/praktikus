@@ -1,8 +1,5 @@
 import { Controller, Get, Query, Request, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../../core/auth/jwt-auth.guard';
-import { RolesGuard } from '../../core/auth/roles.guard';
-import { Roles } from '../../core/auth/roles.decorator';
-import { UserRole } from '../../core/auth/user.entity';
 import { AuthUser } from '../../core/auth/jwt.strategy';
 import { RecyclingReportsService } from './reports.service';
 import { PeriodQueryDto } from './dto/period-query.dto';
@@ -23,8 +20,6 @@ export class ReportsController {
   }
 
   @Get('purchases')
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER)
   getPurchasesByPeriod(
     @Request() req: RequestWithUser,
     @Query() query: PeriodQueryDto,
@@ -33,8 +28,6 @@ export class ReportsController {
   }
 
   @Get('top-materials')
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER)
   getTopMaterials(
     @Request() req: RequestWithUser,
     @Query() query: TopMaterialsQueryDto,
