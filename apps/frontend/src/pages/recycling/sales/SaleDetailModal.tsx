@@ -5,6 +5,9 @@ import {
   CTable, CTableBody, CTableDataCell, CTableHead, CTableHeaderCell, CTableRow,
 } from '@coreui/react';
 import { salesService, type SaleDetail } from '../../../services/recycling/sales.service';
+import { SalePdf } from '../../../components/recycling/SalePdf';
+import { downloadPdf } from '../../../utils/downloadPdf';
+import { companyService } from '../../../services/company.service';
 
 function formatCurrency(value: number): string {
   return Number(value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -49,6 +52,30 @@ export function SaleDetailModal({
   const [detail, setDetail] = useState<SaleDetail | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [printing, setPrinting] = useState(false);
+
+  const handlePrint = async () => {
+    if (!detail) return;
+    setPrinting(true);
+    setError(null);
+    try {
+      let nomeFantasia = 'Praktikus';
+      try {
+        const company = await companyService.getProfile();
+        nomeFantasia = company.nomeFantasia;
+      } catch {
+        /* fallback to 'Praktikus' */
+      }
+      await downloadPdf(
+        <SalePdf sale={detail} empresa={{ nomeFantasia }} />,
+        `Venda-${detail.id.slice(0, 8).toUpperCase()}.pdf`,
+      );
+    } catch {
+      setError('Erro ao gerar PDF.');
+    } finally {
+      setPrinting(false);
+    }
+  };
 
   useEffect(() => {
     if (!saleId) { setDetail(null); return; }
@@ -169,6 +196,15 @@ export function SaleDetailModal({
         )}
       </CModalBody>
       <CModalFooter>
+        <CButton
+          color="primary"
+          variant="outline"
+          onClick={handlePrint}
+          disabled={!detail || printing}
+          style={{ marginRight: 'auto', minWidth: 130 }}
+        >
+          {printing ? <CSpinner size="sm" /> : 'Imprimir PDF'}
+        </CButton>
         <CButton color="secondary" variant="outline" onClick={onClose}>Fechar</CButton>
       </CModalFooter>
     </CModal>
