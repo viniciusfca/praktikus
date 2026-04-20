@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   CModal, CModalBody, CModalFooter, CModalHeader, CModalTitle,
   CButton, CSpinner, CAlert,
@@ -21,6 +21,13 @@ export function PrintPromptModal({
 }: PrintPromptModalProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (open) {
+      setError(null);
+      setLoading(false);
+    }
+  }, [open]);
 
   const handlePrint = async () => {
     setLoading(true);
@@ -62,7 +69,7 @@ export function PrintPromptModal({
         >
           {loading ? <CSpinner size="sm" /> : 'Imprimir PDF'}
         </CButton>
-        <CButton color="secondary" variant="outline" onClick={onClose}>
+        <CButton color="secondary" variant="outline" onClick={onClose} disabled={loading}>
           Fechar
         </CButton>
       </CModalFooter>
