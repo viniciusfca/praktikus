@@ -23,6 +23,8 @@ import {
 import { Line } from 'react-chartjs-2';
 import { useAuthStore } from '../../store/auth.store';
 import { useDashboardSummary, usePurchasesByPeriod, useTopMaterials } from '../../hooks/recycling/useReports';
+import { useUpcomingColetas } from '../../hooks/recycling/useColetas';
+import { suppliersService } from '../../services/recycling/suppliers.service';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Filler, Tooltip, Legend);
 
@@ -299,6 +301,112 @@ function TopMaterialsCard({
   );
 }
 
+// ── Upcoming Coletas ─────────────────────────────────────────────────────────
+
+const COLETA_STATUS_COLORS: Record<string, { bg: string; text: string; border: string; label: string }> = {
+  AGENDADA: { bg: 'rgba(52,142,145,0.12)', text: 'var(--cui-primary)', border: 'var(--cui-primary)', label: 'Agendada' },
+  CONCLUIDA: { bg: 'rgba(22,163,74,0.12)', text: '#15803d', border: '#16a34a', label: 'Concluída' },
+  CANCELADA: { bg: 'rgba(107,114,128,0.10)', text: '#6b7280', border: '#9ca3af', label: 'Cancelada' },
+};
+
+function formatWhen(isoDate: string): { time: string; label: string } {
+  const d = new Date(isoDate);
+  const time = d.toTimeString().slice(0, 5);
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const target = new Date(d); target.setHours(0, 0, 0, 0);
+  const diffDays = Math.round((target.getTime() - today.getTime()) / 86_400_000);
+  let label = d.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short' });
+  if (diffDays === 0) label = 'HOJE';
+  else if (diffDays === 1) label = 'AMANHÃ';
+  return { time, label };
+}
+
+function UpcomingColetasCard({
+  coletas,
+  loading,
+  supplierMap,
+  onSeeAll,
+  onNew,
+}: {
+  coletas: Array<{ id: string; scheduledAt: string; status: string; supplierId: string }>;
+  loading: boolean;
+  supplierMap: Record<string, { name: string; address: string | null }>;
+  onSeeAll: () => void;
+  onNew: () => void;
+}) {
+  return (
+    <Card padding={0}>
+      <CardHeader
+        title="Próximas coletas"
+        desc="hoje e amanhã"
+        action={
+          <button
+            type="button"
+            onClick={onSeeAll}
+            style={{
+              border: 0, background: 'transparent', color: 'var(--cui-primary)',
+              fontSize: 12.5, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+            }}
+          >
+            Ver todas →
+          </button>
+        }
+      />
+      <div style={{ padding: '0 20px 20px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {loading && (
+          <div style={{ display: 'flex', justifyContent: 'center', padding: 20 }}>
+            <CSpinner size="sm" color="primary" />
+          </div>
+        )}
+        {!loading && coletas.length === 0 && (
+          <div style={{ textAlign: 'center', padding: '16px 0' }}>
+            <div style={{ color: 'var(--cui-secondary-color)', fontSize: 13, marginBottom: 10 }}>
+              Nenhuma coleta agendada.
+            </div>
+            <CButton color="primary" size="sm" onClick={onNew} style={{ borderRadius: 8 }}>
+              Nova coleta
+            </CButton>
+          </div>
+        )}
+        {!loading && coletas.map((c) => {
+          const w = formatWhen(c.scheduledAt);
+          const s = COLETA_STATUS_COLORS[c.status] ?? COLETA_STATUS_COLORS.AGENDADA;
+          return (
+            <div key={c.id} style={{
+              display: 'grid', gridTemplateColumns: '80px 1fr auto',
+              alignItems: 'center', gap: 10,
+              padding: '8px 10px', borderRadius: 8, background: 'var(--cui-card-cap-bg)',
+            }}>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: 14 }}>{w.time}</div>
+                <div style={{ fontSize: 10, color: 'var(--cui-secondary-color)', textTransform: 'uppercase', fontWeight: 600 }}>
+                  {w.label}
+                </div>
+              </div>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontWeight: 600, fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {supplierMap[c.supplierId]?.name ?? '…'}
+                </div>
+                <div style={{ fontSize: 11, color: 'var(--cui-secondary-color)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {supplierMap[c.supplierId]?.address ?? 'Endereço não cadastrado'}
+                </div>
+              </div>
+              <span style={{
+                display: 'inline-flex', alignItems: 'center', gap: 4,
+                padding: '2px 8px', borderRadius: 999, fontSize: 11, fontWeight: 600,
+                color: s.text, background: s.bg, whiteSpace: 'nowrap',
+              }}>
+                <span style={{ width: 5, height: 5, borderRadius: '50%', background: s.border }} />
+                {s.label}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </Card>
+  );
+}
+
 // ── Main ────────────────────────────────────────────────────────────────────
 
 export function RecyclingDashboardPage() {
@@ -318,7 +426,25 @@ export function RecyclingDashboardPage() {
   const { summary, loading, error } = useDashboardSummary();
   const { rows, loading: chartLoading, fetch } = usePurchasesByPeriod();
   const { materials: topMaterials, loading: topLoading } = useTopMaterials(undefined, 5);
+  const { coletas: upcomingColetas, loading: coletasLoading } = useUpcomingColetas(4);
   const [period, setPeriod] = useState<Period>('30d');
+
+  const [supplierMap, setSupplierMap] = useState<Record<string, { name: string; address: string | null }>>({});
+
+  useEffect(() => {
+    if (upcomingColetas.length === 0) return;
+    const ids = Array.from(new Set(upcomingColetas.map((c) => c.supplierId)));
+    Promise.all(ids.map((id) => suppliersService.getById(id).catch(() => null)))
+      .then((results) => {
+        const map: Record<string, { name: string; address: string | null }> = {};
+        results.forEach((s) => {
+          if (!s) return;
+          const addr = s.address ? `${s.address.street}, ${s.address.number}` : null;
+          map[s.id] = { name: s.name, address: addr };
+        });
+        setSupplierMap(map);
+      });
+  }, [upcomingColetas]);
 
   useEffect(() => {
     const end = new Date();
@@ -642,18 +768,26 @@ export function RecyclingDashboardPage() {
         </Card>
       </div>
 
-      {/* ── Top materials row ─────────────────────────────────────────────────── */}
+      {/* ── Top materials + upcoming coletas ─────────────────────────────────── */}
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'minmax(0, 1fr)',
+          gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)',
           gap: 16,
         }}
+        className="pk-dashboard-grid"
       >
         <TopMaterialsCard
           materials={topMaterials}
           loading={topLoading}
           onSeeStock={() => navigate('/recycling/stock')}
+        />
+        <UpcomingColetasCard
+          coletas={upcomingColetas}
+          loading={coletasLoading}
+          supplierMap={supplierMap}
+          onSeeAll={() => navigate('/recycling/coletas')}
+          onNew={() => navigate('/recycling/coletas')}
         />
       </div>
     </div>
