@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   CAlert,
@@ -13,11 +13,12 @@ import {
   CTableRow,
 } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
-import { cilPlus, cilSearch, cilBasket } from '@coreui/icons';
+import { cilPlus, cilSearch, cilBasket, cilArrowTop } from '@coreui/icons';
 import { usePurchases } from '../../../hooks/recycling/usePurchases';
-import { suppliersService, type Supplier } from '../../../services/recycling/suppliers.service';
+import { usePurchasesSummary } from '../../../hooks/recycling/useReports';
+import { PurchaseDetailModal } from './PurchaseDetailModal';
+import { PaymentBadge } from '../../../components/recycling/PaymentBadge';
 
-// ── Constants ───────────────────────────────────────────────────────────────
 type PaymentFilter = 'all' | 'CASH' | 'PIX' | 'CARD';
 
 const PAYMENT_FILTERS: { value: PaymentFilter; label: string }[] = [
@@ -27,88 +28,106 @@ const PAYMENT_FILTERS: { value: PaymentFilter; label: string }[] = [
   { value: 'CARD', label: 'Cartão' },
 ];
 
-// ── Formatters ──────────────────────────────────────────────────────────────
+function formatCurrency(value: number): string {
+  return Number(value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+
 function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('pt-BR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  });
+  return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
 }
 
 function formatTime(iso: string): string {
   return new Date(iso).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 }
 
-function formatCurrency(value: number): string {
-  return Number(value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+function formatKg(value: number): string {
+  return `${Math.round(value).toLocaleString('pt-BR')}kg`;
 }
 
-// ── PaymentBadge ────────────────────────────────────────────────────────────
-function PaymentBadge({ method }: { method: string }) {
-  const config: Record<string, { label: string; color: string; bg: string }> = {
-    CASH: { label: 'Dinheiro', color: '#16a34a', bg: 'rgba(22, 163, 74, 0.12)' },
-    PIX: { label: 'PIX', color: 'var(--cui-primary)', bg: 'rgba(52, 142, 145, 0.12)' },
-    CARD: { label: 'Cartão', color: '#6b7280', bg: 'rgba(107, 114, 128, 0.12)' },
-  };
-  const c = config[method] ?? config.CARD;
+function materialSummary(item: { itemCount: number; firstProductName: string | null; totalKg: number }): string {
+  if (item.itemCount === 0) return '—';
+  if (item.itemCount === 1 && item.firstProductName) {
+    return `${item.firstProductName} · ${formatKg(item.totalKg)}`;
+  }
+  return `${item.itemCount} materiais · ${formatKg(item.totalKg)}`;
+}
+
+function KpiCard({
+  label,
+  value,
+  sub,
+  loading,
+}: {
+  label: string;
+  value: string;
+  sub: string;
+  loading: boolean;
+}) {
   return (
-    <span
+    <div
       style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 6,
-        padding: '3px 10px',
-        borderRadius: 999,
-        fontSize: 11.5,
-        fontWeight: 600,
-        color: c.color,
-        background: c.bg,
+        padding: '18px 20px',
+        background: 'var(--cui-card-bg)',
+        border: '1px solid var(--cui-border-color)',
+        borderRadius: 14,
       }}
     >
-      <span style={{ width: 6, height: 6, borderRadius: '50%', background: c.color, flexShrink: 0 }} />
-      {c.label}
-    </span>
+      <div
+        style={{
+          fontSize: 11,
+          color: 'var(--cui-secondary-color)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 6,
+          textTransform: 'uppercase',
+          letterSpacing: '0.04em',
+          fontWeight: 600,
+        }}
+      >
+        <CIcon icon={cilArrowTop} style={{ width: 13, height: 13 }} />
+        {label}
+      </div>
+      <div
+        style={{
+          marginTop: 8,
+          fontSize: 26,
+          fontWeight: 700,
+          letterSpacing: '-0.02em',
+          fontVariantNumeric: 'tabular-nums',
+          color: 'var(--cui-body-color)',
+        }}
+      >
+        {loading ? '—' : value}
+      </div>
+      <div style={{ marginTop: 4, fontSize: 12, color: 'var(--cui-secondary-color)' }}>
+        {sub}
+      </div>
+    </div>
   );
 }
 
-// ── Main page ───────────────────────────────────────────────────────────────
 export function PurchasesPage() {
   const navigate = useNavigate();
   const [page, setPage] = useState(1);
   const limit = 20;
   const { purchases, total, loading, error } = usePurchases(page, limit);
+  const { summary, loading: summaryLoading } = usePurchasesSummary();
 
-  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [search, setSearch] = useState('');
   const [paymentFilter, setPaymentFilter] = useState<PaymentFilter>('all');
-
-  // Load suppliers once for name lookup (first 200 — suficiente pra operações reais)
-  useEffect(() => {
-    suppliersService
-      .list(1, 200)
-      .then((res) => setSuppliers(res.data))
-      .catch(() => setSuppliers([]));
-  }, []);
-
-  const supplierMap = useMemo(() => {
-    const map = new Map<string, string>();
-    for (const s of suppliers) map.set(s.id, s.name);
-    return map;
-  }, [suppliers]);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return purchases.filter((p) => {
       if (paymentFilter !== 'all' && p.paymentMethod !== paymentFilter) return false;
       if (q) {
-        const supplierName = (supplierMap.get(p.supplierId) ?? '').toLowerCase();
-        const hay = `${p.id} ${supplierName}`.toLowerCase();
+        const hay = `${p.id} ${p.supplierName} ${p.notes ?? ''}`.toLowerCase();
         if (!hay.includes(q)) return false;
       }
       return true;
     });
-  }, [purchases, paymentFilter, search, supplierMap]);
+  }, [purchases, paymentFilter, search]);
 
   const totalPages = Math.ceil(total / limit) || 1;
   const shownFrom = total === 0 ? 0 : (page - 1) * limit + 1;
@@ -141,7 +160,7 @@ export function PurchasesPage() {
           <p style={{ margin: '4px 0 0', fontSize: 13.5, color: 'var(--cui-secondary-color)' }}>
             {total > 0
               ? `${total} ${total === 1 ? 'compra registrada' : 'compras registradas'}`
-              : 'Registre entradas de material comprado de fornecedores'}
+              : 'Registre entradas de material comprado de fornecedores.'}
           </p>
         </div>
         <CButton
@@ -151,6 +170,34 @@ export function PurchasesPage() {
         >
           <CIcon icon={cilPlus} size="sm" /> Nova compra
         </CButton>
+      </div>
+
+      {/* KPI grid */}
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+          gap: 14,
+        }}
+      >
+        <KpiCard
+          label="Hoje"
+          value={formatCurrency(summary?.today.total ?? 0)}
+          sub={`${summary?.today.count ?? 0} ${(summary?.today.count ?? 0) === 1 ? 'compra' : 'compras'}`}
+          loading={summaryLoading}
+        />
+        <KpiCard
+          label="Semana"
+          value={formatCurrency(summary?.week.total ?? 0)}
+          sub={`${summary?.week.count ?? 0} ${(summary?.week.count ?? 0) === 1 ? 'compra' : 'compras'}`}
+          loading={summaryLoading}
+        />
+        <KpiCard
+          label="Mês"
+          value={formatCurrency(summary?.month.total ?? 0)}
+          sub={`${summary?.month.count ?? 0} ${(summary?.month.count ?? 0) === 1 ? 'compra' : 'compras'}`}
+          loading={summaryLoading}
+        />
       </div>
 
       {error && <CAlert color="danger" className="mb-0">{error}</CAlert>}
@@ -173,7 +220,7 @@ export function PurchasesPage() {
               }}
             />
             <CFormInput
-              placeholder="Buscar por ID ou fornecedor..."
+              placeholder="Buscar por fornecedor, material ou ID..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               style={{ paddingLeft: 36 }}
@@ -182,7 +229,6 @@ export function PurchasesPage() {
             />
           </div>
 
-          {/* Payment filter pills */}
           <div
             style={{
               display: 'inline-flex',
@@ -249,6 +295,7 @@ export function PurchasesPage() {
               <CTableHeaderCell>ID</CTableHeaderCell>
               <CTableHeaderCell>Data</CTableHeaderCell>
               <CTableHeaderCell>Fornecedor</CTableHeaderCell>
+              <CTableHeaderCell>Material</CTableHeaderCell>
               <CTableHeaderCell>Pagamento</CTableHeaderCell>
               <CTableHeaderCell style={{ textAlign: 'right' }}>Total</CTableHeaderCell>
             </CTableRow>
@@ -256,32 +303,19 @@ export function PurchasesPage() {
           <CTableBody>
             {loading ? (
               <CTableRow>
-                <CTableDataCell colSpan={5} className="text-center py-4">
+                <CTableDataCell colSpan={6} className="text-center py-4">
                   <CSpinner size="sm" color="primary" />
                 </CTableDataCell>
               </CTableRow>
             ) : filtered.length === 0 ? (
               <CTableRow>
-                <CTableDataCell colSpan={5} className="text-center py-5">
-                  <div
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      gap: 8,
-                    }}
-                  >
-                    <div
-                      style={{
-                        width: 44,
-                        height: 44,
-                        borderRadius: 12,
-                        background: 'rgba(52,142,145,0.1)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
+                <CTableDataCell colSpan={6} className="text-center py-5">
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+                    <div style={{
+                      width: 44, height: 44, borderRadius: 12,
+                      background: 'rgba(52,142,145,0.1)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>
                       <CIcon icon={cilBasket} size="lg" style={{ color: 'var(--cui-primary)' }} />
                     </div>
                     <div style={{ fontWeight: 600, color: 'var(--cui-body-color)' }}>
@@ -296,118 +330,70 @@ export function PurchasesPage() {
                 </CTableDataCell>
               </CTableRow>
             ) : (
-              filtered.map((p) => {
-                const supplierName = supplierMap.get(p.supplierId);
-                return (
-                  <CTableRow key={p.id}>
-                    <CTableDataCell
-                      style={{
-                        fontFamily: "'JetBrains Mono', monospace",
-                        fontSize: 12,
-                        color: 'var(--cui-body-color)',
-                        fontWeight: 600,
-                      }}
-                    >
-                      #{p.id.slice(0, 8).toUpperCase()}
-                    </CTableDataCell>
-                    <CTableDataCell>
-                      <div
-                        style={{
-                          fontSize: 13,
-                          color: 'var(--cui-body-color)',
-                          fontVariantNumeric: 'tabular-nums',
-                        }}
-                      >
-                        {formatDate(p.purchasedAt)}
-                      </div>
-                      <div
-                        style={{
-                          fontSize: 11.5,
-                          color: 'var(--cui-secondary-color)',
-                          fontVariantNumeric: 'tabular-nums',
-                        }}
-                      >
-                        {formatTime(p.purchasedAt)}
-                      </div>
-                    </CTableDataCell>
-                    <CTableDataCell>
-                      {supplierName ? (
-                        <span style={{ fontWeight: 500, color: 'var(--cui-body-color)' }}>
-                          {supplierName}
-                        </span>
-                      ) : (
-                        <span
-                          style={{
-                            color: 'var(--cui-secondary-color)',
-                            fontFamily: "'JetBrains Mono', monospace",
-                            fontSize: 12,
-                          }}
-                        >
-                          {p.supplierId.slice(0, 8)}…
-                        </span>
-                      )}
-                    </CTableDataCell>
-                    <CTableDataCell>
-                      <PaymentBadge method={p.paymentMethod} />
-                    </CTableDataCell>
-                    <CTableDataCell
-                      style={{
-                        textAlign: 'right',
-                        fontVariantNumeric: 'tabular-nums',
-                        fontWeight: 600,
-                        color: 'var(--cui-body-color)',
-                      }}
-                    >
-                      {formatCurrency(p.total)}
-                    </CTableDataCell>
-                  </CTableRow>
-                );
-              })
+              filtered.map((p) => (
+                <CTableRow
+                  key={p.id}
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => setSelectedId(p.id)}
+                >
+                  <CTableDataCell style={{
+                    fontFamily: "'JetBrains Mono', monospace",
+                    fontSize: 12,
+                    color: 'var(--cui-body-color)',
+                    fontWeight: 600,
+                  }}>
+                    #{p.id.slice(0, 8).toUpperCase()}
+                  </CTableDataCell>
+                  <CTableDataCell>
+                    <div style={{ fontSize: 13, color: 'var(--cui-body-color)', fontVariantNumeric: 'tabular-nums' }}>
+                      {formatDate(p.purchasedAt)}
+                    </div>
+                    <div style={{ fontSize: 11.5, color: 'var(--cui-secondary-color)', fontVariantNumeric: 'tabular-nums' }}>
+                      {formatTime(p.purchasedAt)}
+                    </div>
+                  </CTableDataCell>
+                  <CTableDataCell>
+                    {p.supplierName ? (
+                      <span style={{ fontWeight: 500, color: 'var(--cui-body-color)' }}>{p.supplierName}</span>
+                    ) : (
+                      <span style={{ color: 'var(--cui-secondary-color)' }}>—</span>
+                    )}
+                  </CTableDataCell>
+                  <CTableDataCell>
+                    <span style={{ fontSize: 13, color: 'var(--cui-body-color)' }}>
+                      {materialSummary(p)}
+                    </span>
+                  </CTableDataCell>
+                  <CTableDataCell>
+                    <PaymentBadge method={p.paymentMethod} />
+                  </CTableDataCell>
+                  <CTableDataCell style={{
+                    textAlign: 'right',
+                    fontWeight: 700,
+                    fontVariantNumeric: 'tabular-nums',
+                    color: 'var(--cui-primary)',
+                  }}>
+                    {formatCurrency(p.total)}
+                  </CTableDataCell>
+                </CTableRow>
+              ))
             )}
           </CTableBody>
         </CTable>
 
         <div className="pk-table-footer">
-          <span>
-            {total > 0 ? `Mostrando ${shownFrom}–${shownTo} de ${total}` : 'Nenhum registro'}
-          </span>
+          <span>{total > 0 ? `Mostrando ${shownFrom}–${shownTo} de ${total}` : 'Nenhum registro'}</span>
           {total > limit && (
             <div style={{ marginLeft: 'auto', display: 'flex', gap: 4 }}>
-              <CButton
-                color="secondary"
-                variant="outline"
-                size="sm"
-                disabled={page === 1}
-                onClick={() => setPage(page - 1)}
-                aria-label="Página anterior"
-              >
-                ‹
-              </CButton>
-              <span
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  padding: '0 10px',
-                  fontWeight: 500,
-                  color: 'var(--cui-body-color)',
-                }}
-              >
-                {page} / {totalPages}
-              </span>
-              <CButton
-                color="secondary"
-                variant="outline"
-                size="sm"
-                disabled={page >= totalPages}
-                onClick={() => setPage(page + 1)}
-                aria-label="Próxima página"
-              >
-                ›
-              </CButton>
+              <CButton color="secondary" variant="outline" size="sm" disabled={page === 1} onClick={() => setPage(page - 1)} aria-label="Página anterior">‹</CButton>
+              <span style={{ display: 'inline-flex', alignItems: 'center', padding: '0 10px', fontWeight: 500, color: 'var(--cui-body-color)' }}>{page} / {totalPages}</span>
+              <CButton color="secondary" variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage(page + 1)} aria-label="Próxima página">›</CButton>
             </div>
           )}
         </div>
       </div>
+
+      <PurchaseDetailModal purchaseId={selectedId} onClose={() => setSelectedId(null)} />
     </div>
   );
 }
