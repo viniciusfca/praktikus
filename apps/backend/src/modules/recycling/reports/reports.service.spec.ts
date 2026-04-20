@@ -4,6 +4,9 @@ import { RecyclingReportsService } from './reports.service';
 
 const mockQueryRunner = {
   connect: jest.fn().mockResolvedValue(undefined),
+  startTransaction: jest.fn().mockResolvedValue(undefined),
+  commitTransaction: jest.fn().mockResolvedValue(undefined),
+  rollbackTransaction: jest.fn().mockResolvedValue(undefined),
   query: jest.fn(),
   release: jest.fn().mockResolvedValue(undefined),
 };

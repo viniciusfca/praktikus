@@ -17,9 +17,15 @@ export class RecyclingReportsService {
     const schemaName = this.getSchemaName(tenantId);
     const qr = this.dataSource.createQueryRunner();
     await qr.connect();
+    await qr.startTransaction();
     try {
       await qr.query(`SET LOCAL search_path TO "${schemaName}", public`);
-      return await fn(qr);
+      const result = await fn(qr);
+      await qr.commitTransaction();
+      return result;
+    } catch (err) {
+      await qr.rollbackTransaction();
+      throw err;
     } finally {
       await qr.release();
     }

@@ -145,7 +145,9 @@ export function SalesPage() {
             Vendas
           </h1>
           <p style={{ margin: '4px 0 0', fontSize: 13.5, color: 'var(--cui-secondary-color)' }}>
-            Registre saídas de material vendido para compradores.
+            {total > 0
+              ? `${total} ${total === 1 ? 'venda registrada' : 'vendas registradas'}`
+              : 'Registre saídas de material vendido para compradores.'}
           </p>
         </div>
         <CButton
