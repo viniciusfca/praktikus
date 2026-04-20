@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Query, Request, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Query, Request, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../../core/auth/jwt-auth.guard';
 import { AuthUser } from '../../core/auth/jwt.strategy';
 import { EmployeePermissionsGuard, RequirePermission } from '../employees/employee-permissions.guard';
@@ -26,7 +26,7 @@ export class PurchasesController {
 
   @Get(':id')
   @RequirePermission('canViewStock')
-  getById(@Request() req: RequestWithUser, @Param('id') id: string) {
+  getById(@Request() req: RequestWithUser, @Param('id', ParseUUIDPipe) id: string) {
     return this.purchasesService.getById(req.user.tenantId, id);
   }
 
