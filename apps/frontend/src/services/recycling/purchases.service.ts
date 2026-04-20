@@ -3,6 +3,18 @@ import { PaymentMethod } from '@praktikus/shared';
 
 export { PaymentMethod };
 
+export interface Purchase {
+  id: string;
+  supplierId: string;
+  operatorId: string;
+  cashSessionId: string | null;
+  paymentMethod: PaymentMethod;
+  totalAmount: number;
+  purchasedAt: string;
+  notes: string | null;
+  createdAt: string;
+}
+
 export interface PurchaseListItem {
   id: string;
   purchasedAt: string;
@@ -14,6 +26,15 @@ export interface PurchaseListItem {
   firstProductName: string | null;
   totalKg: number;
   notes: string | null;
+}
+
+export interface PurchaseDetailItem {
+  id: string;
+  productId: string;
+  productName: string;
+  quantity: number;
+  unitPrice: number;
+  subtotal: number;
 }
 
 export interface PurchaseDetail {
@@ -29,14 +50,7 @@ export interface PurchaseDetail {
   paymentMethod: PaymentMethod;
   notes: string | null;
   total: number;
-  items: Array<{
-    id: string;
-    productId: string;
-    productName: string;
-    quantity: number;
-    unitPrice: number;
-    subtotal: number;
-  }>;
+  items: PurchaseDetailItem[];
 }
 
 export interface CreatePurchasePayload {
@@ -55,8 +69,8 @@ export const purchasesService = {
     const { data } = await api.get<PurchaseDetail>(`/recycling/purchases/${id}`);
     return data;
   },
-  async create(payload: CreatePurchasePayload): Promise<{ id: string }> {
-    const { data } = await api.post<{ id: string }>('/recycling/purchases', payload);
+  async create(payload: CreatePurchasePayload): Promise<Purchase> {
+    const { data } = await api.post<Purchase>('/recycling/purchases', payload);
     return data;
   },
 };
