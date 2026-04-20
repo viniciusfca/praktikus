@@ -203,8 +203,8 @@ export function createTenantTablesSql(schemaName: string, segment: TenantSegment
     `CREATE TABLE IF NOT EXISTS "${schemaName}".employee_permissions (
       user_id UUID PRIMARY KEY,
       can_manage_suppliers BOOLEAN NOT NULL DEFAULT true,
-      can_manage_buyers BOOLEAN NOT NULL DEFAULT false,
-      can_manage_products BOOLEAN NOT NULL DEFAULT false,
+      can_manage_buyers BOOLEAN NOT NULL DEFAULT true,
+      can_manage_products BOOLEAN NOT NULL DEFAULT true,
       can_open_close_cash BOOLEAN NOT NULL DEFAULT true,
       can_view_stock BOOLEAN NOT NULL DEFAULT true,
       can_view_reports BOOLEAN NOT NULL DEFAULT false,

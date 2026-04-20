@@ -8,10 +8,10 @@ export class EmployeePermissionsEntity {
   @Column({ name: 'can_manage_suppliers', default: true })
   canManageSuppliers: boolean;
 
-  @Column({ name: 'can_manage_buyers', default: false })
+  @Column({ name: 'can_manage_buyers', default: true })
   canManageBuyers: boolean;
 
-  @Column({ name: 'can_manage_products', default: false })
+  @Column({ name: 'can_manage_products', default: true })
   canManageProducts: boolean;
 
   @Column({ name: 'can_open_close_cash', default: true })
