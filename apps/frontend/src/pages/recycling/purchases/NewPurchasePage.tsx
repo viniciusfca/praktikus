@@ -23,6 +23,10 @@ import CIcon from '@coreui/icons-react';
 import { cilPlus, cilTrash, cilArrowLeft } from '@coreui/icons';
 import { purchasesService, PaymentMethod } from '../../../services/recycling/purchases.service';
 import { usePurchaseFormData } from '../../../hooks/recycling/usePurchaseFormData';
+import { PrintPromptModal } from '../../../components/PrintPromptModal';
+import { PurchasePdf } from '../../../components/recycling/PurchasePdf';
+import { downloadPdf } from '../../../utils/downloadPdf';
+import { companyService } from '../../../services/company.service';
 
 // ── Schema ──────────────────────────────────────────────────────────────────
 const itemSchema = z.object({
@@ -134,6 +138,7 @@ export function NewPurchasePage() {
   const navigate = useNavigate();
   const { suppliers, products, loading: loadingData, error: loadError } = usePurchaseFormData();
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [newPurchaseId, setNewPurchaseId] = useState<string | null>(null);
 
   const {
     register,
@@ -176,7 +181,7 @@ export function NewPurchasePage() {
   const onSubmit = async (data: FormData) => {
     setSubmitError(null);
     try {
-      await purchasesService.create({
+      const created = await purchasesService.create({
         supplierId: data.supplierId,
         paymentMethod: data.paymentMethod,
         items: data.items.map((item) => ({
@@ -186,12 +191,30 @@ export function NewPurchasePage() {
         })),
         notes: data.notes || undefined,
       });
-      navigate('/recycling/purchases');
+      setNewPurchaseId(created.id);
     } catch (err: unknown) {
       const anyErr = err as { response?: { data?: { message?: string | string[] } } };
       const msg = anyErr?.response?.data?.message;
       setSubmitError(Array.isArray(msg) ? msg.join(', ') : (msg ?? 'Erro ao registrar compra.'));
     }
+  };
+
+  const handlePrintNewPurchase = async () => {
+    if (!newPurchaseId) return;
+    const [detail, company] = await Promise.all([
+      purchasesService.getById(newPurchaseId),
+      companyService.getProfile().catch(() => ({ nomeFantasia: 'Praktikus' })),
+    ]);
+    await downloadPdf(
+      <PurchasePdf purchase={detail} empresa={{ nomeFantasia: company.nomeFantasia }} />,
+      `Compra-${detail.id.slice(0, 8).toUpperCase()}.pdf`,
+    );
+    navigate('/recycling/purchases');
+  };
+
+  const handleClosePrompt = () => {
+    setNewPurchaseId(null);
+    navigate('/recycling/purchases');
   };
 
   if (loadingData) {
@@ -494,6 +517,14 @@ export function NewPurchasePage() {
           </div>
         </div>
       </form>
+
+      <PrintPromptModal
+        open={newPurchaseId !== null}
+        title="Compra registrada"
+        message="Deseja imprimir o comprovante?"
+        onPrint={handlePrintNewPurchase}
+        onClose={handleClosePrompt}
+      />
     </div>
   );
 }
