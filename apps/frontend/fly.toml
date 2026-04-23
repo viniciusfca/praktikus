@@ -1,9 +1,6 @@
 app = 'praktikus-frontend'
 primary_region = 'gru'
 
-[build]
-  dockerfile = 'apps/frontend/Dockerfile'
-
 [env]
   BACKEND_HOST = 'praktikus-backend.internal'
 
