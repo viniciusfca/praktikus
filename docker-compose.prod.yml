@@ -50,6 +50,8 @@ services:
       context: .
       dockerfile: apps/frontend/Dockerfile
       target: runner
+    environment:
+      BACKEND_HOST: backend
     ports:
       - '80:80'
       - '443:443'
