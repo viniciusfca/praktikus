@@ -1,9 +1,6 @@
 app = 'praktikus-backend'
 primary_region = 'gru'
 
-[build]
-  dockerfile = 'apps/backend/Dockerfile'
-
 [env]
   NODE_ENV = 'production'
   PORT = '3000'
