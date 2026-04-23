@@ -6,13 +6,12 @@ import { z } from 'zod';
 import {
   CAlert,
   CButton,
-  CCard,
-  CCardBody,
   CFormFeedback,
   CFormInput,
   CFormLabel,
   CSpinner,
 } from '@coreui/react';
+import { AuthShell } from '../../components/AuthShell';
 import { authService } from '../../services/auth.service';
 import { useAuthStore } from '../../store/auth.store';
 import { jwtDecode } from 'jwt-decode';
@@ -54,61 +53,118 @@ export function LoginPage() {
   };
 
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '1rem',
-      }}
-    >
-      <CCard style={{ width: '100%', maxWidth: 420 }}>
-        <CCardBody className="p-4">
-          <h5 className="fw-bold text-center mb-1">Praktikus</h5>
-          <p className="text-secondary text-center mb-3">Acesse sua conta</p>
+    <AuthShell>
+      <h1
+        style={{
+          margin: '0 0 6px',
+          fontSize: 26,
+          letterSpacing: '-0.02em',
+          fontWeight: 600,
+        }}
+      >
+        Bem-vindo de volta
+      </h1>
+      <p style={{ margin: '0 0 28px', color: 'var(--cui-secondary-color)' }}>
+        Entre para continuar gerenciando seu negócio.
+      </p>
 
-          {error && <CAlert color="danger" className="mb-3">{error}</CAlert>}
+      {error && (
+        <CAlert color="danger" className="mb-3">
+          {error}
+        </CAlert>
+      )}
 
-          <form onSubmit={handleSubmit(onSubmit)} noValidate>
-            <div className="mb-3">
-              <CFormLabel>E-mail</CFormLabel>
-              <CFormInput
-                type="email"
-                {...register('email')}
-                invalid={!!errors.email}
-                aria-label="E-mail"
-              />
-              {errors.email && <CFormFeedback invalid>{errors.email.message}</CFormFeedback>}
-            </div>
-            <div className="mb-3">
-              <CFormLabel>Senha</CFormLabel>
-              <CFormInput
-                type="password"
-                {...register('password')}
-                invalid={!!errors.password}
-                aria-label="Senha"
-              />
-              {errors.password && <CFormFeedback invalid>{errors.password.message}</CFormFeedback>}
-            </div>
-            <CButton
-              type="submit"
-              color="primary"
-              className="w-100 mt-2"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? <CSpinner size="sm" /> : 'Entrar'}
-            </CButton>
-          </form>
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        noValidate
+        style={{ display: 'flex', flexDirection: 'column', gap: 14 }}
+      >
+        <div>
+          <CFormLabel style={{ fontWeight: 500, fontSize: 13 }}>E-mail</CFormLabel>
+          <CFormInput
+            type="email"
+            placeholder="voce@suaempresa.com.br"
+            {...register('email')}
+            invalid={!!errors.email}
+            aria-label="E-mail"
+          />
+          {errors.email && <CFormFeedback invalid>{errors.email.message}</CFormFeedback>}
+        </div>
 
-          <p className="text-center mt-3 mb-0" style={{ fontSize: '0.875rem' }}>
-            Não tem conta?{' '}
-            <Link to="/register" style={{ color: 'inherit' }}>
-              Cadastre sua oficina
-            </Link>
-          </p>
-        </CCardBody>
-      </CCard>
-    </div>
+        <div>
+          <CFormLabel style={{ fontWeight: 500, fontSize: 13 }}>Senha</CFormLabel>
+          <CFormInput
+            type="password"
+            placeholder="••••••••"
+            {...register('password')}
+            invalid={!!errors.password}
+            aria-label="Senha"
+          />
+          {errors.password && (
+            <CFormFeedback invalid>{errors.password.message}</CFormFeedback>
+          )}
+        </div>
+
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginTop: 2,
+          }}
+        >
+          <label
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              fontSize: 13,
+              color: 'var(--cui-secondary-color)',
+              cursor: 'pointer',
+            }}
+          >
+            <input type="checkbox" /> Lembrar de mim
+          </label>
+          <a
+            href="#"
+            style={{
+              fontSize: 13,
+              color: 'var(--cui-primary)',
+              textDecoration: 'none',
+              fontWeight: 500,
+            }}
+          >
+            Esqueci a senha
+          </a>
+        </div>
+
+        <CButton
+          type="submit"
+          color="primary"
+          size="lg"
+          style={{ width: '100%', marginTop: 4, borderRadius: 8 }}
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? <CSpinner size="sm" /> : 'Entrar'}
+        </CButton>
+      </form>
+
+      <p
+        style={{
+          marginTop: 24,
+          textAlign: 'center',
+          fontSize: 13,
+          color: 'var(--cui-secondary-color)',
+        }}
+      >
+        Ainda não tem conta?{' '}
+        <Link
+          to="/register"
+          style={{ color: 'var(--cui-primary)', fontWeight: 500, textDecoration: 'none' }}
+        >
+          Comece grátis
+        </Link>
+      </p>
+    </AuthShell>
   );
 }

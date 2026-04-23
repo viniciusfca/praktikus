@@ -26,6 +26,8 @@ import { SaleEntity } from '../modules/recycling/sales/sale.entity';
 import { SaleItemEntity } from '../modules/recycling/sales/sale-item.entity';
 import { SupplierEntity } from '../modules/recycling/suppliers/supplier.entity';
 import { UnitEntity } from '../modules/recycling/units/unit.entity';
+import { ColetaEntity } from '../modules/recycling/coletas/coleta.entity';
+import { ColetaCommentEntity } from '../modules/recycling/coletas/coleta-comment.entity';
 
 @Module({
   imports: [
@@ -39,7 +41,7 @@ import { UnitEntity } from '../modules/recycling/units/unit.entity';
         username: config.get<string>('DB_USER'),
         password: config.get<string>('DB_PASS'),
         database: config.get<string>('DB_NAME'),
-        entities: [TenantEntity, UserEntity, RefreshTokenEntity, BillingEntity, CustomerEntity, VehicleEntity, CatalogServiceEntity, CatalogPartEntity, AppointmentEntity, AppointmentCommentEntity, ServiceOrderEntity, SoItemServiceEntity, SoItemPartEntity, BuyerEntity, CashSessionEntity, CashTransactionEntity, EmployeePermissionsEntity, ProductEntity, PurchaseEntity, PurchaseItemEntity, StockMovementEntity, SaleEntity, SaleItemEntity, SupplierEntity, UnitEntity],
+        entities: [TenantEntity, UserEntity, RefreshTokenEntity, BillingEntity, CustomerEntity, VehicleEntity, CatalogServiceEntity, CatalogPartEntity, AppointmentEntity, AppointmentCommentEntity, ServiceOrderEntity, SoItemServiceEntity, SoItemPartEntity, BuyerEntity, CashSessionEntity, CashTransactionEntity, EmployeePermissionsEntity, ProductEntity, PurchaseEntity, PurchaseItemEntity, StockMovementEntity, SaleEntity, SaleItemEntity, SupplierEntity, UnitEntity, ColetaEntity, ColetaCommentEntity],
         synchronize: false,
         logging: config.get('NODE_ENV') === 'development',
         migrations: [__dirname + '/migrations/*.{ts,js}'],

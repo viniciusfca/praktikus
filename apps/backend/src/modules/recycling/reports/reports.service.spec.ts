@@ -4,6 +4,9 @@ import { RecyclingReportsService } from './reports.service';
 
 const mockQueryRunner = {
   connect: jest.fn().mockResolvedValue(undefined),
+  startTransaction: jest.fn().mockResolvedValue(undefined),
+  commitTransaction: jest.fn().mockResolvedValue(undefined),
+  rollbackTransaction: jest.fn().mockResolvedValue(undefined),
   query: jest.fn(),
   release: jest.fn().mockResolvedValue(undefined),
 };
@@ -30,31 +33,45 @@ describe('RecyclingReportsService', () => {
   });
 
   describe('getDashboardSummary', () => {
-    it('should return today totals and cash session info', async () => {
+    it('should return today totals, monthly total and cash session info with current balance', async () => {
       mockQueryRunner.query.mockImplementation(async (sql: string) => {
         if (sql.includes('SET LOCAL')) return undefined;
-        if (sql.includes('purchases') && sql.includes('CURRENT_DATE')) return [{ total_today: '1500.00', purchases_count: '5' }];
-        if (sql.includes('cash_sessions')) return [{ status: 'OPEN', opening_balance: '200.00' }];
+        if (sql.includes('CURRENT_DATE') && sql.includes('total_today')) {
+          return [{ total_today: '1500.00', purchases_count: '5' }];
+        }
+        if (sql.includes("date_trunc('month'") && sql.includes('total_month')) {
+          return [{ total_month: '14820.00', purchases_count_month: '42' }];
+        }
+        if (sql.includes('cash_sessions')) return [{ id: 'sess1', status: 'OPEN', opening_balance: '200.00' }];
+        if (sql.includes('cash_transactions')) return [{ total_in: '800.00', total_out: '340.00' }];
         return [];
       });
 
       const result = await service.getDashboardSummary(TENANT);
       expect(result.totalPurchasedToday).toBe(1500);
       expect(result.purchasesCountToday).toBe(5);
-      expect(result.cashSession).toBeDefined();
+      expect(result.totalPurchasedMonth).toBe(14820);
+      expect(result.purchasesCountMonth).toBe(42);
       expect(result.cashSession?.openingBalance).toBe(200);
+      expect(result.cashSession?.currentBalance).toBe(660);
     });
 
     it('should return null cashSession when no open session', async () => {
       mockQueryRunner.query.mockImplementation(async (sql: string) => {
         if (sql.includes('SET LOCAL')) return undefined;
-        if (sql.includes('purchases') && sql.includes('CURRENT_DATE')) return [{ total_today: '0.00', purchases_count: '0' }];
+        if (sql.includes('CURRENT_DATE') && sql.includes('total_today')) {
+          return [{ total_today: '0.00', purchases_count: '0' }];
+        }
+        if (sql.includes("date_trunc('month'") && sql.includes('total_month')) {
+          return [{ total_month: '0.00', purchases_count_month: '0' }];
+        }
         if (sql.includes('cash_sessions')) return [];
         return [];
       });
 
       const result = await service.getDashboardSummary(TENANT);
       expect(result.cashSession).toBeNull();
+      expect(result.totalPurchasedMonth).toBe(0);
     });
   });
 
@@ -69,6 +86,140 @@ describe('RecyclingReportsService', () => {
       expect(result).toHaveLength(1);
       expect(result[0].total).toBe(1500);
       expect(result[0].count).toBe(3);
+    });
+  });
+
+  describe('getSalesSummary', () => {
+    it('should throw on invalid tenantId', async () => {
+      await expect(service.getSalesSummary('bad-id')).rejects.toThrow('Invalid tenantId');
+    });
+
+    it('should return totals for today, week and month', async () => {
+      mockQueryRunner.query.mockImplementation(async (sql: string) => {
+        if (sql.includes('SET LOCAL')) return undefined;
+        if (sql.includes('DATE(s.sold_at) = CURRENT_DATE')) {
+          return [{ total: '680.00', count: '1' }];
+        }
+        if (sql.includes("CURRENT_DATE - interval '7 days'")) {
+          return [{ total: '1690.00', count: '4' }];
+        }
+        if (sql.includes("date_trunc('month'")) {
+          return [{ total: '22540.00', count: '52' }];
+        }
+        return [];
+      });
+
+      const result = await service.getSalesSummary(TENANT);
+      expect(result.today).toEqual({ total: 680, count: 1 });
+      expect(result.week).toEqual({ total: 1690, count: 4 });
+      expect(result.month).toEqual({ total: 22540, count: 52 });
+    });
+
+    it('should return zeros when no sales', async () => {
+      mockQueryRunner.query.mockImplementation(async (sql: string) => {
+        if (sql.includes('SET LOCAL')) return undefined;
+        return [{ total: '0.00', count: '0' }];
+      });
+
+      const result = await service.getSalesSummary(TENANT);
+      expect(result.today).toEqual({ total: 0, count: 0 });
+      expect(result.week).toEqual({ total: 0, count: 0 });
+      expect(result.month).toEqual({ total: 0, count: 0 });
+    });
+  });
+
+  describe('getPurchasesSummary', () => {
+    it('should throw on invalid tenantId', async () => {
+      await expect(service.getPurchasesSummary('bad-id')).rejects.toThrow('Invalid tenantId');
+    });
+
+    it('should return totals for today, week and month', async () => {
+      mockQueryRunner.query.mockImplementation(async (sql: string) => {
+        if (sql.includes('SET LOCAL')) return undefined;
+        if (sql.includes('DATE(purchased_at) = CURRENT_DATE')) {
+          return [{ total: '1500.00', count: '5' }];
+        }
+        if (sql.includes("CURRENT_DATE - interval '7 days'")) {
+          return [{ total: '7200.00', count: '18' }];
+        }
+        if (sql.includes("date_trunc('month'")) {
+          return [{ total: '14820.00', count: '42' }];
+        }
+        return [];
+      });
+
+      const result = await service.getPurchasesSummary(TENANT);
+      expect(result.today).toEqual({ total: 1500, count: 5 });
+      expect(result.week).toEqual({ total: 7200, count: 18 });
+      expect(result.month).toEqual({ total: 14820, count: 42 });
+    });
+
+    it('should return zeros when no purchases', async () => {
+      mockQueryRunner.query.mockImplementation(async (sql: string) => {
+        if (sql.includes('SET LOCAL')) return undefined;
+        return [{ total: '0.00', count: '0' }];
+      });
+
+      const result = await service.getPurchasesSummary(TENANT);
+      expect(result.today).toEqual({ total: 0, count: 0 });
+      expect(result.week).toEqual({ total: 0, count: 0 });
+      expect(result.month).toEqual({ total: 0, count: 0 });
+    });
+  });
+
+  describe('getTopMaterials', () => {
+    it('should throw on invalid tenantId', async () => {
+      await expect(service.getTopMaterials('bad-id')).rejects.toThrow('Invalid tenantId');
+    });
+
+    it('should return top materials for current month with change vs previous', async () => {
+      mockQueryRunner.query.mockImplementation(async (sql: string) => {
+        if (sql.includes('SET LOCAL')) return undefined;
+        if (sql.includes("date_trunc('month', CURRENT_DATE) - interval")) {
+          return [
+            { product_id: 'p1', volume_kg: '720.0000' },
+          ];
+        }
+        if (sql.includes("date_trunc('month', CURRENT_DATE)")) {
+          return [
+            { product_id: 'p1', name: 'Alumínio', volume_kg: '820.0000', avg_price: '8.5000' },
+            { product_id: 'p2', name: 'PET', volume_kg: '640.0000', avg_price: '2.2000' },
+          ];
+        }
+        return [];
+      });
+
+      const result = await service.getTopMaterials(TENANT);
+      expect(result).toHaveLength(2);
+      expect(result[0].productId).toBe('p1');
+      expect(result[0].volumeKg).toBe(820);
+      expect(result[0].avgPricePerKg).toBe(8.5);
+      expect(result[0].changePct).toBeCloseTo(13.9, 1);
+      expect(result[1].changePct).toBeNull();
+    });
+
+    it('should accept explicit month parameter', async () => {
+      const queries: string[] = [];
+      mockQueryRunner.query.mockImplementation(async (sql: string) => {
+        queries.push(sql);
+        if (sql.includes('SET LOCAL')) return undefined;
+        return [];
+      });
+
+      await service.getTopMaterials(TENANT, '2026-03', 10);
+      const monthQuery = queries.find((q) => q.includes("'2026-03-01'"));
+      expect(monthQuery).toBeDefined();
+      expect(queries.some((q) => q.includes('LIMIT 10'))).toBe(true);
+    });
+
+    it('should return empty array when no purchases in month', async () => {
+      mockQueryRunner.query.mockImplementation(async (sql: string) => {
+        if (sql.includes('SET LOCAL')) return undefined;
+        return [];
+      });
+
+      const result = await service.getTopMaterials(TENANT);
+      expect(result).toEqual([]);
     });
   });
 });

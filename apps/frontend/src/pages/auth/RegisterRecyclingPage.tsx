@@ -6,13 +6,13 @@ import { z } from 'zod';
 import {
   CAlert,
   CButton,
-  CCard,
-  CCardBody,
   CFormFeedback,
   CFormInput,
   CFormLabel,
   CSpinner,
 } from '@coreui/react';
+import { AuthShell } from '../../components/AuthShell';
+import { Stepper } from '../../components/Stepper';
 import { authService } from '../../services/auth.service';
 import { useAuthStore } from '../../store/auth.store';
 import { stripDigits, formatCnpj, formatPhone } from '../../utils/masks';
@@ -39,7 +39,9 @@ const step2Schema = z
 type Step1Data = z.infer<typeof step1Schema>;
 type Step2Data = z.infer<typeof step2Schema>;
 
-const STEPS = ['Dados da Empresa', 'Dados do Responsável'];
+const STEPS = ['Dados da empresa', 'Dados do responsável'];
+
+const labelStyle = { fontWeight: 500, fontSize: 13 };
 
 export function RegisterRecyclingPage() {
   const navigate = useNavigate();
@@ -71,199 +73,194 @@ export function RegisterRecyclingPage() {
   };
 
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '1rem',
-      }}
-    >
-      <CCard style={{ width: '100%', maxWidth: 520 }}>
-        <CCardBody className="p-4">
-          <h5 className="fw-bold text-center mb-1">Praktikus</h5>
-          <p className="text-secondary text-center mb-3">Cadastre sua recicladora — 30 dias grátis</p>
+    <AuthShell>
+      <h1 style={{ margin: '0 0 6px', fontSize: 24, letterSpacing: '-0.02em', fontWeight: 600 }}>
+        Crie sua conta
+      </h1>
+      <p style={{ margin: '0 0 10px', color: 'var(--cui-secondary-color)' }}>
+        Cadastre sua recicladora — 30 dias grátis.
+      </p>
 
-          {/* Step indicator */}
-          <div className="d-flex align-items-center mb-4">
-            {STEPS.map((label, i) => (
-              <div key={label} className="d-flex align-items-center" style={{ flex: 1 }}>
-                <div className="d-flex align-items-center gap-2">
-                  <div
-                    style={{
-                      width: 28,
-                      height: 28,
-                      borderRadius: '50%',
-                      backgroundColor: i <= activeStep ? 'var(--cui-primary)' : 'var(--cui-secondary-bg)',
-                      color: i <= activeStep ? '#fff' : 'var(--cui-body-color)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '0.75rem',
-                      fontWeight: 'bold',
-                      flexShrink: 0,
-                    }}
-                  >
-                    {i + 1}
-                  </div>
-                  <span style={{ fontSize: '0.8rem', fontWeight: i === activeStep ? 600 : 400 }}>{label}</span>
-                </div>
-                {i < STEPS.length - 1 && (
-                  <div
-                    style={{
-                      flex: 1,
-                      height: 1,
-                      backgroundColor: 'var(--cui-border-color)',
-                      margin: '0 8px',
-                    }}
-                  />
-                )}
-              </div>
-            ))}
+      <Stepper steps={STEPS} current={activeStep} />
+
+      {error && (
+        <CAlert color="danger" className="mb-3">
+          {error}
+        </CAlert>
+      )}
+
+      {activeStep === 0 && (
+        <form
+          onSubmit={form1.handleSubmit(onStep1Submit)}
+          noValidate
+          style={{ display: 'flex', flexDirection: 'column', gap: 14 }}
+        >
+          <div>
+            <CFormLabel style={labelStyle}>CNPJ</CFormLabel>
+            <Controller
+              control={form1.control}
+              name="cnpj"
+              render={({ field }) => (
+                <CFormInput
+                  placeholder="00.000.000/0000-00"
+                  aria-label="CNPJ"
+                  value={formatCnpj(field.value || '')}
+                  onChange={(e) => field.onChange(stripDigits(e.target.value))}
+                  onBlur={field.onBlur}
+                  ref={field.ref}
+                  invalid={!!form1.formState.errors.cnpj}
+                />
+              )}
+            />
+            {form1.formState.errors.cnpj && (
+              <CFormFeedback invalid>{form1.formState.errors.cnpj.message}</CFormFeedback>
+            )}
           </div>
 
-          {error && <CAlert color="danger" className="mb-3">{error}</CAlert>}
+          <div>
+            <CFormLabel style={labelStyle}>Razão social</CFormLabel>
+            <CFormInput
+              aria-label="Razão Social"
+              {...form1.register('razaoSocial')}
+              invalid={!!form1.formState.errors.razaoSocial}
+            />
+            {form1.formState.errors.razaoSocial && (
+              <CFormFeedback invalid>{form1.formState.errors.razaoSocial.message}</CFormFeedback>
+            )}
+          </div>
 
-          {activeStep === 0 && (
-            <form onSubmit={form1.handleSubmit(onStep1Submit)} noValidate>
-              <div className="mb-3">
-                <CFormLabel>CNPJ</CFormLabel>
-                <Controller
-                  control={form1.control}
-                  name="cnpj"
-                  render={({ field }) => (
-                    <CFormInput
-                      placeholder="00.000.000/0000-00"
-                      aria-label="CNPJ"
-                      value={formatCnpj(field.value || '')}
-                      onChange={(e) => field.onChange(stripDigits(e.target.value))}
-                      onBlur={field.onBlur}
-                      ref={field.ref}
-                      invalid={!!form1.formState.errors.cnpj}
-                    />
-                  )}
-                />
-                {form1.formState.errors.cnpj && (
-                  <CFormFeedback invalid>{form1.formState.errors.cnpj.message}</CFormFeedback>
-                )}
-              </div>
-              <div className="mb-3">
-                <CFormLabel>Razão Social</CFormLabel>
-                <CFormInput
-                  aria-label="Razão Social"
-                  {...form1.register('razaoSocial')}
-                  invalid={!!form1.formState.errors.razaoSocial}
-                />
-                {form1.formState.errors.razaoSocial && (
-                  <CFormFeedback invalid>{form1.formState.errors.razaoSocial.message}</CFormFeedback>
-                )}
-              </div>
-              <div className="mb-3">
-                <CFormLabel>Nome Fantasia</CFormLabel>
-                <CFormInput
-                  aria-label="Nome Fantasia"
-                  {...form1.register('nomeFantasia')}
-                  invalid={!!form1.formState.errors.nomeFantasia}
-                />
-                {form1.formState.errors.nomeFantasia && (
-                  <CFormFeedback invalid>{form1.formState.errors.nomeFantasia.message}</CFormFeedback>
-                )}
-              </div>
-              <div className="mb-4">
-                <CFormLabel>Telefone</CFormLabel>
-                <Controller
-                  control={form1.control}
-                  name="telefone"
-                  render={({ field }) => (
-                    <CFormInput
-                      placeholder="(00) 00000-0000"
-                      aria-label="Telefone"
-                      value={formatPhone(field.value || '')}
-                      onChange={(e) => field.onChange(stripDigits(e.target.value))}
-                      onBlur={field.onBlur}
-                      ref={field.ref}
-                    />
-                  )}
-                />
-              </div>
-              <CButton type="submit" color="primary" className="w-100">
-                Próximo
-              </CButton>
-            </form>
-          )}
+          <div>
+            <CFormLabel style={labelStyle}>Nome fantasia</CFormLabel>
+            <CFormInput
+              aria-label="Nome Fantasia"
+              {...form1.register('nomeFantasia')}
+              invalid={!!form1.formState.errors.nomeFantasia}
+            />
+            {form1.formState.errors.nomeFantasia && (
+              <CFormFeedback invalid>{form1.formState.errors.nomeFantasia.message}</CFormFeedback>
+            )}
+          </div>
 
-          {activeStep === 1 && (
-            <form onSubmit={form2.handleSubmit(onStep2Submit)} noValidate>
-              <div className="mb-3">
-                <CFormLabel>Seu nome</CFormLabel>
+          <div>
+            <CFormLabel style={labelStyle}>Telefone</CFormLabel>
+            <Controller
+              control={form1.control}
+              name="telefone"
+              render={({ field }) => (
                 <CFormInput
-                  aria-label="Seu nome"
-                  {...form2.register('ownerName')}
-                  invalid={!!form2.formState.errors.ownerName}
+                  placeholder="(11) 99999-9999"
+                  aria-label="Telefone"
+                  value={formatPhone(field.value || '')}
+                  onChange={(e) => field.onChange(stripDigits(e.target.value))}
+                  onBlur={field.onBlur}
+                  ref={field.ref}
                 />
-                {form2.formState.errors.ownerName && (
-                  <CFormFeedback invalid>{form2.formState.errors.ownerName.message}</CFormFeedback>
-                )}
-              </div>
-              <div className="mb-3">
-                <CFormLabel>E-mail</CFormLabel>
-                <CFormInput
-                  type="email"
-                  aria-label="E-mail"
-                  {...form2.register('email')}
-                  invalid={!!form2.formState.errors.email}
-                />
-                {form2.formState.errors.email && (
-                  <CFormFeedback invalid>{form2.formState.errors.email.message}</CFormFeedback>
-                )}
-              </div>
-              <div className="mb-3">
-                <CFormLabel>Senha</CFormLabel>
-                <CFormInput
-                  type="password"
-                  aria-label="Senha"
-                  {...form2.register('password')}
-                  invalid={!!form2.formState.errors.password}
-                />
-                {form2.formState.errors.password && (
-                  <CFormFeedback invalid>{form2.formState.errors.password.message}</CFormFeedback>
-                )}
-              </div>
-              <div className="mb-4">
-                <CFormLabel>Confirmar senha</CFormLabel>
-                <CFormInput
-                  type="password"
-                  aria-label="Confirmar senha"
-                  {...form2.register('confirmPassword')}
-                  invalid={!!form2.formState.errors.confirmPassword}
-                />
-                {form2.formState.errors.confirmPassword && (
-                  <CFormFeedback invalid>{form2.formState.errors.confirmPassword.message}</CFormFeedback>
-                )}
-              </div>
-              <div className="d-flex gap-2">
-                <CButton color="secondary" variant="outline" className="flex-grow-1" onClick={() => setActiveStep(0)}>
-                  Voltar
-                </CButton>
-                <CButton
-                  type="submit"
-                  color="primary"
-                  className="flex-grow-1"
-                  disabled={form2.formState.isSubmitting}
-                >
-                  {form2.formState.isSubmitting ? <CSpinner size="sm" /> : 'Cadastrar'}
-                </CButton>
-              </div>
-            </form>
-          )}
+              )}
+            />
+          </div>
 
-          <p className="text-center mt-3 mb-0" style={{ fontSize: '0.875rem' }}>
+          <CButton
+            type="submit"
+            color="primary"
+            size="lg"
+            style={{ width: '100%', marginTop: 4, borderRadius: 8 }}
+          >
+            Próximo →
+          </CButton>
+
+          <p style={{ textAlign: 'center', fontSize: 13, color: 'var(--cui-secondary-color)', margin: 0 }}>
             Já tem conta?{' '}
-            <Link to="/login" style={{ color: 'inherit' }}>Entrar</Link>
+            <Link
+              to="/login"
+              style={{ color: 'var(--cui-primary)', fontWeight: 500, textDecoration: 'none' }}
+            >
+              Entrar
+            </Link>
           </p>
-        </CCardBody>
-      </CCard>
-    </div>
+        </form>
+      )}
+
+      {activeStep === 1 && (
+        <form
+          onSubmit={form2.handleSubmit(onStep2Submit)}
+          noValidate
+          style={{ display: 'flex', flexDirection: 'column', gap: 14 }}
+        >
+          <div>
+            <CFormLabel style={labelStyle}>Seu nome</CFormLabel>
+            <CFormInput
+              aria-label="Seu nome"
+              {...form2.register('ownerName')}
+              invalid={!!form2.formState.errors.ownerName}
+            />
+            {form2.formState.errors.ownerName && (
+              <CFormFeedback invalid>{form2.formState.errors.ownerName.message}</CFormFeedback>
+            )}
+          </div>
+
+          <div>
+            <CFormLabel style={labelStyle}>E-mail</CFormLabel>
+            <CFormInput
+              type="email"
+              aria-label="E-mail"
+              {...form2.register('email')}
+              invalid={!!form2.formState.errors.email}
+            />
+            {form2.formState.errors.email && (
+              <CFormFeedback invalid>{form2.formState.errors.email.message}</CFormFeedback>
+            )}
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <div>
+              <CFormLabel style={labelStyle}>Senha</CFormLabel>
+              <CFormInput
+                type="password"
+                aria-label="Senha"
+                {...form2.register('password')}
+                invalid={!!form2.formState.errors.password}
+              />
+              {form2.formState.errors.password && (
+                <CFormFeedback invalid>{form2.formState.errors.password.message}</CFormFeedback>
+              )}
+            </div>
+
+            <div>
+              <CFormLabel style={labelStyle}>Confirmar</CFormLabel>
+              <CFormInput
+                type="password"
+                aria-label="Confirmar senha"
+                {...form2.register('confirmPassword')}
+                invalid={!!form2.formState.errors.confirmPassword}
+              />
+              {form2.formState.errors.confirmPassword && (
+                <CFormFeedback invalid>{form2.formState.errors.confirmPassword.message}</CFormFeedback>
+              )}
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 10 }}>
+            <CButton
+              color="secondary"
+              variant="outline"
+              size="lg"
+              onClick={() => setActiveStep(0)}
+              style={{ borderRadius: 8 }}
+            >
+              Voltar
+            </CButton>
+            <CButton
+              type="submit"
+              color="primary"
+              size="lg"
+              disabled={form2.formState.isSubmitting}
+              style={{ borderRadius: 8 }}
+            >
+              {form2.formState.isSubmitting ? <CSpinner size="sm" /> : 'Cadastrar e começar →'}
+            </CButton>
+          </div>
+        </form>
+      )}
+    </AuthShell>
   );
 }

@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   CAlert,
   CButton,
-  CCard,
+  CFormInput,
   CSpinner,
   CTable,
   CTableBody,
@@ -13,27 +13,97 @@ import {
   CTableRow,
 } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
-import { cilPlus } from '@coreui/icons';
+import { cilPlus, cilSearch, cilBasket, cilArrowTop } from '@coreui/icons';
 import { usePurchases } from '../../../hooks/recycling/usePurchases';
+import { usePurchasesSummary } from '../../../hooks/recycling/useReports';
+import { PurchaseDetailModal } from './PurchaseDetailModal';
+import { PaymentBadge } from '../../../components/recycling/PaymentBadge';
 
-const PAYMENT_METHOD_LABELS: Record<string, string> = {
-  CASH: 'Dinheiro',
-  PIX: 'PIX',
-  CARD: 'Cartão',
-};
+type PaymentFilter = 'all' | 'CASH' | 'PIX' | 'CARD';
 
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('pt-BR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
+const PAYMENT_FILTERS: { value: PaymentFilter; label: string }[] = [
+  { value: 'all', label: 'Todas' },
+  { value: 'CASH', label: 'Dinheiro' },
+  { value: 'PIX', label: 'PIX' },
+  { value: 'CARD', label: 'Cartão' },
+];
 
 function formatCurrency(value: number): string {
   return Number(value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+
+function formatDate(iso: string): string {
+  return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+}
+
+function formatTime(iso: string): string {
+  return new Date(iso).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+}
+
+function formatKg(value: number): string {
+  return `${Math.round(value).toLocaleString('pt-BR')}kg`;
+}
+
+function materialSummary(item: { itemCount: number; firstProductName: string | null; totalKg: number }): string {
+  if (item.itemCount === 0) return '—';
+  if (item.itemCount === 1 && item.firstProductName) {
+    return `${item.firstProductName} · ${formatKg(item.totalKg)}`;
+  }
+  return `${item.itemCount} materiais · ${formatKg(item.totalKg)}`;
+}
+
+function KpiCard({
+  label,
+  value,
+  sub,
+  loading,
+}: {
+  label: string;
+  value: string;
+  sub: string;
+  loading: boolean;
+}) {
+  return (
+    <div
+      style={{
+        padding: '18px 20px',
+        background: 'var(--cui-card-bg)',
+        border: '1px solid var(--cui-border-color)',
+        borderRadius: 14,
+      }}
+    >
+      <div
+        style={{
+          fontSize: 11,
+          color: 'var(--cui-secondary-color)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 6,
+          textTransform: 'uppercase',
+          letterSpacing: '0.04em',
+          fontWeight: 600,
+        }}
+      >
+        <CIcon icon={cilArrowTop} style={{ width: 13, height: 13 }} />
+        {label}
+      </div>
+      <div
+        style={{
+          marginTop: 8,
+          fontSize: 26,
+          fontWeight: 700,
+          letterSpacing: '-0.02em',
+          fontVariantNumeric: 'tabular-nums',
+          color: 'var(--cui-body-color)',
+        }}
+      >
+        {loading ? '—' : value}
+      </div>
+      <div style={{ marginTop: 4, fontSize: 12, color: 'var(--cui-secondary-color)' }}>
+        {sub}
+      </div>
+    </div>
+  );
 }
 
 export function PurchasesPage() {
@@ -41,81 +111,289 @@ export function PurchasesPage() {
   const [page, setPage] = useState(1);
   const limit = 20;
   const { purchases, total, loading, error } = usePurchases(page, limit);
+  const { summary, loading: summaryLoading } = usePurchasesSummary();
+
+  const [search, setSearch] = useState('');
+  const [paymentFilter, setPaymentFilter] = useState<PaymentFilter>('all');
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return purchases.filter((p) => {
+      if (paymentFilter !== 'all' && p.paymentMethod !== paymentFilter) return false;
+      if (q) {
+        const hay = `${p.id} ${p.supplierName} ${p.notes ?? ''}`.toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    });
+  }, [purchases, paymentFilter, search]);
+
+  const totalPages = Math.ceil(total / limit) || 1;
+  const shownFrom = total === 0 ? 0 : (page - 1) * limit + 1;
+  const shownTo = Math.min(page * limit, total);
 
   return (
-    <>
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h5 className="fw-bold mb-0">Compras</h5>
-        <CButton color="primary" size="sm" onClick={() => navigate('/recycling/purchases/new')}>
-          <CIcon icon={cilPlus} className="me-1" />
-          Nova Compra
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      {/* Page head */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'flex-start',
+          justifyContent: 'space-between',
+          gap: 20,
+          flexWrap: 'wrap',
+        }}
+      >
+        <div>
+          <h1
+            style={{
+              margin: 0,
+              fontSize: 22,
+              fontWeight: 600,
+              letterSpacing: '-0.02em',
+              color: 'var(--cui-body-color)',
+            }}
+          >
+            Compras
+          </h1>
+          <p style={{ margin: '4px 0 0', fontSize: 13.5, color: 'var(--cui-secondary-color)' }}>
+            {total > 0
+              ? `${total} ${total === 1 ? 'compra registrada' : 'compras registradas'}`
+              : 'Registre entradas de material comprado de fornecedores.'}
+          </p>
+        </div>
+        <CButton
+          color="primary"
+          onClick={() => navigate('/recycling/purchases/new')}
+          style={{ borderRadius: 8, display: 'inline-flex', alignItems: 'center', gap: 6 }}
+        >
+          <CIcon icon={cilPlus} size="sm" /> Nova compra
         </CButton>
       </div>
 
-      {error && <CAlert color="danger" className="mb-3">{error}</CAlert>}
+      {/* KPI grid */}
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+          gap: 14,
+        }}
+      >
+        <KpiCard
+          label="Hoje"
+          value={formatCurrency(summary?.today.total ?? 0)}
+          sub={`${summary?.today.count ?? 0} ${(summary?.today.count ?? 0) === 1 ? 'compra' : 'compras'}`}
+          loading={summaryLoading}
+        />
+        <KpiCard
+          label="Semana"
+          value={formatCurrency(summary?.week.total ?? 0)}
+          sub={`${summary?.week.count ?? 0} ${(summary?.week.count ?? 0) === 1 ? 'compra' : 'compras'}`}
+          loading={summaryLoading}
+        />
+        <KpiCard
+          label="Mês"
+          value={formatCurrency(summary?.month.total ?? 0)}
+          sub={`${summary?.month.count ?? 0} ${(summary?.month.count ?? 0) === 1 ? 'compra' : 'compras'}`}
+          loading={summaryLoading}
+        />
+      </div>
 
-      <CCard>
-        <CTable hover responsive>
+      {error && <CAlert color="danger" className="mb-0">{error}</CAlert>}
+
+      {/* Table card */}
+      <div className="pk-table-card">
+        <div className="pk-table-toolbar" style={{ flexWrap: 'wrap' }}>
+          <div style={{ position: 'relative', flex: 1, minWidth: 240, maxWidth: 360 }}>
+            <CIcon
+              icon={cilSearch}
+              style={{
+                position: 'absolute',
+                left: 12,
+                top: '50%',
+                transform: 'translateY(-50%)',
+                color: 'var(--cui-secondary-color)',
+                pointerEvents: 'none',
+                width: 14,
+                height: 14,
+              }}
+            />
+            <CFormInput
+              placeholder="Buscar por fornecedor, material ou ID..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              style={{ paddingLeft: 36 }}
+              size="sm"
+              aria-label="Buscar compras"
+            />
+          </div>
+
+          <div
+            style={{
+              display: 'inline-flex',
+              gap: 2,
+              padding: 3,
+              background: 'var(--cui-card-cap-bg)',
+              border: '1px solid var(--cui-border-color)',
+              borderRadius: 10,
+              flexWrap: 'wrap',
+            }}
+          >
+            {PAYMENT_FILTERS.map((f) => {
+              const active = paymentFilter === f.value;
+              const count =
+                f.value === 'all'
+                  ? purchases.length
+                  : purchases.filter((p) => p.paymentMethod === f.value).length;
+              return (
+                <button
+                  key={f.value}
+                  type="button"
+                  onClick={() => setPaymentFilter(f.value)}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    padding: '4px 10px',
+                    border: 0,
+                    borderRadius: 7,
+                    background: active ? 'var(--cui-card-bg)' : 'transparent',
+                    color: active ? 'var(--cui-body-color)' : 'var(--cui-secondary-color)',
+                    fontSize: 12.5,
+                    fontWeight: active ? 600 : 500,
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                    boxShadow: active ? '0 1px 2px rgba(10,12,13,0.06)' : 'none',
+                    transition: 'all 0.12s',
+                  }}
+                >
+                  {f.label}
+                  {count > 0 && (
+                    <span
+                      style={{
+                        fontSize: 10.5,
+                        padding: '1px 5px',
+                        borderRadius: 999,
+                        fontWeight: 700,
+                        background: active ? 'rgba(52,142,145,0.12)' : 'rgba(107,114,128,0.12)',
+                        color: active ? 'var(--cui-primary)' : 'var(--cui-secondary-color)',
+                      }}
+                    >
+                      {count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <CTable hover responsive className="mb-0">
           <CTableHead>
             <CTableRow>
+              <CTableHeaderCell>ID</CTableHeaderCell>
               <CTableHeaderCell>Data</CTableHeaderCell>
               <CTableHeaderCell>Fornecedor</CTableHeaderCell>
-              <CTableHeaderCell>Forma de Pagamento</CTableHeaderCell>
-              <CTableHeaderCell className="text-end">Total (R$)</CTableHeaderCell>
+              <CTableHeaderCell>Material</CTableHeaderCell>
+              <CTableHeaderCell>Pagamento</CTableHeaderCell>
+              <CTableHeaderCell style={{ textAlign: 'right' }}>Total</CTableHeaderCell>
             </CTableRow>
           </CTableHead>
           <CTableBody>
             {loading ? (
               <CTableRow>
-                <CTableDataCell colSpan={4} className="text-center py-3">
-                  <CSpinner size="sm" />
+                <CTableDataCell colSpan={6} className="text-center py-4">
+                  <CSpinner size="sm" color="primary" />
                 </CTableDataCell>
               </CTableRow>
-            ) : purchases.length === 0 ? (
+            ) : filtered.length === 0 ? (
               <CTableRow>
-                <CTableDataCell colSpan={4} className="text-center py-3 text-muted">
-                  Nenhuma compra registrada.
+                <CTableDataCell colSpan={6} className="text-center py-5">
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+                    <div style={{
+                      width: 44, height: 44, borderRadius: 12,
+                      background: 'rgba(52,142,145,0.1)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      <CIcon icon={cilBasket} size="lg" style={{ color: 'var(--cui-primary)' }} />
+                    </div>
+                    <div style={{ fontWeight: 600, color: 'var(--cui-body-color)' }}>
+                      {purchases.length === 0 ? 'Nenhuma compra ainda' : 'Nenhum resultado'}
+                    </div>
+                    <div style={{ fontSize: 13, color: 'var(--cui-secondary-color)' }}>
+                      {purchases.length === 0
+                        ? 'Registre a primeira compra para começar.'
+                        : 'Tente ajustar a busca ou o filtro.'}
+                    </div>
+                  </div>
                 </CTableDataCell>
               </CTableRow>
-            ) : purchases.map((p) => (
-              <CTableRow key={p.id}>
-                <CTableDataCell>{formatDate(p.purchasedAt)}</CTableDataCell>
-                <CTableDataCell className="text-monospace" style={{ fontFamily: 'monospace' }}>
-                  {p.supplierId.slice(0, 8)}…
-                </CTableDataCell>
-                <CTableDataCell>{PAYMENT_METHOD_LABELS[p.paymentMethod] ?? p.paymentMethod}</CTableDataCell>
-                <CTableDataCell className="text-end">{formatCurrency(p.totalAmount)}</CTableDataCell>
-              </CTableRow>
-            ))}
+            ) : (
+              filtered.map((p) => (
+                <CTableRow
+                  key={p.id}
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => setSelectedId(p.id)}
+                >
+                  <CTableDataCell style={{
+                    fontFamily: "'JetBrains Mono', monospace",
+                    fontSize: 12,
+                    color: 'var(--cui-body-color)',
+                    fontWeight: 600,
+                  }}>
+                    #{p.id.slice(0, 8).toUpperCase()}
+                  </CTableDataCell>
+                  <CTableDataCell>
+                    <div style={{ fontSize: 13, color: 'var(--cui-body-color)', fontVariantNumeric: 'tabular-nums' }}>
+                      {formatDate(p.purchasedAt)}
+                    </div>
+                    <div style={{ fontSize: 11.5, color: 'var(--cui-secondary-color)', fontVariantNumeric: 'tabular-nums' }}>
+                      {formatTime(p.purchasedAt)}
+                    </div>
+                  </CTableDataCell>
+                  <CTableDataCell>
+                    {p.supplierName ? (
+                      <span style={{ fontWeight: 500, color: 'var(--cui-body-color)' }}>{p.supplierName}</span>
+                    ) : (
+                      <span style={{ color: 'var(--cui-secondary-color)' }}>—</span>
+                    )}
+                  </CTableDataCell>
+                  <CTableDataCell>
+                    <span style={{ fontSize: 13, color: 'var(--cui-body-color)' }}>
+                      {materialSummary(p)}
+                    </span>
+                  </CTableDataCell>
+                  <CTableDataCell>
+                    <PaymentBadge method={p.paymentMethod} />
+                  </CTableDataCell>
+                  <CTableDataCell style={{
+                    textAlign: 'right',
+                    fontWeight: 700,
+                    fontVariantNumeric: 'tabular-nums',
+                    color: 'var(--cui-primary)',
+                  }}>
+                    {formatCurrency(p.total)}
+                  </CTableDataCell>
+                </CTableRow>
+              ))
+            )}
           </CTableBody>
         </CTable>
-      </CCard>
 
-      {total > limit && (
-        <div className="d-flex justify-content-between align-items-center mt-3">
-          <small className="text-muted">Total: {total}</small>
-          <div className="d-flex gap-2">
-            <CButton
-              size="sm"
-              color="secondary"
-              variant="outline"
-              disabled={page === 1}
-              onClick={() => setPage(page - 1)}
-            >
-              Anterior
-            </CButton>
-            <CButton
-              size="sm"
-              color="secondary"
-              variant="outline"
-              disabled={page * limit >= total}
-              onClick={() => setPage(page + 1)}
-            >
-              Proxima
-            </CButton>
-          </div>
+        <div className="pk-table-footer">
+          <span>{total > 0 ? `Mostrando ${shownFrom}–${shownTo} de ${total}` : 'Nenhum registro'}</span>
+          {total > limit && (
+            <div style={{ marginLeft: 'auto', display: 'flex', gap: 4 }}>
+              <CButton color="secondary" variant="outline" size="sm" disabled={page === 1} onClick={() => setPage(page - 1)} aria-label="Página anterior">‹</CButton>
+              <span style={{ display: 'inline-flex', alignItems: 'center', padding: '0 10px', fontWeight: 500, color: 'var(--cui-body-color)' }}>{page} / {totalPages}</span>
+              <CButton color="secondary" variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage(page + 1)} aria-label="Próxima página">›</CButton>
+            </div>
+          )}
         </div>
-      )}
-    </>
+      </div>
+
+      <PurchaseDetailModal purchaseId={selectedId} onClose={() => setSelectedId(null)} />
+    </div>
   );
 }

@@ -1,11 +1,9 @@
 import { Controller, Get, Query, Request, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../../core/auth/jwt-auth.guard';
-import { RolesGuard } from '../../core/auth/roles.guard';
-import { Roles } from '../../core/auth/roles.decorator';
-import { UserRole } from '../../core/auth/user.entity';
 import { AuthUser } from '../../core/auth/jwt.strategy';
 import { RecyclingReportsService } from './reports.service';
 import { PeriodQueryDto } from './dto/period-query.dto';
+import { TopMaterialsQueryDto } from './dto/top-materials-query.dto';
 
 interface RequestWithUser extends Request {
   user: AuthUser;
@@ -22,12 +20,28 @@ export class ReportsController {
   }
 
   @Get('purchases')
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER)
   getPurchasesByPeriod(
     @Request() req: RequestWithUser,
     @Query() query: PeriodQueryDto,
   ) {
     return this.reportsService.getPurchasesByPeriod(req.user.tenantId, query.startDate, query.endDate);
+  }
+
+  @Get('top-materials')
+  getTopMaterials(
+    @Request() req: RequestWithUser,
+    @Query() query: TopMaterialsQueryDto,
+  ) {
+    return this.reportsService.getTopMaterials(req.user.tenantId, query.month, query.limit);
+  }
+
+  @Get('sales-summary')
+  getSalesSummary(@Request() req: RequestWithUser) {
+    return this.reportsService.getSalesSummary(req.user.tenantId);
+  }
+
+  @Get('purchases-summary')
+  getPurchasesSummary(@Request() req: RequestWithUser) {
+    return this.reportsService.getPurchasesSummary(req.user.tenantId);
   }
 }

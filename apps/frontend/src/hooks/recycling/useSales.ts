@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
-import { salesService, type Sale } from '../../services/recycling/sales.service';
+import { salesService, type SaleListItem } from '../../services/recycling/sales.service';
 
 export function useSales(page: number, limit = 20) {
-  const [sales, setSales] = useState<Sale[]>([]);
+  const [sales, setSales] = useState<SaleListItem[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

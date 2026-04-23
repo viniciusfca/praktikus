@@ -3,7 +3,12 @@ import { useAuthStore } from '../store/auth.store';
 
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL ?? '/api',
-  headers: { 'Content-Type': 'application/json' },
+  headers: {
+    'Content-Type': 'application/json',
+    // Dynamic data — prevent 304 Not Modified (axios default validateStatus
+    // treats 304 as error and the empty cached-body response breaks hooks).
+    'Cache-Control': 'no-cache',
+  },
 });
 
 api.interceptors.request.use((config) => {

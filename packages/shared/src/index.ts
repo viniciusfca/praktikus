@@ -2,3 +2,6 @@ export * from './enums/roles.enum';
 export * from './enums/tenant-status.enum';
 export * from './enums/tenant-segment.enum';
 export * from './enums/cash-register.enums';
+export * from './enums/coleta-status.enum';
+export * from './types/top-material';
+export * from './types/coleta';

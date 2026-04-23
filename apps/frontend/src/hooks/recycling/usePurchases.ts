@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
-import { purchasesService, type Purchase } from '../../services/recycling/purchases.service';
+import { purchasesService, type PurchaseListItem } from '../../services/recycling/purchases.service';
 
 export function usePurchases(page: number, limit = 20) {
-  const [purchases, setPurchases] = useState<Purchase[]>([]);
+  const [purchases, setPurchases] = useState<PurchaseListItem[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

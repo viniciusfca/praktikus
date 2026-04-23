@@ -93,42 +93,47 @@ export function CreateServiceOrderDialog({ open, onClose, onSaved }: Props) {
   return (
     <CModal visible={open} onClose={onClose} size="lg">
       <CModalHeader>
-        <CModalTitle>Nova Ordem de Serviço</CModalTitle>
+        <CModalTitle>Nova ordem de serviço</CModalTitle>
       </CModalHeader>
       <CModalBody>
-        <div className="d-flex flex-column gap-3">
-          <div>
-            <CFormLabel>Cliente</CFormLabel>
-            <Controller
-              name="clienteId"
-              control={control}
-              render={({ field }) => (
-                <CFormSelect {...field} invalid={!!errors.clienteId}>
-                  <option value="">Selecione um cliente</option>
-                  {customers.map((c) => (
-                    <option key={c.id} value={c.id}>{c.nome} — {c.cpfCnpj}</option>
-                  ))}
-                </CFormSelect>
-              )}
-            />
-            {errors.clienteId && <CFormFeedback invalid>{errors.clienteId.message}</CFormFeedback>}
-          </div>
+        <p style={{ fontSize: 13, color: 'var(--cui-secondary-color)', margin: '0 0 14px' }}>
+          Preencha os dados iniciais de entrada do veículo.
+        </p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div>
+              <CFormLabel>Cliente</CFormLabel>
+              <Controller
+                name="clienteId"
+                control={control}
+                render={({ field }) => (
+                  <CFormSelect {...field} invalid={!!errors.clienteId}>
+                    <option value="">Selecione um cliente</option>
+                    {customers.map((c) => (
+                      <option key={c.id} value={c.id}>{c.nome} — {c.cpfCnpj}</option>
+                    ))}
+                  </CFormSelect>
+                )}
+              />
+              {errors.clienteId && <CFormFeedback invalid>{errors.clienteId.message}</CFormFeedback>}
+            </div>
 
-          <div>
-            <CFormLabel>Veículo</CFormLabel>
-            <Controller
-              name="veiculoId"
-              control={control}
-              render={({ field }) => (
-                <CFormSelect {...field} disabled={!selectedClienteId} invalid={!!errors.veiculoId}>
-                  <option value="">{!selectedClienteId ? 'Selecione o cliente primeiro' : 'Selecione um veículo'}</option>
-                  {vehicles.map((v) => (
-                    <option key={v.id} value={v.id}>{v.placa} — {v.modelo}</option>
-                  ))}
-                </CFormSelect>
-              )}
-            />
-            {errors.veiculoId && <CFormFeedback invalid>{errors.veiculoId.message}</CFormFeedback>}
+            <div>
+              <CFormLabel>Veículo</CFormLabel>
+              <Controller
+                name="veiculoId"
+                control={control}
+                render={({ field }) => (
+                  <CFormSelect {...field} disabled={!selectedClienteId} invalid={!!errors.veiculoId}>
+                    <option value="">{!selectedClienteId ? 'Selecione o cliente primeiro' : 'Selecione um veículo'}</option>
+                    {vehicles.map((v) => (
+                      <option key={v.id} value={v.id}>{v.placa} — {v.modelo}</option>
+                    ))}
+                  </CFormSelect>
+                )}
+              />
+              {errors.veiculoId && <CFormFeedback invalid>{errors.veiculoId.message}</CFormFeedback>}
+            </div>
           </div>
 
           <div>
@@ -147,26 +152,34 @@ export function CreateServiceOrderDialog({ open, onClose, onSaved }: Props) {
                 </CFormSelect>
               )}
             />
+            <div style={{ fontSize: 11.5, color: 'var(--cui-secondary-color)', marginTop: 4 }}>
+              Vincule a um agendamento para preencher automaticamente.
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div>
+              <CFormLabel>KM de entrada</CFormLabel>
+              <CFormInput {...register('kmEntrada')} placeholder="Ex: 94000" />
+            </div>
+            <div>
+              <CFormLabel>Combustível</CFormLabel>
+              <CFormInput {...register('combustivel')} placeholder="Ex: 1/2, cheio..." />
+            </div>
           </div>
 
           <div>
-            <CFormLabel>KM de Entrada</CFormLabel>
-            <CFormInput {...register('kmEntrada')} />
-          </div>
-
-          <div>
-            <CFormLabel>Combustível</CFormLabel>
-            <CFormInput {...register('combustivel')} placeholder="ex: 1/2, Cheio..." />
-          </div>
-
-          <div>
-            <CFormLabel>Observações de Entrada</CFormLabel>
-            <CFormTextarea {...register('observacoesEntrada')} rows={3} />
+            <CFormLabel>Observações de entrada</CFormLabel>
+            <CFormTextarea
+              {...register('observacoesEntrada')}
+              rows={3}
+              placeholder="Ruídos, avarias visíveis, queixas do cliente..."
+            />
           </div>
         </div>
       </CModalBody>
       <CModalFooter>
-        <CButton color="secondary" onClick={onClose}>Cancelar</CButton>
+        <CButton color="secondary" variant="outline" onClick={onClose}>Cancelar</CButton>
         <CButton color="primary" onClick={handleSubmit(onSubmit)} disabled={saving}>
           {saving ? <CSpinner size="sm" /> : 'Criar OS'}
         </CButton>

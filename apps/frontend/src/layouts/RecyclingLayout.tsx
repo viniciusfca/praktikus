@@ -35,10 +35,12 @@ import {
   cilSun,
   cilMoon,
   cilAccountLogout,
+  cilTruck,
 } from '@coreui/icons';
 import { useAuthStore } from '../store/auth.store';
 import { useThemeMode } from '../theme/ThemeProvider';
 import { useSessionCountdown } from '../hooks/useSessionCountdown';
+import { Logo } from '../components/Logo';
 
 const STORAGE_KEY = 'recycling_sidebar_open';
 
@@ -49,9 +51,10 @@ const navItems: Array<{ label: string; icon: any; path: string; ownerOnly: boole
   { label: 'Compras', icon: cilBasket, path: '/recycling/purchases', ownerOnly: false },
   { label: 'Estoque', icon: cilLayers, path: '/recycling/stock', ownerOnly: false },
   { label: 'Vendas', icon: cilCart, path: '/recycling/sales', ownerOnly: false },
+  { label: 'Coletas', icon: cilTruck, path: '/recycling/coletas', ownerOnly: false },
   { label: 'Fornecedores', icon: cilPeople, path: '/recycling/suppliers', ownerOnly: false },
-  { label: 'Compradores', icon: cilFactory, path: '/recycling/buyers', ownerOnly: true },
-  { label: 'Produtos', icon: cilList, path: '/recycling/products', ownerOnly: true },
+  { label: 'Compradores', icon: cilFactory, path: '/recycling/buyers', ownerOnly: false },
+  { label: 'Produtos', icon: cilList, path: '/recycling/products', ownerOnly: false },
   { label: 'Funcionários', icon: cilGroup, path: '/recycling/employees', ownerOnly: true },
   { label: 'Configurações', icon: cilSettings, path: '/recycling/settings', ownerOnly: true },
 ];
@@ -152,7 +155,7 @@ export function RecyclingLayout() {
       {/* Sidebar */}
       <CSidebar
         className="border-end"
-        colorScheme="dark"
+        colorScheme={mode}
         narrow={!isMobile && !sidebarOpen}
         visible={isMobile ? mobileVisible : true}
         overlaid={isMobile}
@@ -161,26 +164,31 @@ export function RecyclingLayout() {
         }}
       >
         <CSidebarBrand
-          className="d-flex align-items-center justify-content-between px-3"
-          style={{ minHeight: 56 }}
+          className="d-flex align-items-center px-3"
+          style={{ minHeight: 56, gap: 8 }}
         >
-          {(sidebarOpen || isMobile) && (
-            <span className="fw-bold text-primary fs-5">Praktikus</span>
-          )}
-          {!isMobile && (
+          {(sidebarOpen || isMobile) ? (
+            <>
+              <Logo size={26} />
+              {!isMobile && (
+                <button
+                  className="btn btn-sm btn-ghost-secondary ms-auto"
+                  onClick={handleToggleSidebar}
+                  aria-label="Collapse sidebar"
+                  style={{ border: 'none', background: 'none', color: 'inherit', flexShrink: 0 }}
+                >
+                  <CIcon icon={cilChevronLeft} />
+                </button>
+              )}
+            </>
+          ) : (
             <button
-              className="btn btn-sm btn-ghost-secondary ms-auto"
+              className="btn btn-sm btn-ghost-secondary mx-auto"
               onClick={handleToggleSidebar}
-              aria-label={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
+              aria-label="Expand sidebar"
               style={{ border: 'none', background: 'none', color: 'inherit' }}
             >
-              <CIcon
-                icon={cilChevronLeft}
-                style={{
-                  transition: 'transform 0.2s',
-                  transform: sidebarOpen ? 'none' : 'rotate(180deg)',
-                }}
-              />
+              <Logo variant="icon" size={26} />
             </button>
           )}
         </CSidebarBrand>
