@@ -14,8 +14,8 @@ const segments = [
   },
   {
     emoji: '♻️',
-    name: 'Recicláveis',
-    desc: 'Controle de compras, estoque, caixa e vendas para ferro-velho e cooperativas.',
+    name: 'Recicladoras',
+    desc: 'Controle de compras, estoque, caixa e vendas para cooperativas e recicladoras.',
     live: true,
     path: '/register/recycling',
   },
@@ -36,16 +36,30 @@ const segments = [
 const features = [
   { emoji: '⚡', title: 'Configure em minutos', desc: 'Onboarding guiado por segmento. Seus primeiros agendamentos e OS em menos de 10 min.' },
   { emoji: '🔒', title: 'Dados seguros e exportáveis', desc: 'Backups diários, LGPD-friendly. Seus dados são seus — exporte em CSV ou PDF quando quiser.' },
-  { emoji: '💬', title: 'WhatsApp nativo', desc: 'Envie lembretes, orçamentos e links de aprovação direto pelo WhatsApp do cliente.' },
+  { emoji: '✨', title: 'Feito no Brasil', desc: 'Suporte em português, adaptado à realidade de pequenos e médios negócios brasileiros.' },
   { emoji: '📊', title: 'Relatórios que importam', desc: 'Faturamento, ticket médio, top serviços. Decisões baseadas em dados, não em intuição.' },
   { emoji: '🖨️', title: 'PDF profissional', desc: 'Ordens de serviço e orçamentos prontos para imprimir ou enviar, com sua marca.' },
   { emoji: '🏢', title: 'Multi-unidade', desc: 'Gerencie várias filiais com permissões granulares e relatórios consolidados.' },
 ];
 
+const plan = {
+  name: 'Praktikus Pro',
+  price: 89.90,
+  desc: 'Acesso completo, sem limites, sem surpresas.',
+  features: [
+    'OS e agendamentos ilimitados',
+    'Até 5 usuários inclusos',
+    'Relatórios avançados',
+    'PDF com sua marca',
+    'Multi-unidade',
+    'Suporte prioritário em português',
+  ],
+};
+
 const faqs = [
-  { q: 'Como funciona o trial de 30 dias?', a: 'Você tem acesso a todos os recursos do plano Pro por 30 dias, sem precisar informar cartão de crédito. Ao final, você escolhe o plano que melhor se adapta à sua operação.' },
-  { q: 'Posso mudar de plano depois?', a: 'Sim. Você pode fazer upgrade ou downgrade a qualquer momento direto pelo painel, e nós fazemos o prorata automaticamente.' },
-  { q: 'E se eu atender mais de um segmento?', a: 'Sem problema. Um único login pode alternar entre áreas (ex.: oficina e recicláveis) e cada uma mantém seus dados, equipe e relatórios separados.' },
+  { q: 'Como funciona o trial de 30 dias?', a: 'Você tem acesso a todos os recursos por 30 dias para testar à vontade. Ao final do período, basta ativar a assinatura para continuar sem perder seus dados.' },
+  { q: 'Como é a cobrança?', a: 'Mensalidade única de R$ 89,90 no cartão de crédito, processada de forma segura via Asaas. Você pode cancelar a qualquer momento direto pelo painel.' },
+  { q: 'Posso cancelar quando quiser?', a: 'Sim. O cancelamento é feito direto pelo painel, sem multa e sem burocracia. Seus dados ficam disponíveis para exportação por 30 dias após o cancelamento.' },
   { q: 'Meus dados ficam seguros?', a: 'Sim. Infraestrutura na nuvem com criptografia em repouso e em trânsito, backups diários automáticos e conformidade com a LGPD.' },
   { q: 'Preciso instalar algo?', a: 'Não. Praktikus roda 100% no navegador — também temos app PWA instalável no celular para usar offline em casos pontuais.' },
 ];
@@ -123,100 +137,10 @@ function HeroMockup() {
   );
 }
 
-// ── Plan card ────────────────────────────────────────────────────────────────
-
-interface Plan {
-  name: string;
-  price: number;
-  desc: string;
-  features: string[];
-  cta: string;
-  featured?: boolean;
-  billing: 'monthly' | 'annual';
-}
-
-function PlanCard({ plan }: { plan: Plan }) {
-  const featured = plan.featured ?? false;
-  return (
-    <div style={{
-      position: 'relative',
-      padding: 28, borderRadius: 14,
-      border: `1px solid ${featured ? 'var(--cui-primary)' : 'var(--cui-border-color)'}`,
-      background: 'var(--cui-card-bg)',
-      display: 'flex', flexDirection: 'column', gap: 14,
-      boxShadow: featured ? '0 0 0 3px rgba(52,142,145,0.15)' : undefined,
-    }}>
-      {featured && (
-        <div style={{
-          position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)',
-          background: 'var(--cui-primary)', color: '#fff',
-          padding: '3px 12px', borderRadius: 999, fontSize: 11, fontWeight: 600,
-          letterSpacing: '0.04em', textTransform: 'uppercase', whiteSpace: 'nowrap',
-        }}>
-          Mais popular
-        </div>
-      )}
-      <p style={{ margin: 0, fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--cui-secondary-color)' }}>
-        {plan.name}
-      </p>
-      <div style={{ fontSize: 38, fontWeight: 700, letterSpacing: '-0.03em', lineHeight: 1, color: 'var(--cui-body-color)' }}>
-        R$ {plan.price.toFixed(2).replace('.', ',')}
-        <span style={{ fontSize: 14, fontWeight: 400, color: 'var(--cui-secondary-color)' }}>
-          /{plan.billing === 'annual' ? 'mês, anual' : 'mês'}
-        </span>
-      </div>
-      <p style={{ margin: 0, fontSize: 13.5, color: 'var(--cui-secondary-color)' }}>{plan.desc}</p>
-      <ul style={{ listStyle: 'none', padding: 0, margin: '4px 0 0', display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {plan.features.map(f => (
-          <li key={f} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', fontSize: 13.5 }}>
-            <span style={{ color: 'var(--cui-primary)', flexShrink: 0, marginTop: 1 }}>✓</span>
-            <span>{f}</span>
-          </li>
-        ))}
-      </ul>
-      <div style={{ marginTop: 'auto', paddingTop: 4 }}>
-        <CButton
-          color="primary"
-          variant={featured ? undefined : 'outline'}
-          href="/register"
-          style={{ width: '100%', borderRadius: 8 }}
-        >
-          {plan.cta}
-        </CButton>
-      </div>
-    </div>
-  );
-}
-
 // ── Main component ───────────────────────────────────────────────────────────
 
 export function LandingPage() {
-  const [billing, setBilling] = useState<'monthly' | 'annual'>('annual');
   const [faqOpen, setFaqOpen] = useState<number>(-1);
-
-  const plans: Plan[] = [
-    {
-      name: 'Starter', billing,
-      price: billing === 'annual' ? 49 : 59,
-      desc: '1 usuário, ideal para autônomos.',
-      features: ['Até 50 OS/mês', 'Agenda e clientes', 'PDF e WhatsApp', 'Suporte por e-mail'],
-      cta: 'Começar grátis',
-    },
-    {
-      name: 'Pro', billing, featured: true,
-      price: billing === 'annual' ? 69.90 : 89,
-      desc: 'Para oficinas em crescimento.',
-      features: ['OS e agendamentos ilimitados', 'Até 5 usuários', 'Relatórios avançados', 'Integração WhatsApp Business', 'Suporte prioritário'],
-      cta: 'Começar grátis',
-    },
-    {
-      name: 'Business', billing,
-      price: billing === 'annual' ? 149 : 189,
-      desc: 'Multi-unidade e equipes grandes.',
-      features: ['Tudo do Pro', 'Usuários ilimitados', 'Multi-unidade', 'API e integrações', 'Gerente dedicado'],
-      cta: 'Falar com vendas',
-    },
-  ];
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--cui-body-bg)', color: 'var(--cui-body-color)' }}>
@@ -239,9 +163,8 @@ export function LandingPage() {
               </a>
             ))}
           </div>
-          <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
-            <CButton color="secondary" variant="ghost" href="/login" size="sm" style={{ borderRadius: 8 }}>Entrar</CButton>
-            <CButton color="primary" href="/register" size="sm" style={{ borderRadius: 8 }}>Começar grátis →</CButton>
+          <div style={{ marginLeft: 'auto' }}>
+            <CButton color="primary" href="/login" size="sm" style={{ borderRadius: 8 }}>Entrar →</CButton>
           </div>
         </div>
       </nav>
@@ -266,7 +189,7 @@ export function LandingPage() {
           </h1>
 
           <p style={{ fontSize: 17, lineHeight: 1.55, color: 'var(--cui-secondary-color)', maxWidth: 520, margin: '0 0 28px' }}>
-            Uma plataforma feita para oficinas, clínicas, ferro-velhos e mais. Agenda, ordens de serviço, clientes, estoque e relatórios — sem planilha, sem complicação.
+            Plataforma feita para oficinas, clínicas e recicladoras. Agenda, ordens de serviço, clientes, estoque e relatórios — sem planilha, sem complicação.
           </p>
 
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
@@ -279,7 +202,7 @@ export function LandingPage() {
           </div>
 
           <div style={{ marginTop: 24, display: 'flex', gap: 18, flexWrap: 'wrap', fontSize: 12.5, color: 'var(--cui-secondary-color)' }}>
-            {['Sem cartão de crédito', 'Cancele quando quiser', 'Suporte em português'].map(t => (
+            {['30 dias grátis', 'Cancele quando quiser', 'Suporte em português'].map(t => (
               <span key={t} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                 <span style={{ color: 'var(--cui-primary)', fontWeight: 700 }}>✓</span> {t}
               </span>
@@ -381,43 +304,70 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* ── PRICING ──────────────────────────────────────────────────────── */}
+      {/* ── PRICING — plano único ───────────────────────────────────────── */}
       <section id="pricing" style={{ maxWidth: 1180, margin: '0 auto', padding: '60px 24px' }}>
         <div style={{ textAlign: 'center', marginBottom: 36 }}>
           <h2 style={{ fontSize: 34, fontWeight: 600, letterSpacing: '-0.025em', margin: '0 0 10px' }}>
-            Preços{' '}
-            <em style={{ fontStyle: 'italic', fontFamily: "'Instrument Serif', serif", color: 'var(--cui-primary)', fontWeight: 400 }}>honestos</em>.
+            Preço{' '}
+            <em style={{ fontStyle: 'italic', fontFamily: "'Instrument Serif', serif", color: 'var(--cui-primary)', fontWeight: 400 }}>honesto</em>, plano único.
           </h2>
-          <p style={{ color: 'var(--cui-secondary-color)', margin: '0 0 20px', fontSize: 15 }}>30 dias grátis em qualquer plano. Sem cartão de crédito.</p>
-
-          {/* billing toggle */}
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: 3, background: 'var(--cui-secondary-bg, #f4f5f5)', borderRadius: 10, border: '1px solid var(--cui-border-color)' }}>
-            {(['monthly', 'annual'] as const).map(b => (
-              <button
-                key={b}
-                onClick={() => setBilling(b)}
-                style={{
-                  padding: '6px 16px', border: 0, cursor: 'pointer', borderRadius: 7,
-                  fontSize: 13, fontWeight: 600, fontFamily: 'inherit',
-                  background: billing === b ? 'var(--cui-card-bg)' : 'transparent',
-                  color: billing === b ? 'var(--cui-body-color)' : 'var(--cui-secondary-color)',
-                  boxShadow: billing === b ? '0 1px 3px rgba(10,12,13,0.07)' : 'none',
-                  transition: 'all 0.12s',
-                }}
-              >
-                {b === 'monthly' ? 'Mensal' : 'Anual'}
-              </button>
-            ))}
-          </div>
-          {billing === 'annual' && (
-            <span style={{ marginLeft: 10, fontSize: 12, fontWeight: 600, color: '#16a34a', background: 'rgba(22,163,74,0.1)', padding: '2px 8px', borderRadius: 999 }}>
-              Economize 22%
-            </span>
-          )}
+          <p style={{ color: 'var(--cui-secondary-color)', margin: 0, fontSize: 15 }}>
+            30 dias grátis para testar. Depois, uma mensalidade só.
+          </p>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, alignItems: 'stretch' }}>
-          {plans.map(plan => <PlanCard key={plan.name} plan={plan} />)}
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '0 24px' }}>
+          <div style={{
+            position: 'relative',
+            maxWidth: 460, width: '100%',
+            padding: 32, borderRadius: 16,
+            border: '1px solid var(--cui-primary)',
+            background: 'var(--cui-card-bg)',
+            boxShadow: '0 0 0 3px rgba(52,142,145,0.15), 0 10px 30px rgba(52,142,145,0.08)',
+            display: 'flex', flexDirection: 'column', gap: 16,
+          }}>
+            <div style={{
+              position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)',
+              background: 'var(--cui-primary)', color: '#fff',
+              padding: '4px 14px', borderRadius: 999, fontSize: 11, fontWeight: 600,
+              letterSpacing: '0.06em', textTransform: 'uppercase', whiteSpace: 'nowrap',
+            }}>
+              Plano único
+            </div>
+
+            <p style={{ margin: '4px 0 0', fontSize: 13, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--cui-secondary-color)' }}>
+              {plan.name}
+            </p>
+
+            <div style={{ fontSize: 46, fontWeight: 700, letterSpacing: '-0.035em', lineHeight: 1, color: 'var(--cui-body-color)' }}>
+              R$ {plan.price.toFixed(2).replace('.', ',')}
+              <span style={{ fontSize: 16, fontWeight: 400, color: 'var(--cui-secondary-color)' }}> /mês</span>
+            </div>
+
+            <p style={{ margin: 0, fontSize: 14.5, color: 'var(--cui-secondary-color)', lineHeight: 1.5 }}>{plan.desc}</p>
+
+            <ul style={{ listStyle: 'none', padding: 0, margin: '4px 0 4px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {plan.features.map(f => (
+                <li key={f} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', fontSize: 14 }}>
+                  <span style={{ color: 'var(--cui-primary)', flexShrink: 0, marginTop: 1, fontWeight: 700 }}>✓</span>
+                  <span>{f}</span>
+                </li>
+              ))}
+            </ul>
+
+            <CButton
+              color="primary"
+              size="lg"
+              href="/register"
+              style={{ width: '100%', borderRadius: 10, marginTop: 4 }}
+            >
+              Começar 30 dias grátis →
+            </CButton>
+
+            <p style={{ textAlign: 'center', fontSize: 12, color: 'var(--cui-secondary-color)', margin: 0 }}>
+              Cobrança segura via Asaas · Cancele quando quiser
+            </p>
+          </div>
         </div>
       </section>
 

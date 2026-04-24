@@ -78,7 +78,7 @@ export function RegisterPage() {
         Crie sua conta
       </h1>
       <p style={{ margin: '0 0 10px', color: 'var(--cui-secondary-color)' }}>
-        30 dias grátis. Sem cartão de crédito.
+        30 dias grátis para testar.
       </p>
 
       <Stepper steps={STEPS} current={activeStep} />
