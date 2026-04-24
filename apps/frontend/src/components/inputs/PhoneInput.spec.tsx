@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { useState } from 'react';
 import { PhoneInput } from './PhoneInput';
 
-function PhoneInputTest(props: { onChangeSpy?: ReturnType<typeof vi.fn> }) {
+function PhoneInputTest(props: { onChangeSpy?: (value: string) => void }) {
   const [value, setValue] = useState('');
   const onChange = (v: string) => {
     setValue(v);
