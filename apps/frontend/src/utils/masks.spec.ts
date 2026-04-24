@@ -41,8 +41,7 @@ describe('parseDecimal', () => {
   });
   it('treats dots as thousand separators', () => {
     expect(parseDecimal('1.000', 2)).toBe(1000);
-    // Note: 1.234.567,89 has floating-point precision loss when parsed; truncates to 1234567.88
-    expect(parseDecimal('1.234.567,89', 2)).toBe(1234567.88);
+    expect(parseDecimal('1.234.567,89', 2)).toBe(1234567.89);
   });
   it('returns null for empty or invalid input', () => {
     expect(parseDecimal('', 2)).toBeNull();

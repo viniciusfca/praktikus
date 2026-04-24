@@ -35,14 +35,13 @@ export function parseDecimal(input: string, decimals: number): number | null {
   if (!input) return null;
   // pt-BR: `.` = thousand separator, `,` = decimal separator.
   const normalized = input.replace(/\./g, '').replace(',', '.');
-  if (!/^-?\d+(\.\d+)?$/.test(normalized)) return null;
-  const n = Number(normalized);
-  if (!Number.isFinite(n)) return null;
-  // First apply toFixed to normalize precision (rounds to get stable number)
-  // then use Math.trunc to ensure we truncate (not round) to the target decimals
-  const stable = Number(n.toFixed(decimals + 1));
-  const factor = 10 ** decimals;
-  return Math.trunc(stable * factor) / factor;
+  const match = normalized.match(/^(-?)(\d+)(?:\.(\d+))?$/);
+  if (!match) return null;
+  const [, sign, intPart, fracPart = ''] = match;
+  const truncatedFrac = fracPart.slice(0, decimals);
+  const numericStr = truncatedFrac ? `${sign}${intPart}.${truncatedFrac}` : `${sign}${intPart}`;
+  const n = Number(numericStr);
+  return Number.isFinite(n) ? n : null;
 }
 
 export function formatDecimal(value: number, decimals: number): string {
