@@ -1,5 +1,6 @@
 import { CFormInput } from '@coreui/react';
 import type { CFormInputProps } from '@coreui/react/dist/esm/components/form/CFormInput';
+import { useEffect, useState } from 'react';
 import { stripDigits } from '../../utils/masks';
 
 type BaseProps = Omit<CFormInputProps, 'type' | 'value' | 'onChange'>;
@@ -16,14 +17,19 @@ function formatTime(digits: string): string {
 }
 
 export function TimeInput({ value, onChange, ...rest }: TimeInputProps) {
-  const display = formatTime(stripDigits(value));
+  const [displayValue, setDisplayValue] = useState<string>(
+    formatTime(stripDigits(value)),
+  );
+
+  useEffect(() => {
+    setDisplayValue(formatTime(stripDigits(value)));
+  }, [value]);
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const input = e.target as HTMLInputElement;
-    const digits = stripDigits(input.value).slice(0, 4);
+    const digits = stripDigits(e.target.value).slice(0, 4);
     const formatted = formatTime(digits);
+    setDisplayValue(formatted);
     onChange(formatted);
-    input.value = formatted;
   }
 
   return (
@@ -32,7 +38,7 @@ export function TimeInput({ value, onChange, ...rest }: TimeInputProps) {
       type="text"
       inputMode="numeric"
       placeholder="HH:mm"
-      defaultValue={display}
+      value={displayValue}
       onChange={handleChange}
     />
   );
