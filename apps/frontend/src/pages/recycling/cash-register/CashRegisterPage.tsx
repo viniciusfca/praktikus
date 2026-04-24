@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { CurrencyInput } from '../../../components/inputs';
 import {
   CButton,
   CFormFeedback,
@@ -285,6 +286,7 @@ interface TxModalProps {
 function TransactionModal({ open, defaultType, onClose, onSubmit, submitting }: TxModalProps) {
   const {
     register,
+    control,
     handleSubmit,
     reset,
     setValue,
@@ -304,7 +306,7 @@ function TransactionModal({ open, defaultType, onClose, onSubmit, submitting }: 
   const type = watch('type');
 
   return (
-    <CModal visible={open} onClose={onClose} size="sm">
+    <CModal visible={open} onClose={onClose}>
       <CModalHeader>
         <CModalTitle>Nova transação</CModalTitle>
       </CModalHeader>
@@ -381,13 +383,17 @@ function TransactionModal({ open, defaultType, onClose, onSubmit, submitting }: 
               </div>
               <div>
                 <CFormLabel style={labelStyle}>Valor (R$)</CFormLabel>
-                <CFormInput
-                  type="number"
-                  step="0.01"
-                  min="0.01"
-                  placeholder="0,00"
-                  {...register('amount', { valueAsNumber: true })}
-                  invalid={!!errors.amount}
+                <Controller
+                  control={control}
+                  name="amount"
+                  render={({ field }) => (
+                    <CurrencyInput
+                      value={field.value ?? null}
+                      onChange={field.onChange}
+                      placeholder="0,00"
+                      invalid={!!errors.amount}
+                    />
+                  )}
                 />
                 {errors.amount && <CFormFeedback invalid>{errors.amount.message}</CFormFeedback>}
               </div>
