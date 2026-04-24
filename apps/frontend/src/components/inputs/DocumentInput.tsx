@@ -13,17 +13,19 @@ export interface DocumentInputProps extends BaseProps {
 
 export function DocumentInput({ type, value, onChange, ...rest }: DocumentInputProps) {
   const maxDigits = type === 'CPF' ? 11 : 14;
-  const [text, setText] = useState<string>(formatDocument(value.slice(0, maxDigits), type));
+  const [displayValue, setDisplayValue] = useState<string>(
+    formatDocument(value.slice(0, maxDigits), type),
+  );
 
   useEffect(() => {
     const formatted = formatDocument(value.slice(0, maxDigits), type);
-    setText(formatted);
-  }, [type, value, maxDigits]);
+    setDisplayValue(formatted);
+  }, [value, type, maxDigits]);
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const digits = stripDigits(e.target.value).slice(0, maxDigits);
     const formatted = formatDocument(digits, type);
-    setText(formatted);
+    setDisplayValue(formatted);
     onChange(digits);
   }
 
@@ -32,7 +34,7 @@ export function DocumentInput({ type, value, onChange, ...rest }: DocumentInputP
       {...rest}
       type="text"
       inputMode="numeric"
-      value={text}
+      value={displayValue}
       onChange={handleChange}
     />
   );
