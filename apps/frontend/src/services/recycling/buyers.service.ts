@@ -3,7 +3,8 @@ import { api } from '../api';
 export interface Buyer {
   id: string;
   name: string;
-  cnpj: string | null;
+  document: string | null;
+  documentType: 'CPF' | 'CNPJ' | null;
   phone: string | null;
   contactName: string | null;
   createdAt: string;
