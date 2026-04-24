@@ -7,7 +7,6 @@ import {
   CAlert,
   CButton,
   CFormFeedback,
-  CFormInput,
   CFormLabel,
   CFormSelect,
   CFormTextarea,
@@ -29,12 +28,13 @@ import { companyService } from '../../../services/company.service';
 import { buyersService, type Buyer } from '../../../services/recycling/buyers.service';
 import { productsService, type Product } from '../../../services/recycling/products.service';
 import { stockService, type StockBalance } from '../../../services/recycling/stock.service';
+import { CurrencyInput, NumericInput } from '../../../components/inputs';
 
 // ── Schema ──────────────────────────────────────────────────────────────────
 const itemSchema = z.object({
   productId: z.string().uuid('Selecione um produto'),
-  quantity: z.number().positive('Quantidade deve ser positiva'),
-  unitPrice: z.number().positive('Preço deve ser positivo').max(999999.9999, 'Preço máximo excedido'),
+  quantity: z.number().positive('Quantidade deve ser positiva').multipleOf(0.001, 'Use até 3 casas decimais'),
+  unitPrice: z.number().positive('Preço deve ser positivo').multipleOf(0.01, 'Use até 2 casas decimais').max(999999.99, 'Preço máximo excedido'),
 });
 
 const schema = z.object({
@@ -440,13 +440,19 @@ export function NewSalePage() {
                         </CTableDataCell>
 
                         <CTableDataCell style={{ verticalAlign: 'top' }}>
-                          <CFormInput
-                            type="number"
-                            step="0.0001"
-                            min="0.0001"
-                            size="sm"
-                            {...register(`items.${index}.quantity`, { valueAsNumber: true })}
-                            invalid={!!errors.items?.[index]?.quantity || insufficient}
+                          <Controller
+                            control={control}
+                            name={`items.${index}.quantity`}
+                            render={({ field }) => (
+                              <NumericInput
+                                value={field.value ?? null}
+                                onChange={field.onChange}
+                                decimals={3}
+                                size="sm"
+                                placeholder="0,000"
+                                invalid={!!errors.items?.[index]?.quantity || insufficient}
+                              />
+                            )}
                           />
                           {errors.items?.[index]?.quantity && (
                             <CFormFeedback invalid>
@@ -456,13 +462,18 @@ export function NewSalePage() {
                         </CTableDataCell>
 
                         <CTableDataCell style={{ verticalAlign: 'top' }}>
-                          <CFormInput
-                            type="number"
-                            step="0.0001"
-                            min="0.0001"
-                            size="sm"
-                            {...register(`items.${index}.unitPrice`, { valueAsNumber: true })}
-                            invalid={!!errors.items?.[index]?.unitPrice}
+                          <Controller
+                            control={control}
+                            name={`items.${index}.unitPrice`}
+                            render={({ field }) => (
+                              <CurrencyInput
+                                value={field.value ?? null}
+                                onChange={field.onChange}
+                                size="sm"
+                                placeholder="0,00"
+                                invalid={!!errors.items?.[index]?.unitPrice}
+                              />
+                            )}
                           />
                           {errors.items?.[index]?.unitPrice && (
                             <CFormFeedback invalid>
