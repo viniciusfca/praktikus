@@ -279,22 +279,46 @@ WHATSAPP_MEDIA_STORAGE=s3  # ou 'local' em dev
 
 ---
 
-## 9. Fases de Entrega
+## 9. Estratégia de Onboarding (decidida)
+
+**Fase inicial: setup manual.** O cliente cria WABA no próprio Business Manager, gera `phone_number_id` + token de System User dele, e cola na tela `AccountConnectionPage` do Praktikus. Vantagens:
+
+- Zero dependência de aprovação da Meta (Business Verification do Praktikus + App Review **não bloqueiam** o lançamento).
+- Permite começar a vender o add-on enquanto os processos burocráticos da Meta correm em paralelo.
+- Útil de forma permanente para clientes enterprise que já têm WABA pré-existente.
+
+**Fase futura: Embedded Signup.** Migração planejada quando:
+1. Business Verification do Praktikus aprovada;
+2. App Review aprovado com `whatsapp_business_messaging` + `whatsapp_business_management`;
+3. Volume de novos clientes justifique o esforço de redução de fricção (~5 min vs 30-60 min do manual).
+
+**Mudanças necessárias na migração** (documentadas para referência futura):
+- Backend: novo endpoint `POST /whatsapp/embedded-signup/callback` + `POST /whatsapp/data-deletion`; `CloudApiProvider` ganha `registerPhoneNumber()` e `subscribeWebhook()`.
+- Frontend: substituir formulário manual por botão que dispara `FB.login` com `config_id`; carregar SDK do Facebook; ajustar CSP (`script-src` + `frame-src`).
+- Variáveis novas: `META_CONFIGURATION_ID`, `VITE_META_APP_ID`, `VITE_META_CONFIGURATION_ID`.
+- Operacional: Política de Privacidade e Termos atualizados; endpoint de Data Deletion funcional; domínio verificado no Business Manager; screencast para App Review.
+- Manter o formulário manual como fallback escondido (admin-only) para casos enterprise.
+
+**Recomendação operacional:** iniciar Business Verification e submeter App Review **assim que a fase 2 estiver pronta** (já dá pra gerar screencast com fluxo manual funcionando). Os processos da Meta levam semanas e correm em paralelo ao desenvolvimento.
+
+---
+
+## 10. Fases de Entrega
 
 | Fase | Escopo | Estimativa |
 |---|---|---|
 | 1 | Entities + migrations + ativação por feature flag + menu oculto | 1 sprint |
-| 2 | Setup manual de conta (sem Embedded Signup) + envio/recebimento texto | 1 sprint |
+| 2 | Setup **manual** de conta + envio/recebimento texto | 1 sprint |
 | 3 | Setores + roteamento + segregação de visibilidade | 1 sprint |
 | 4 | Templates + mídia (imagem/áudio/doc) | 1 sprint |
 | 5 | Billing: assinatura add-on + cobrança de excedente | 1 sprint |
-| 6 | Tela de upsell + onboarding guiado (Embedded Signup) | 1 sprint |
+| 6 | Tela de upsell para clientes sem o add-on | 1 sprint |
+| 7 *(futura)* | Migração para Embedded Signup (após App Review aprovado) | 1 sprint |
 
 ---
 
-## 10. Pontos em Aberto
+## 11. Pontos em Aberto
 
-- **Embedded Signup vs manual:** começar manual (cliente cria WABA, fornece `phone_number_id` e token) reduz complexidade da fase 1. Embedded Signup (fase 6) melhora conversão mas exige revisão da Meta do nosso App.
 - **Limite de atendentes por plano:** implementar via contagem de `whatsapp_department_users` distintos no momento de adicionar — ou deixar soft limit (só alertar) na primeira versão.
 - **Integração com clientes/fornecedores existentes:** resolver `linked_customer_id` por segmento — workshop usa `customers`, recycling usa `suppliers`. Proposta: match automático por telefone na primeira mensagem de um número.
 - **Retenção de mídia:** Meta expira URLs em ~5min. Worker precisa baixar e armazenar. Definir política de retenção (90 dias? infinito?) em função de custo de storage.
