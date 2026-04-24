@@ -24,6 +24,7 @@ export function AuthShell({ children }: AuthShellProps) {
     >
       {/* ── Form side ───────────────────────────────────────────────────── */}
       <div
+        className="pk-auth-form"
         style={{
           padding: '48px 40px',
           display: 'flex',

@@ -205,6 +205,49 @@ code, pre, kbd, samp {
   padding: 8px !important;
   margin: 1px 8px !important;
 }
+.sidebar-narrow .sidebar-nav .nav-link .nav-icon {
+  margin-right: 0 !important;
+}
+
+/* Brand — remove sublinhado residual caso renderize como <a> em outro layout */
+.sidebar-brand,
+.sidebar-brand:hover,
+.sidebar-brand:focus {
+  text-decoration: none !important;
+}
+
+/* Botão de colapsar — refinado, quadrado, discreto */
+.sidebar-collapse-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--cui-sidebar-nav-link-color, #9ca3af);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+.sidebar-collapse-btn:hover {
+  background: rgba(52, 142, 145, 0.10);
+  color: #40a7aa;
+}
+.sidebar-collapse-btn:focus-visible {
+  outline: 2px solid rgba(52, 142, 145, 0.45);
+  outline-offset: 1px;
+}
+.sidebar-collapse-btn--expand {
+  width: auto;
+  height: auto;
+  padding: 2px;
+}
+.sidebar-collapse-btn--expand:hover {
+  background: transparent;
+}
 
 /* ── Header / Topbar ─────────────────────────────────────────────────────── */
 .header {
@@ -468,6 +511,32 @@ code, pre, kbd, samp {
   }
   .pk-auth-aside {
     display: none !important;
+  }
+  .pk-auth-form {
+    padding: 32px 20px !important;
+  }
+}
+
+/* ── Stepper — compacto em mobile ────────────────────────────────────────── */
+/* Mostra só o label do step ativo; outros ficam apenas com o círculo numerado. */
+@media (max-width: 640px) {
+  .pk-stepper__label:not(.pk-stepper__label--active) {
+    display: none !important;
+  }
+}
+
+/* ── Form rows — colapsam em 1 coluna no mobile ─────────────────────────── */
+@media (max-width: 520px) {
+  .pk-form-row-2,
+  .pk-form-row-actions {
+    grid-template-columns: 1fr !important;
+  }
+  /* Botões de ação em registro: primary vai no topo quando empilhado. */
+  .pk-form-row-actions > :first-child {
+    order: 2;
+  }
+  .pk-form-row-actions > :last-child {
+    order: 1;
   }
 }
 

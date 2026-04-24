@@ -213,7 +213,7 @@ export function RegisterPage() {
             )}
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+          <div className="pk-form-row-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
             <div>
               <CFormLabel style={labelStyle}>Senha</CFormLabel>
               <CFormInput
@@ -265,7 +265,7 @@ export function RegisterPage() {
             </span>
           </label>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 10 }}>
+          <div className="pk-form-row-actions" style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 10 }}>
             <CButton
               color="secondary"
               variant="outline"

@@ -43,6 +43,7 @@ export function Stepper({ steps, current }: StepperProps) {
                 {done ? '✓' : i + 1}
               </div>
               <span
+                className={`pk-stepper__label${active ? ' pk-stepper__label--active' : ''}`}
                 style={{
                   fontSize: 13,
                   fontWeight: active ? 600 : 500,
