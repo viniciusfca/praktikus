@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
@@ -26,12 +26,13 @@ import CIcon from '@coreui/icons-react';
 import { cilPlus, cilPen, cilRecycle } from '@coreui/icons';
 import { productsService, type Product } from '../../../services/recycling/products.service';
 import { unitsService, type Unit } from '../../../services/recycling/units.service';
+import { CurrencyInput } from '../../../components/inputs';
 
 // ── Schema ──────────────────────────────────────────────────────────────────
 const schema = z.object({
   name: z.string().min(1, 'Nome é obrigatório'),
   unitId: z.string().uuid('Selecione uma unidade válida'),
-  pricePerUnit: z.number().positive('Preço deve ser maior que zero'),
+  pricePerUnit: z.number().positive('Preço deve ser maior que zero').multipleOf(0.01, 'Use até 2 casas decimais'),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -58,6 +59,7 @@ function ProductFormDialog({ open, editing, units, onClose, onSaved }: ProductFo
 
   const {
     register,
+    control,
     handleSubmit,
     reset,
     formState: { errors, isSubmitting },
@@ -138,13 +140,17 @@ function ProductFormDialog({ open, editing, units, onClose, onSaved }: ProductFo
 
             <div>
               <CFormLabel style={labelStyle}>Preço por unidade (R$) *</CFormLabel>
-              <CFormInput
-                type="number"
-                step="0.0001"
-                min="0"
-                placeholder="0,00"
-                {...register('pricePerUnit', { valueAsNumber: true })}
-                invalid={!!errors.pricePerUnit}
+              <Controller
+                control={control}
+                name="pricePerUnit"
+                render={({ field }) => (
+                  <CurrencyInput
+                    value={field.value ?? null}
+                    onChange={field.onChange}
+                    invalid={!!errors.pricePerUnit}
+                    placeholder="0,00"
+                  />
+                )}
               />
               {errors.pricePerUnit && (
                 <CFormFeedback invalid>{errors.pricePerUnit.message}</CFormFeedback>
