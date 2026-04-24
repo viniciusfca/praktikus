@@ -69,7 +69,8 @@ export class BuyersService {
       const repo = manager.getRepository(BuyerEntity);
       const buyer = repo.create({
         name: dto.name,
-        cnpj: dto.cnpj ?? null,
+        document: dto.document ?? null,
+        documentType: dto.documentType ?? null,
         phone: dto.phone ?? null,
         contactName: dto.contactName ?? null,
       });

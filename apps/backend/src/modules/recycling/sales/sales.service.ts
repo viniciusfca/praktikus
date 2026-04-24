@@ -205,7 +205,7 @@ export class SalesService {
         SELECT
           s.id, s.sold_at, s.notes,
           b.id as buyer_id, b.name as buyer_name,
-          b.cnpj as buyer_document, NULL as buyer_document_type,
+          b.document as buyer_document, b.document_type as buyer_document_type,
           u.id as operator_id, u.name as operator_name
         FROM "${schemaName}".sales s
         LEFT JOIN "${schemaName}".buyers b ON b.id = s.buyer_id
