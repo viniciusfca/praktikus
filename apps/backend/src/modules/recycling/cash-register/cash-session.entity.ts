@@ -1,5 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
 import { CashSessionStatus } from '@praktikus/shared';
+import { numericTransformer } from '../common/numeric-transformer';
 
 @Entity({ name: 'cash_sessions' })
 export class CashSessionEntity {
@@ -18,10 +19,10 @@ export class CashSessionEntity {
   @Column({ name: 'closed_at', type: 'timestamptz', nullable: true })
   closedAt: Date | null;
 
-  @Column({ name: 'opening_balance', type: 'numeric', precision: 12, scale: 2, default: 0 })
+  @Column({ name: 'opening_balance', type: 'numeric', precision: 12, scale: 2, default: 0, transformer: numericTransformer })
   openingBalance: number;
 
-  @Column({ name: 'closing_balance', type: 'numeric', precision: 12, scale: 2, nullable: true })
+  @Column({ name: 'closing_balance', type: 'numeric', precision: 12, scale: 2, nullable: true, transformer: numericTransformer })
   closingBalance: number | null;
 
   @Column({ type: 'varchar', default: CashSessionStatus.OPEN })

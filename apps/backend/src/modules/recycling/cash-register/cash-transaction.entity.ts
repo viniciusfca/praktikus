@@ -1,5 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn } from 'typeorm';
 import { TransactionType, PaymentMethod } from '@praktikus/shared';
+import { numericTransformer } from '../common/numeric-transformer';
 
 @Entity({ name: 'cash_transactions' })
 export class CashTransactionEntity {
@@ -15,7 +16,7 @@ export class CashTransactionEntity {
   @Column({ name: 'payment_method', type: 'varchar' })
   paymentMethod: PaymentMethod;
 
-  @Column({ type: 'numeric', precision: 12, scale: 2 })
+  @Column({ type: 'numeric', precision: 12, scale: 2, transformer: numericTransformer })
   amount: number;
 
   @Column({ type: 'varchar', nullable: true })
