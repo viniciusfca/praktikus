@@ -19,6 +19,7 @@ export function DocumentInput({ type, value, onChange, ...rest }: DocumentInputP
 
   useEffect(() => {
     const formatted = formatDocument(value.slice(0, maxDigits), type);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: sync display when parent value or type changes
     setDisplayValue(formatted);
   }, [value, type, maxDigits]);
 

@@ -33,6 +33,7 @@ export function NumericInput({
       value === null || value === undefined ? '' : formatDecimal(value, decimals);
     const parsedCurrent = parseDecimal(text, decimals);
     if (parsedCurrent !== value) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: reformat text when external value changes (form reset, prefill)
       setText(nextFormatted);
     }
   }, [value, decimals]);
