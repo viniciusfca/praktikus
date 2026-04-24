@@ -38,8 +38,11 @@ export function parseDecimal(input: string, decimals: number): number | null {
   if (!/^-?\d+(\.\d+)?$/.test(normalized)) return null;
   const n = Number(normalized);
   if (!Number.isFinite(n)) return null;
-  // Use toFixed to avoid floating-point precision issues, then convert back
-  return Number(n.toFixed(decimals));
+  // First apply toFixed to normalize precision (rounds to get stable number)
+  // then use Math.trunc to ensure we truncate (not round) to the target decimals
+  const stable = Number(n.toFixed(decimals + 1));
+  const factor = 10 ** decimals;
+  return Math.trunc(stable * factor) / factor;
 }
 
 export function formatDecimal(value: number, decimals: number): string {
