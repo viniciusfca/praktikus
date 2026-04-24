@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException, ConflictException } from '@nestjs/common';
+import { BadRequestException, NotFoundException, ConflictException } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { BuyersService } from './buyers.service';
 import { BuyerEntity } from './buyer.entity';
@@ -98,6 +98,29 @@ describe('BuyersService', () => {
       const result = await service.create(TENANT, { name: 'Anônimo' });
       expect(result.document).toBeNull();
       expect(result.documentType).toBeNull();
+    });
+
+    it('rejects create when document is set without documentType', async () => {
+      await expect(
+        service.create(TENANT, { name: 'X', document: '12345678901' } as any),
+      ).rejects.toThrow(/document e documentType/);
+    });
+
+    it('rejects create when documentType is set without document', async () => {
+      await expect(
+        service.create(TENANT, { name: 'X', documentType: 'CPF' } as any),
+      ).rejects.toThrow(/document e documentType/);
+    });
+  });
+
+  describe('update', () => {
+    it('rejects update that leaves document and documentType inconsistent', async () => {
+      mockBuyerRepo.findOne.mockResolvedValue({
+        id: 'b1', name: 'X', document: '12345678000199', documentType: 'CNPJ',
+      });
+      await expect(
+        service.update(TENANT, 'b1', { documentType: null } as any),
+      ).rejects.toThrow(/document e documentType/);
     });
   });
 

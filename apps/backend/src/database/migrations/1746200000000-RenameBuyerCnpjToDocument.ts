@@ -11,6 +11,10 @@ export class RenameBuyerCnpjToDocument1746200000000 implements MigrationInterfac
     // Pre-check: any existing cnpj values must have exactly 14 digits.
     for (const tenant of tenants) {
       const schemaName = `tenant_${tenant.id.replace(/-/g, '')}`;
+      const exists = await queryRunner.query(
+        `SELECT to_regclass('"${schemaName}".buyers') IS NOT NULL AS exists`,
+      );
+      if (!exists[0]?.exists) continue; // skip tenants without a buyers table
       const invalid: Array<{ id: string; cnpj: string }> = await queryRunner.query(
         `SELECT id, cnpj FROM "${schemaName}".buyers WHERE cnpj IS NOT NULL AND LENGTH(cnpj) <> 14`,
       );
@@ -24,6 +28,10 @@ export class RenameBuyerCnpjToDocument1746200000000 implements MigrationInterfac
 
     for (const tenant of tenants) {
       const schemaName = `tenant_${tenant.id.replace(/-/g, '')}`;
+      const exists = await queryRunner.query(
+        `SELECT to_regclass('"${schemaName}".buyers') IS NOT NULL AS exists`,
+      );
+      if (!exists[0]?.exists) continue; // skip tenants without a buyers table
       await queryRunner.query(
         `ALTER TABLE "${schemaName}".buyers RENAME COLUMN cnpj TO document`,
       );
@@ -42,6 +50,10 @@ export class RenameBuyerCnpjToDocument1746200000000 implements MigrationInterfac
     );
     for (const tenant of tenants) {
       const schemaName = `tenant_${tenant.id.replace(/-/g, '')}`;
+      const exists = await queryRunner.query(
+        `SELECT to_regclass('"${schemaName}".buyers') IS NOT NULL AS exists`,
+      );
+      if (!exists[0]?.exists) continue; // skip tenants without a buyers table
       const cpfs: Array<{ id: string }> = await queryRunner.query(
         `SELECT id FROM "${schemaName}".buyers WHERE document_type = 'CPF'`,
       );

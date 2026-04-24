@@ -1,4 +1,4 @@
-import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
+import { Injectable, BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import { DataSource, EntityManager } from 'typeorm';
 import { BuyerEntity } from './buyer.entity';
 import { CreateBuyerDto } from './dto/create-buyer.dto';
@@ -7,6 +7,16 @@ import { UpdateBuyerDto } from './dto/update-buyer.dto';
 @Injectable()
 export class BuyersService {
   constructor(private readonly dataSource: DataSource) {}
+
+  private assertDocumentConsistency(document: string | null | undefined, documentType: 'CPF' | 'CNPJ' | null | undefined): void {
+    const hasDoc = document !== null && document !== undefined && document !== '';
+    const hasType = documentType !== null && documentType !== undefined;
+    if (hasDoc !== hasType) {
+      throw new BadRequestException(
+        'document e documentType devem ser fornecidos juntos ou ambos ausentes.',
+      );
+    }
+  }
 
   private getSchemaName(tenantId: string): string {
     if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(tenantId)) {
@@ -65,6 +75,7 @@ export class BuyersService {
   }
 
   async create(tenantId: string, dto: CreateBuyerDto): Promise<BuyerEntity> {
+    this.assertDocumentConsistency(dto.document, dto.documentType);
     return this.withSchema(tenantId, async (manager) => {
       const repo = manager.getRepository(BuyerEntity);
       const buyer = repo.create({
@@ -84,6 +95,7 @@ export class BuyersService {
       const buyer = await repo.findOne({ where: { id } });
       if (!buyer) throw new NotFoundException('Comprador não encontrado.');
       Object.assign(buyer, dto);
+      this.assertDocumentConsistency(buyer.document, buyer.documentType);
       return repo.save(buyer);
     });
   }
