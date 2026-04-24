@@ -293,7 +293,7 @@ export function NewSalePage() {
             gridTemplateColumns: 'minmax(0, 1fr) 320px',
             gap: 16,
           }}
-          className="pk-dashboard-grid"
+          className="pk-form-summary"
         >
           {/* ── Main column ───────────────────────────────────── */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>

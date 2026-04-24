@@ -91,7 +91,7 @@ export function CreateServiceOrderDialog({ open, onClose, onSaved }: Props) {
   };
 
   return (
-    <CModal visible={open} onClose={onClose} size="lg">
+    <CModal visible={open} onClose={onClose} size="lg" className="pk-modal-mobile">
       <CModalHeader>
         <CModalTitle>Nova ordem de serviço</CModalTitle>
       </CModalHeader>
@@ -100,7 +100,7 @@ export function CreateServiceOrderDialog({ open, onClose, onSaved }: Props) {
           Preencha os dados iniciais de entrada do veículo.
         </p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div className="pk-form-row-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <div>
               <CFormLabel>Cliente</CFormLabel>
               <Controller
@@ -157,7 +157,7 @@ export function CreateServiceOrderDialog({ open, onClose, onSaved }: Props) {
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div className="pk-form-row-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <div>
               <CFormLabel>KM de entrada</CFormLabel>
               <CFormInput {...register('kmEntrada')} placeholder="Ex: 94000" />

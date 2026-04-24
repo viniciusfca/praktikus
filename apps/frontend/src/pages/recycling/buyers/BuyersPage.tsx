@@ -171,7 +171,7 @@ function BuyerFormDialog({ open, editing, onClose, onSaved }: BuyerFormDialogPro
   };
 
   return (
-    <CModal visible={open} onClose={onClose}>
+    <CModal visible={open} onClose={onClose} className="pk-modal-mobile">
       <CModalHeader>
         <CModalTitle>{editing ? 'Editar comprador' : 'Novo comprador'}</CModalTitle>
       </CModalHeader>
@@ -223,7 +223,7 @@ function BuyerFormDialog({ open, editing, onClose, onSaved }: BuyerFormDialogPro
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div className="pk-form-row-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               <div>
                 <CFormLabel style={labelStyle}>Telefone</CFormLabel>
                 <Controller

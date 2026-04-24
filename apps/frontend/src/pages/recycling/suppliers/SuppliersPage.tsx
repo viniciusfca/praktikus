@@ -200,7 +200,7 @@ function SupplierFormDialog({ open, editing, onClose, onSaved }: SupplierFormDia
   };
 
   return (
-    <CModal visible={open} onClose={onClose} size="lg">
+    <CModal visible={open} onClose={onClose} size="lg" className="pk-modal-mobile">
       <CModalHeader>
         <CModalTitle>{editing ? 'Editar fornecedor' : 'Novo fornecedor'}</CModalTitle>
       </CModalHeader>

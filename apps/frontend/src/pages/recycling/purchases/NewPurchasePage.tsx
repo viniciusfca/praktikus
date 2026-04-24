@@ -270,7 +270,7 @@ export function NewPurchasePage() {
             gridTemplateColumns: 'minmax(0, 1fr) 320px',
             gap: 16,
           }}
-          className="pk-dashboard-grid"
+          className="pk-form-summary"
         >
           {/* ── Main column ───────────────────────────────────── */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -278,7 +278,7 @@ export function NewPurchasePage() {
             <Card
               header={<CardTitle title="Dados da compra" desc="Fornecedor, pagamento e observações" />}
             >
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+              <div className="pk-form-row-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
                 <div>
                   <CFormLabel style={labelStyle}>Fornecedor *</CFormLabel>
                   <CFormSelect {...register('supplierId')} invalid={!!errors.supplierId}>

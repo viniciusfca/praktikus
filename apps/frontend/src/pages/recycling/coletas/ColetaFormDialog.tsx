@@ -167,7 +167,7 @@ export function ColetaFormDialog({
   const showPanel = panelOpen && supplierQuery.trim().length >= 2;
 
   return (
-    <CModal visible={open} onClose={onClose} alignment="center">
+    <CModal visible={open} onClose={onClose} alignment="center" className="pk-modal-mobile">
       <CModalHeader>
         <CModalTitle>{editing ? 'Editar coleta' : 'Nova coleta'}</CModalTitle>
       </CModalHeader>

@@ -97,7 +97,7 @@ function ProductFormDialog({ open, editing, units, onClose, onSaved }: ProductFo
   };
 
   return (
-    <CModal visible={open} onClose={onClose} size="sm">
+    <CModal visible={open} onClose={onClose} size="sm" className="pk-modal-mobile">
       <CModalHeader>
         <CModalTitle>{editing ? 'Editar produto' : 'Novo produto'}</CModalTitle>
       </CModalHeader>

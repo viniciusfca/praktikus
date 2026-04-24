@@ -145,7 +145,7 @@ function AddServiceDialog({ open, soId, services, onClose, onSaved }: AddService
   };
 
   return (
-    <CModal visible={open} onClose={onClose} size="sm">
+    <CModal visible={open} onClose={onClose} size="sm" className="pk-modal-mobile">
       <CModalHeader><CModalTitle>Adicionar serviço</CModalTitle></CModalHeader>
       <CModalBody>
         <div className="d-flex flex-column gap-3">
@@ -225,7 +225,7 @@ function AddPartDialog({ open, soId, parts, onClose, onSaved }: AddPartDialogPro
   };
 
   return (
-    <CModal visible={open} onClose={onClose} size="sm">
+    <CModal visible={open} onClose={onClose} size="sm" className="pk-modal-mobile">
       <CModalHeader><CModalTitle>Adicionar peça</CModalTitle></CModalHeader>
       <CModalBody>
         <div className="d-flex flex-column gap-3">

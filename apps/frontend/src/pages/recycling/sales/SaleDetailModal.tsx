@@ -94,7 +94,7 @@ export function SaleDetailModal({
   const shortId = detail ? `#${detail.id.slice(0, 8).toUpperCase()}` : '';
 
   return (
-    <CModal visible={open} onClose={onClose} size="lg" alignment="center">
+    <CModal visible={open} onClose={onClose} size="lg" alignment="center" className="pk-modal-mobile">
       <CModalHeader>
         <CModalTitle>Venda {shortId}</CModalTitle>
       </CModalHeader>

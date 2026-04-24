@@ -306,7 +306,7 @@ function TransactionModal({ open, defaultType, onClose, onSubmit, submitting }: 
   const type = watch('type');
 
   return (
-    <CModal visible={open} onClose={onClose}>
+    <CModal visible={open} onClose={onClose} className="pk-modal-mobile">
       <CModalHeader>
         <CModalTitle>Nova transação</CModalTitle>
       </CModalHeader>
@@ -372,7 +372,7 @@ function TransactionModal({ open, defaultType, onClose, onSubmit, submitting }: 
               <input type="hidden" {...register('type')} />
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div className="pk-form-row-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               <div>
                 <CFormLabel style={labelStyle}>Forma de pagamento</CFormLabel>
                 <CFormSelect {...register('paymentMethod')}>
