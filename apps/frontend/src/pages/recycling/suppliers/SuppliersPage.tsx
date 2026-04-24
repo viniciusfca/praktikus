@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
+import { DocumentInput, PhoneInput } from '../../../components/inputs';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
@@ -123,6 +124,7 @@ function SupplierFormDialog({ open, editing, onClose, onSaved }: SupplierFormDia
 
   const {
     register,
+    control,
     handleSubmit,
     reset,
     watch,
@@ -237,17 +239,35 @@ function SupplierFormDialog({ open, editing, onClose, onSaved }: SupplierFormDia
                   <CFormLabel style={labelStyle}>
                     {documentType === 'CPF' ? 'CPF (11 dígitos)' : 'CNPJ (14 dígitos)'}
                   </CFormLabel>
-                  <CFormInput
-                    {...register('document')}
-                    placeholder={documentType === 'CPF' ? '00000000000' : '00000000000000'}
-                    invalid={!!errors.document}
+                  <Controller
+                    control={control}
+                    name="document"
+                    render={({ field }) => (
+                      <DocumentInput
+                        type={documentType === 'CPF' ? 'CPF' : 'CNPJ'}
+                        value={field.value ?? ''}
+                        onChange={field.onChange}
+                        invalid={!!errors.document}
+                        placeholder={documentType === 'CPF' ? '000.000.000-00' : '00.000.000/0000-00'}
+                      />
+                    )}
                   />
                   {errors.document && <CFormFeedback invalid>{errors.document.message}</CFormFeedback>}
                 </div>
               ) : (
                 <div>
                   <CFormLabel style={labelStyle}>Telefone</CFormLabel>
-                  <CFormInput {...register('phone')} placeholder="(00) 00000-0000" />
+                  <Controller
+                    control={control}
+                    name="phone"
+                    render={({ field }) => (
+                      <PhoneInput
+                        value={field.value ?? ''}
+                        onChange={field.onChange}
+                        placeholder="(00) 00000-0000"
+                      />
+                    )}
+                  />
                 </div>
               )}
             </div>
@@ -255,7 +275,17 @@ function SupplierFormDialog({ open, editing, onClose, onSaved }: SupplierFormDia
             {documentType && (
               <div>
                 <CFormLabel style={labelStyle}>Telefone</CFormLabel>
-                <CFormInput {...register('phone')} placeholder="(00) 00000-0000" />
+                <Controller
+                  control={control}
+                  name="phone"
+                  render={({ field }) => (
+                    <PhoneInput
+                      value={field.value ?? ''}
+                      onChange={field.onChange}
+                      placeholder="(00) 00000-0000"
+                    />
+                  )}
+                />
               </div>
             )}
 
