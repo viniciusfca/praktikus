@@ -203,7 +203,7 @@ function ServicesTab() {
         </div>
       </div>
 
-      <CModal visible={modalOpen} onClose={() => setModalOpen(false)} size="sm">
+      <CModal visible={modalOpen} onClose={() => setModalOpen(false)} size="sm" className="pk-modal-mobile">
         <CModalHeader>
           <CModalTitle>{editing ? 'Editar serviço' : 'Novo serviço'}</CModalTitle>
         </CModalHeader>
@@ -391,7 +391,7 @@ function PartsTab() {
         </div>
       </div>
 
-      <CModal visible={modalOpen} onClose={() => setModalOpen(false)} size="sm">
+      <CModal visible={modalOpen} onClose={() => setModalOpen(false)} size="sm" className="pk-modal-mobile">
         <CModalHeader>
           <CModalTitle>{editing ? 'Editar peça' : 'Nova peça'}</CModalTitle>
         </CModalHeader>

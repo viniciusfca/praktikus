@@ -1,8 +1,23 @@
-import { IsString, IsOptional, Matches, MinLength } from 'class-validator';
+import { IsString, IsOptional, Matches, IsIn, ValidateIf, MinLength } from 'class-validator';
 
 export class CreateBuyerDto {
-  @IsString() @MinLength(2) name: string;
-  @IsOptional() @Matches(/^\d{14}$/, { message: 'CNPJ deve ter 14 dígitos' }) cnpj?: string;
-  @IsOptional() @IsString() phone?: string;
-  @IsOptional() @IsString() contactName?: string;
+  @IsString()
+  @MinLength(2)
+  name: string;
+
+  @IsOptional()
+  @Matches(/^\d{11}$|^\d{14}$/, { message: 'Documento deve ter 11 (CPF) ou 14 (CNPJ) dígitos' })
+  document?: string;
+
+  @ValidateIf((o) => !!o.document)
+  @IsIn(['CPF', 'CNPJ'])
+  documentType?: 'CPF' | 'CNPJ';
+
+  @IsOptional()
+  @IsString()
+  phone?: string;
+
+  @IsOptional()
+  @IsString()
+  contactName?: string;
 }

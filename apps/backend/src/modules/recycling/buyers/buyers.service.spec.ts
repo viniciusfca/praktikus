@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException, ConflictException } from '@nestjs/common';
+import { BadRequestException, NotFoundException, ConflictException } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { BuyersService } from './buyers.service';
 import { BuyerEntity } from './buyer.entity';
@@ -67,13 +67,61 @@ describe('BuyersService', () => {
     await expect(service.getById(TENANT, 'missing')).rejects.toThrow(NotFoundException);
   });
 
-  it('should create a buyer', async () => {
-    const dto = { name: 'Empresa Recicla', cnpj: '12345678000195' };
-    const created = { id: 'b1', ...dto };
-    mockBuyerRepo.create.mockReturnValue(created);
-    mockBuyerRepo.save.mockResolvedValue(created);
-    const result = await service.create(TENANT, dto);
-    expect(result.name).toBe('Empresa Recicla');
+  describe('create', () => {
+    it('creates a buyer with CNPJ', async () => {
+      mockBuyerRepo.create.mockReturnValue({ id: 'b1', name: 'ACME', document: '12345678000199', documentType: 'CNPJ' });
+      mockBuyerRepo.save.mockResolvedValue({ id: 'b1', name: 'ACME', document: '12345678000199', documentType: 'CNPJ' });
+      const result = await service.create(TENANT, {
+        name: 'ACME',
+        document: '12345678000199',
+        documentType: 'CNPJ',
+      });
+      expect(result.document).toBe('12345678000199');
+      expect(result.documentType).toBe('CNPJ');
+    });
+
+    it('creates a buyer with CPF (pessoa física)', async () => {
+      mockBuyerRepo.create.mockReturnValue({ id: 'b2', name: 'João', document: '12345678901', documentType: 'CPF' });
+      mockBuyerRepo.save.mockResolvedValue({ id: 'b2', name: 'João', document: '12345678901', documentType: 'CPF' });
+      const result = await service.create(TENANT, {
+        name: 'João',
+        document: '12345678901',
+        documentType: 'CPF',
+      });
+      expect(result.document).toBe('12345678901');
+      expect(result.documentType).toBe('CPF');
+    });
+
+    it('creates a buyer without document', async () => {
+      mockBuyerRepo.create.mockReturnValue({ id: 'b3', name: 'Anônimo', document: null, documentType: null });
+      mockBuyerRepo.save.mockResolvedValue({ id: 'b3', name: 'Anônimo', document: null, documentType: null });
+      const result = await service.create(TENANT, { name: 'Anônimo' });
+      expect(result.document).toBeNull();
+      expect(result.documentType).toBeNull();
+    });
+
+    it('rejects create when document is set without documentType', async () => {
+      await expect(
+        service.create(TENANT, { name: 'X', document: '12345678901' } as any),
+      ).rejects.toThrow(/document e documentType/);
+    });
+
+    it('rejects create when documentType is set without document', async () => {
+      await expect(
+        service.create(TENANT, { name: 'X', documentType: 'CPF' } as any),
+      ).rejects.toThrow(/document e documentType/);
+    });
+  });
+
+  describe('update', () => {
+    it('rejects update that leaves document and documentType inconsistent', async () => {
+      mockBuyerRepo.findOne.mockResolvedValue({
+        id: 'b1', name: 'X', document: '12345678000199', documentType: 'CNPJ',
+      });
+      await expect(
+        service.update(TENANT, 'b1', { documentType: null } as any),
+      ).rejects.toThrow(/document e documentType/);
+    });
   });
 
   it('should throw ConflictException when deleting buyer with sales', async () => {

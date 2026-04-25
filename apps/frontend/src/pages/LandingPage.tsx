@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { CButton } from '@coreui/react';
 import { Logo } from '../components/Logo';
 
@@ -14,8 +14,8 @@ const segments = [
   },
   {
     emoji: '♻️',
-    name: 'Recicláveis',
-    desc: 'Controle de compras, estoque, caixa e vendas para ferro-velho e cooperativas.',
+    name: 'Recicladoras',
+    desc: 'Controle de compras, estoque, caixa e vendas para cooperativas e recicladoras.',
     live: true,
     path: '/register/recycling',
   },
@@ -36,26 +36,55 @@ const segments = [
 const features = [
   { emoji: '⚡', title: 'Configure em minutos', desc: 'Onboarding guiado por segmento. Seus primeiros agendamentos e OS em menos de 10 min.' },
   { emoji: '🔒', title: 'Dados seguros e exportáveis', desc: 'Backups diários, LGPD-friendly. Seus dados são seus — exporte em CSV ou PDF quando quiser.' },
-  { emoji: '💬', title: 'WhatsApp nativo', desc: 'Envie lembretes, orçamentos e links de aprovação direto pelo WhatsApp do cliente.' },
+  { emoji: '✨', title: 'Feito no Brasil', desc: 'Suporte em português, adaptado à realidade de pequenos e médios negócios brasileiros.' },
   { emoji: '📊', title: 'Relatórios que importam', desc: 'Faturamento, ticket médio, top serviços. Decisões baseadas em dados, não em intuição.' },
   { emoji: '🖨️', title: 'PDF profissional', desc: 'Ordens de serviço e orçamentos prontos para imprimir ou enviar, com sua marca.' },
   { emoji: '🏢', title: 'Multi-unidade', desc: 'Gerencie várias filiais com permissões granulares e relatórios consolidados.' },
 ];
 
+const plan = {
+  name: 'Praktikus Pro',
+  price: 89.90,
+  desc: 'Acesso completo, sem limites, sem surpresas.',
+  features: [
+    'OS e agendamentos ilimitados',
+    'Até 5 usuários inclusos',
+    'Relatórios avançados',
+    'PDF com sua marca',
+    'Multi-unidade',
+    'Suporte prioritário em português',
+  ],
+};
+
 const faqs = [
-  { q: 'Como funciona o trial de 30 dias?', a: 'Você tem acesso a todos os recursos do plano Pro por 30 dias, sem precisar informar cartão de crédito. Ao final, você escolhe o plano que melhor se adapta à sua operação.' },
-  { q: 'Posso mudar de plano depois?', a: 'Sim. Você pode fazer upgrade ou downgrade a qualquer momento direto pelo painel, e nós fazemos o prorata automaticamente.' },
-  { q: 'E se eu atender mais de um segmento?', a: 'Sem problema. Um único login pode alternar entre áreas (ex.: oficina e recicláveis) e cada uma mantém seus dados, equipe e relatórios separados.' },
+  { q: 'Como funciona o trial de 30 dias?', a: 'Você tem acesso a todos os recursos por 30 dias para testar à vontade. Ao final do período, basta ativar a assinatura para continuar sem perder seus dados.' },
+  { q: 'Como é a cobrança?', a: 'Mensalidade única de R$ 89,90 no cartão de crédito, processada de forma segura via Asaas. Você pode cancelar a qualquer momento direto pelo painel.' },
+  { q: 'Posso cancelar quando quiser?', a: 'Sim. O cancelamento é feito direto pelo painel, sem multa e sem burocracia. Seus dados ficam disponíveis para exportação por 30 dias após o cancelamento.' },
   { q: 'Meus dados ficam seguros?', a: 'Sim. Infraestrutura na nuvem com criptografia em repouso e em trânsito, backups diários automáticos e conformidade com a LGPD.' },
   { q: 'Preciso instalar algo?', a: 'Não. Praktikus roda 100% no navegador — também temos app PWA instalável no celular para usar offline em casos pontuais.' },
 ];
 
+// ── Mobile detection hook ───────────────────────────────────────────────────
+// Keeps parity with AppLayout/RecyclingLayout pattern.
+function useIsMobile(): boolean {
+  const [isMobile, setIsMobile] = useState(() =>
+    typeof window !== 'undefined' ? window.matchMedia('(max-width: 767px)').matches : false,
+  );
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 767px)');
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
+  return isMobile;
+}
+
 // ── Hero mockup ──────────────────────────────────────────────────────────────
 
-function HeroMockup() {
+function HeroMockup({ compact }: { compact: boolean }) {
   return (
     <div style={{
-      borderRadius: 16, overflow: 'hidden',
+      borderRadius: 14, overflow: 'hidden',
       border: '1px solid var(--cui-border-color)',
       boxShadow: '0 20px 48px rgba(10,12,13,0.14)',
       background: 'var(--cui-card-bg)',
@@ -63,34 +92,36 @@ function HeroMockup() {
       {/* browser chrome */}
       <div style={{
         display: 'flex', alignItems: 'center', gap: 6,
-        padding: '10px 14px', borderBottom: '1px solid var(--cui-border-color)',
+        padding: compact ? '8px 12px' : '10px 14px',
+        borderBottom: '1px solid var(--cui-border-color)',
         background: 'var(--cui-card-cap-bg)',
       }}>
-        <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#FF5F56' }} />
-        <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#FFBD2E' }} />
-        <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#27C93F' }} />
-        <span style={{ flex: 1, textAlign: 'center', fontSize: 11, color: 'var(--cui-secondary-color)', fontFamily: 'JetBrains Mono, monospace' }}>
+        <span style={{ width: 9, height: 9, borderRadius: '50%', background: '#FF5F56' }} />
+        <span style={{ width: 9, height: 9, borderRadius: '50%', background: '#FFBD2E' }} />
+        <span style={{ width: 9, height: 9, borderRadius: '50%', background: '#27C93F' }} />
+        <span style={{ flex: 1, textAlign: 'center', fontSize: 10.5, color: 'var(--cui-secondary-color)', fontFamily: 'JetBrains Mono, monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           app.praktikus.com.br/dashboard
         </span>
       </div>
       {/* mini app */}
-      <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', minHeight: 300 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: compact ? '96px 1fr' : '120px 1fr', minHeight: compact ? 240 : 300 }}>
         <div style={{ borderRight: '1px solid var(--cui-border-color)', padding: '12px 8px', display: 'flex', flexDirection: 'column', gap: 3 }}>
           <div style={{ marginBottom: 12 }}>
-            <Logo size={13} />
+            <Logo size={12} />
           </div>
           {['Dashboard', 'Agendamentos', 'OS', 'Clientes', 'Veículos'].map((item, i) => (
             <div key={item} style={{
-              padding: '6px 8px', borderRadius: 6, fontSize: 11, fontWeight: i === 0 ? 600 : 400,
+              padding: '6px 8px', borderRadius: 6, fontSize: 10.5, fontWeight: i === 0 ? 600 : 400,
               color: i === 0 ? 'var(--cui-primary)' : 'var(--cui-secondary-color)',
               background: i === 0 ? 'rgba(52,142,145,0.1)' : 'transparent',
+              whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
             }}>
               {item}
             </div>
           ))}
         </div>
-        <div style={{ padding: 14 }}>
-          <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 10, color: 'var(--cui-body-color)' }}>Bom dia, Vini 👋</div>
+        <div style={{ padding: compact ? 12 : 14, minWidth: 0 }}>
+          <div style={{ fontSize: 12.5, fontWeight: 600, marginBottom: 10, color: 'var(--cui-body-color)' }}>Bom dia, Vini 👋</div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 10 }}>
             {[
               { label: 'OS abertas', value: '24' },
@@ -102,14 +133,15 @@ function HeroMockup() {
                 padding: '10px 12px', borderRadius: 8,
                 border: '1px solid var(--cui-border-color)',
                 background: 'var(--cui-card-bg)',
+                minWidth: 0,
               }}>
                 <div style={{ fontSize: 10, color: 'var(--cui-secondary-color)', marginBottom: 3 }}>{kpi.label}</div>
-                <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--cui-body-color)' }}>{kpi.value}</div>
+                <div style={{ fontSize: 14.5, fontWeight: 700, color: 'var(--cui-body-color)', whiteSpace: 'nowrap' }}>{kpi.value}</div>
               </div>
             ))}
           </div>
           <div style={{
-            height: 60, borderRadius: 8,
+            height: 56, borderRadius: 8,
             border: '1px solid var(--cui-border-color)',
             background: 'linear-gradient(135deg, rgba(52,142,145,0.06) 0%, rgba(28,80,82,0.04) 100%)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -123,100 +155,14 @@ function HeroMockup() {
   );
 }
 
-// ── Plan card ────────────────────────────────────────────────────────────────
-
-interface Plan {
-  name: string;
-  price: number;
-  desc: string;
-  features: string[];
-  cta: string;
-  featured?: boolean;
-  billing: 'monthly' | 'annual';
-}
-
-function PlanCard({ plan }: { plan: Plan }) {
-  const featured = plan.featured ?? false;
-  return (
-    <div style={{
-      position: 'relative',
-      padding: 28, borderRadius: 14,
-      border: `1px solid ${featured ? 'var(--cui-primary)' : 'var(--cui-border-color)'}`,
-      background: 'var(--cui-card-bg)',
-      display: 'flex', flexDirection: 'column', gap: 14,
-      boxShadow: featured ? '0 0 0 3px rgba(52,142,145,0.15)' : undefined,
-    }}>
-      {featured && (
-        <div style={{
-          position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)',
-          background: 'var(--cui-primary)', color: '#fff',
-          padding: '3px 12px', borderRadius: 999, fontSize: 11, fontWeight: 600,
-          letterSpacing: '0.04em', textTransform: 'uppercase', whiteSpace: 'nowrap',
-        }}>
-          Mais popular
-        </div>
-      )}
-      <p style={{ margin: 0, fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--cui-secondary-color)' }}>
-        {plan.name}
-      </p>
-      <div style={{ fontSize: 38, fontWeight: 700, letterSpacing: '-0.03em', lineHeight: 1, color: 'var(--cui-body-color)' }}>
-        R$ {plan.price.toFixed(2).replace('.', ',')}
-        <span style={{ fontSize: 14, fontWeight: 400, color: 'var(--cui-secondary-color)' }}>
-          /{plan.billing === 'annual' ? 'mês, anual' : 'mês'}
-        </span>
-      </div>
-      <p style={{ margin: 0, fontSize: 13.5, color: 'var(--cui-secondary-color)' }}>{plan.desc}</p>
-      <ul style={{ listStyle: 'none', padding: 0, margin: '4px 0 0', display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {plan.features.map(f => (
-          <li key={f} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', fontSize: 13.5 }}>
-            <span style={{ color: 'var(--cui-primary)', flexShrink: 0, marginTop: 1 }}>✓</span>
-            <span>{f}</span>
-          </li>
-        ))}
-      </ul>
-      <div style={{ marginTop: 'auto', paddingTop: 4 }}>
-        <CButton
-          color="primary"
-          variant={featured ? undefined : 'outline'}
-          href="/register"
-          style={{ width: '100%', borderRadius: 8 }}
-        >
-          {plan.cta}
-        </CButton>
-      </div>
-    </div>
-  );
-}
-
 // ── Main component ───────────────────────────────────────────────────────────
 
 export function LandingPage() {
-  const [billing, setBilling] = useState<'monthly' | 'annual'>('annual');
   const [faqOpen, setFaqOpen] = useState<number>(-1);
+  const isMobile = useIsMobile();
 
-  const plans: Plan[] = [
-    {
-      name: 'Starter', billing,
-      price: billing === 'annual' ? 49 : 59,
-      desc: '1 usuário, ideal para autônomos.',
-      features: ['Até 50 OS/mês', 'Agenda e clientes', 'PDF e WhatsApp', 'Suporte por e-mail'],
-      cta: 'Começar grátis',
-    },
-    {
-      name: 'Pro', billing, featured: true,
-      price: billing === 'annual' ? 69.90 : 89,
-      desc: 'Para oficinas em crescimento.',
-      features: ['OS e agendamentos ilimitados', 'Até 5 usuários', 'Relatórios avançados', 'Integração WhatsApp Business', 'Suporte prioritário'],
-      cta: 'Começar grátis',
-    },
-    {
-      name: 'Business', billing,
-      price: billing === 'annual' ? 149 : 189,
-      desc: 'Multi-unidade e equipes grandes.',
-      features: ['Tudo do Pro', 'Usuários ilimitados', 'Multi-unidade', 'API e integrações', 'Gerente dedicado'],
-      cta: 'Falar com vendas',
-    },
-  ];
+  const containerPad = isMobile ? '0 18px' : '0 24px';
+  const sectionMaxWidth = 1180;
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--cui-body-bg)', color: 'var(--cui-body-color)' }}>
@@ -228,74 +174,113 @@ export function LandingPage() {
         background: 'rgba(var(--cui-body-bg-rgb, 251,251,250), 0.85)',
         borderBottom: '1px solid var(--cui-border-color)',
       }}>
-        <div style={{ maxWidth: 1180, margin: '0 auto', padding: '0 24px', height: 56, display: 'flex', alignItems: 'center', gap: 24 }}>
+        <div style={{
+          maxWidth: sectionMaxWidth, margin: '0 auto', padding: containerPad,
+          height: 56, display: 'flex', alignItems: 'center', gap: isMobile ? 12 : 24,
+        }}>
           <Logo size={22} />
-          <div style={{ display: 'flex', gap: 20, marginLeft: 8 }}>
-            {[['#segments', 'Segmentos'], ['#features', 'Recursos'], ['#pricing', 'Preços'], ['#faq', 'FAQ']].map(([href, label]) => (
-              <a key={href} href={href} style={{ fontSize: 13.5, color: 'var(--cui-secondary-color)', textDecoration: 'none', transition: 'color 0.12s' }}
-                onMouseEnter={e => (e.currentTarget.style.color = 'var(--cui-body-color)')}
-                onMouseLeave={e => (e.currentTarget.style.color = 'var(--cui-secondary-color)')}>
-                {label}
-              </a>
-            ))}
-          </div>
-          <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
-            <CButton color="secondary" variant="ghost" href="/login" size="sm" style={{ borderRadius: 8 }}>Entrar</CButton>
-            <CButton color="primary" href="/register" size="sm" style={{ borderRadius: 8 }}>Começar grátis →</CButton>
+          {!isMobile && (
+            <div style={{ display: 'flex', gap: 20, marginLeft: 8 }}>
+              {[['#segments', 'Segmentos'], ['#features', 'Recursos'], ['#pricing', 'Preços'], ['#faq', 'FAQ']].map(([href, label]) => (
+                <a key={href} href={href} style={{ fontSize: 13.5, color: 'var(--cui-secondary-color)', textDecoration: 'none', transition: 'color 0.12s' }}
+                  onMouseEnter={e => (e.currentTarget.style.color = 'var(--cui-body-color)')}
+                  onMouseLeave={e => (e.currentTarget.style.color = 'var(--cui-secondary-color)')}>
+                  {label}
+                </a>
+              ))}
+            </div>
+          )}
+          <div style={{ marginLeft: 'auto' }}>
+            <CButton color="primary" href="/login" size="sm" style={{ borderRadius: 8 }}>Entrar →</CButton>
           </div>
         </div>
       </nav>
 
       {/* ── HERO ─────────────────────────────────────────────────────────── */}
-      <section style={{ maxWidth: 1180, margin: '0 auto', padding: '64px 24px 48px', display: 'grid', gridTemplateColumns: '1.05fr 1fr', gap: 56, alignItems: 'center' }}>
+      <section style={{
+        maxWidth: sectionMaxWidth, margin: '0 auto',
+        padding: isMobile ? '36px 18px 32px' : '64px 24px 48px',
+        display: 'grid',
+        gridTemplateColumns: isMobile ? '1fr' : '1.05fr 1fr',
+        gap: isMobile ? 32 : 56,
+        alignItems: 'center',
+      }}>
         <div>
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 8,
             padding: '4px 12px 4px 6px', border: '1px solid var(--cui-border-color)',
             background: 'var(--cui-card-bg)', borderRadius: 999, fontSize: 12.5,
-            color: 'var(--cui-secondary-color)', marginBottom: 22,
+            color: 'var(--cui-secondary-color)', marginBottom: isMobile ? 16 : 22,
+            maxWidth: '100%',
           }}>
-            <span style={{ background: 'rgba(52,142,145,0.12)', color: 'var(--cui-primary)', fontWeight: 600, padding: '2px 8px', borderRadius: 999, fontSize: 11 }}>Novo</span>
-            <span><strong style={{ color: 'var(--cui-body-color)' }}>Relatórios v2</strong> — ticket médio e funil de aprovação</span>
+            <span style={{ background: 'rgba(52,142,145,0.12)', color: 'var(--cui-primary)', fontWeight: 600, padding: '2px 8px', borderRadius: 999, fontSize: 11, flexShrink: 0 }}>Novo</span>
+            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <strong style={{ color: 'var(--cui-body-color)' }}>Relatórios v2</strong> — ticket médio e funil
+            </span>
           </div>
 
-          <h1 style={{ fontSize: 'clamp(36px, 5vw, 54px)', lineHeight: 1.03, letterSpacing: '-0.035em', fontWeight: 600, margin: '0 0 16px', color: 'var(--cui-body-color)' }}>
+          <h1 style={{
+            fontSize: 'clamp(30px, 7vw, 54px)',
+            lineHeight: 1.05, letterSpacing: '-0.035em', fontWeight: 600,
+            margin: '0 0 14px', color: 'var(--cui-body-color)',
+          }}>
             Gestão{' '}
             <em style={{ fontStyle: 'italic', fontFamily: "'Instrument Serif', serif", color: 'var(--cui-primary)', fontWeight: 400 }}>inteligente</em>
             {' '}para o seu negócio de serviços.
           </h1>
 
-          <p style={{ fontSize: 17, lineHeight: 1.55, color: 'var(--cui-secondary-color)', maxWidth: 520, margin: '0 0 28px' }}>
-            Uma plataforma feita para oficinas, clínicas, ferro-velhos e mais. Agenda, ordens de serviço, clientes, estoque e relatórios — sem planilha, sem complicação.
+          <p style={{
+            fontSize: isMobile ? 15.5 : 17,
+            lineHeight: 1.55, color: 'var(--cui-secondary-color)',
+            maxWidth: 520, margin: '0 0 24px',
+          }}>
+            Plataforma feita para oficinas, clínicas e recicladoras. Agenda, ordens de serviço, clientes, estoque e relatórios — sem planilha, sem complicação.
           </p>
 
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-            <CButton color="primary" size="lg" href="/register" style={{ borderRadius: 8 }}>
+            <CButton
+              color="primary" size="lg" href="/register"
+              style={{ borderRadius: 8, flex: isMobile ? '1 1 100%' : '0 0 auto' }}
+            >
               Começar 30 dias grátis →
             </CButton>
-            <CButton color="secondary" variant="outline" size="lg" style={{ borderRadius: 8 }}>
+            <CButton
+              color="secondary" variant="outline" size="lg"
+              style={{ borderRadius: 8, flex: isMobile ? '1 1 100%' : '0 0 auto' }}
+            >
               Ver demonstração
             </CButton>
           </div>
 
-          <div style={{ marginTop: 24, display: 'flex', gap: 18, flexWrap: 'wrap', fontSize: 12.5, color: 'var(--cui-secondary-color)' }}>
-            {['Sem cartão de crédito', 'Cancele quando quiser', 'Suporte em português'].map(t => (
+          <div style={{ marginTop: 20, display: 'flex', gap: isMobile ? 12 : 18, flexWrap: 'wrap', fontSize: 12.5, color: 'var(--cui-secondary-color)' }}>
+            {['30 dias grátis', 'Cancele quando quiser', 'Suporte em português'].map(t => (
               <span key={t} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                 <span style={{ color: 'var(--cui-primary)', fontWeight: 700 }}>✓</span> {t}
               </span>
             ))}
           </div>
         </div>
-        <HeroMockup />
+        <HeroMockup compact={isMobile} />
       </section>
 
       {/* ── SEGMENTS ─────────────────────────────────────────────────────── */}
-      <section id="segments" style={{ maxWidth: 1180, margin: '0 auto', padding: '24px 24px 72px' }}>
-        <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <h2 style={{ fontSize: 28, fontWeight: 600, letterSpacing: '-0.02em', margin: '0 0 8px' }}>Escolha seu segmento</h2>
-          <p style={{ color: 'var(--cui-secondary-color)', margin: 0 }}>Uma base sólida, adaptada às particularidades da sua operação.</p>
+      <section id="segments" style={{
+        maxWidth: sectionMaxWidth, margin: '0 auto',
+        padding: isMobile ? '20px 18px 56px' : '24px 24px 72px',
+      }}>
+        <div style={{ textAlign: 'center', marginBottom: isMobile ? 24 : 32 }}>
+          <h2 style={{ fontSize: 'clamp(22px, 4.2vw, 28px)', fontWeight: 600, letterSpacing: '-0.02em', margin: '0 0 8px' }}>
+            Escolha seu segmento
+          </h2>
+          <p style={{ color: 'var(--cui-secondary-color)', margin: 0, fontSize: isMobile ? 14 : 15 }}>
+            Uma base sólida, adaptada às particularidades da sua operação.
+          </p>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14 }}>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+          gap: 14,
+        }}>
           {segments.map(seg => (
             <div
               key={seg.name}
@@ -310,7 +295,7 @@ export function LandingPage() {
                 transition: 'border-color 0.15s, transform 0.18s, box-shadow 0.18s',
               }}
               onMouseEnter={e => {
-                if (!seg.live) return;
+                if (!seg.live || isMobile) return;
                 (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--cui-primary)';
                 (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-2px)';
                 (e.currentTarget as HTMLDivElement).style.boxShadow = '0 8px 20px rgba(52,142,145,0.12)';
@@ -352,18 +337,27 @@ export function LandingPage() {
       </section>
 
       {/* ── FEATURES ─────────────────────────────────────────────────────── */}
-      <section id="features" style={{ maxWidth: 1180, margin: '0 auto', padding: '40px 24px' }}>
-        <div style={{ textAlign: 'center', marginBottom: 40 }}>
-          <h2 style={{ fontSize: 32, fontWeight: 600, letterSpacing: '-0.025em', margin: '0 0 10px' }}>
+      <section id="features" style={{
+        maxWidth: sectionMaxWidth, margin: '0 auto',
+        padding: isMobile ? '32px 18px' : '40px 24px',
+      }}>
+        <div style={{ textAlign: 'center', marginBottom: isMobile ? 28 : 40 }}>
+          <h2 style={{ fontSize: 'clamp(24px, 4.6vw, 32px)', fontWeight: 600, letterSpacing: '-0.025em', margin: '0 0 10px' }}>
             Tudo o que você precisa,{' '}
             <em style={{ fontStyle: 'italic', fontFamily: "'Instrument Serif', serif", color: 'var(--cui-primary)', fontWeight: 400 }}>nada que você não</em>.
           </h2>
-          <p style={{ color: 'var(--cui-secondary-color)', margin: 0 }}>Um único sistema, seis superpoderes.</p>
+          <p style={{ color: 'var(--cui-secondary-color)', margin: 0, fontSize: isMobile ? 14 : 15 }}>
+            Um único sistema, seis superpoderes.
+          </p>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+          gap: 16,
+        }}>
           {features.map(f => (
             <div key={f.title} style={{
-              padding: 24, borderRadius: 14,
+              padding: isMobile ? 20 : 24, borderRadius: 14,
               border: '1px solid var(--cui-border-color)',
               background: 'var(--cui-card-bg)',
             }}>
@@ -381,58 +375,100 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* ── PRICING ──────────────────────────────────────────────────────── */}
-      <section id="pricing" style={{ maxWidth: 1180, margin: '0 auto', padding: '60px 24px' }}>
-        <div style={{ textAlign: 'center', marginBottom: 36 }}>
-          <h2 style={{ fontSize: 34, fontWeight: 600, letterSpacing: '-0.025em', margin: '0 0 10px' }}>
-            Preços{' '}
-            <em style={{ fontStyle: 'italic', fontFamily: "'Instrument Serif', serif", color: 'var(--cui-primary)', fontWeight: 400 }}>honestos</em>.
+      {/* ── PRICING — plano único ───────────────────────────────────────── */}
+      <section id="pricing" style={{
+        maxWidth: sectionMaxWidth, margin: '0 auto',
+        padding: isMobile ? '44px 18px' : '60px 24px',
+      }}>
+        <div style={{ textAlign: 'center', marginBottom: isMobile ? 28 : 36 }}>
+          <h2 style={{ fontSize: 'clamp(26px, 5vw, 34px)', fontWeight: 600, letterSpacing: '-0.025em', margin: '0 0 10px' }}>
+            Preço{' '}
+            <em style={{ fontStyle: 'italic', fontFamily: "'Instrument Serif', serif", color: 'var(--cui-primary)', fontWeight: 400 }}>honesto</em>, plano único.
           </h2>
-          <p style={{ color: 'var(--cui-secondary-color)', margin: '0 0 20px', fontSize: 15 }}>30 dias grátis em qualquer plano. Sem cartão de crédito.</p>
-
-          {/* billing toggle */}
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: 3, background: 'var(--cui-secondary-bg, #f4f5f5)', borderRadius: 10, border: '1px solid var(--cui-border-color)' }}>
-            {(['monthly', 'annual'] as const).map(b => (
-              <button
-                key={b}
-                onClick={() => setBilling(b)}
-                style={{
-                  padding: '6px 16px', border: 0, cursor: 'pointer', borderRadius: 7,
-                  fontSize: 13, fontWeight: 600, fontFamily: 'inherit',
-                  background: billing === b ? 'var(--cui-card-bg)' : 'transparent',
-                  color: billing === b ? 'var(--cui-body-color)' : 'var(--cui-secondary-color)',
-                  boxShadow: billing === b ? '0 1px 3px rgba(10,12,13,0.07)' : 'none',
-                  transition: 'all 0.12s',
-                }}
-              >
-                {b === 'monthly' ? 'Mensal' : 'Anual'}
-              </button>
-            ))}
-          </div>
-          {billing === 'annual' && (
-            <span style={{ marginLeft: 10, fontSize: 12, fontWeight: 600, color: '#16a34a', background: 'rgba(22,163,74,0.1)', padding: '2px 8px', borderRadius: 999 }}>
-              Economize 22%
-            </span>
-          )}
+          <p style={{ color: 'var(--cui-secondary-color)', margin: 0, fontSize: isMobile ? 14 : 15 }}>
+            30 dias grátis para testar. Depois, uma mensalidade só.
+          </p>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, alignItems: 'stretch' }}>
-          {plans.map(plan => <PlanCard key={plan.name} plan={plan} />)}
+        <div style={{ display: 'flex', justifyContent: 'center', padding: isMobile ? 0 : '0 24px' }}>
+          <div style={{
+            position: 'relative',
+            maxWidth: 460, width: '100%',
+            padding: isMobile ? 24 : 32, borderRadius: 16,
+            border: '1px solid var(--cui-primary)',
+            background: 'var(--cui-card-bg)',
+            boxShadow: '0 0 0 3px rgba(52,142,145,0.15), 0 10px 30px rgba(52,142,145,0.08)',
+            display: 'flex', flexDirection: 'column', gap: 14,
+          }}>
+            <div style={{
+              position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)',
+              background: 'var(--cui-primary)', color: '#fff',
+              padding: '4px 14px', borderRadius: 999, fontSize: 11, fontWeight: 600,
+              letterSpacing: '0.06em', textTransform: 'uppercase', whiteSpace: 'nowrap',
+            }}>
+              Plano único
+            </div>
+
+            <p style={{ margin: '4px 0 0', fontSize: 13, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--cui-secondary-color)' }}>
+              {plan.name}
+            </p>
+
+            <div style={{ fontSize: 'clamp(38px, 9vw, 46px)', fontWeight: 700, letterSpacing: '-0.035em', lineHeight: 1, color: 'var(--cui-body-color)' }}>
+              R$ {plan.price.toFixed(2).replace('.', ',')}
+              <span style={{ fontSize: 16, fontWeight: 400, color: 'var(--cui-secondary-color)' }}> /mês</span>
+            </div>
+
+            <p style={{ margin: 0, fontSize: 14.5, color: 'var(--cui-secondary-color)', lineHeight: 1.5 }}>{plan.desc}</p>
+
+            <ul style={{ listStyle: 'none', padding: 0, margin: '4px 0', display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {plan.features.map(f => (
+                <li key={f} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', fontSize: 14 }}>
+                  <span style={{ color: 'var(--cui-primary)', flexShrink: 0, marginTop: 1, fontWeight: 700 }}>✓</span>
+                  <span>{f}</span>
+                </li>
+              ))}
+            </ul>
+
+            <CButton
+              color="primary"
+              size="lg"
+              href="/register"
+              style={{ width: '100%', borderRadius: 10, marginTop: 4 }}
+            >
+              Começar 30 dias grátis →
+            </CButton>
+
+            <p style={{ textAlign: 'center', fontSize: 12, color: 'var(--cui-secondary-color)', margin: 0 }}>
+              Cobrança segura via Asaas · Cancele quando quiser
+            </p>
+          </div>
         </div>
       </section>
 
       {/* ── FAQ ──────────────────────────────────────────────────────────── */}
-      <section id="faq" style={{ maxWidth: 780, margin: '0 auto', padding: '20px 24px 80px' }}>
-        <h2 style={{ fontSize: 28, fontWeight: 600, letterSpacing: '-0.02em', textAlign: 'center', margin: '0 0 28px' }}>Perguntas frequentes</h2>
+      <section id="faq" style={{
+        maxWidth: 780, margin: '0 auto',
+        padding: isMobile ? '16px 18px 56px' : '20px 24px 80px',
+      }}>
+        <h2 style={{
+          fontSize: 'clamp(22px, 4.4vw, 28px)',
+          fontWeight: 600, letterSpacing: '-0.02em',
+          textAlign: 'center', margin: '0 0 24px',
+        }}>
+          Perguntas frequentes
+        </h2>
         {faqs.map((faq, i) => (
           <div
             key={i}
             onClick={() => setFaqOpen(faqOpen === i ? -1 : i)}
-            style={{ borderBottom: '1px solid var(--cui-border-color)', padding: '16px 0', cursor: 'pointer' }}
+            style={{ borderBottom: '1px solid var(--cui-border-color)', padding: '14px 0', cursor: 'pointer' }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontWeight: 550, fontSize: 15 }}>
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              fontWeight: 550, fontSize: isMobile ? 14.5 : 15, gap: 12,
+            }}>
               <span>{faq.q}</span>
-              <span style={{ color: 'var(--cui-primary)', fontSize: 18, flexShrink: 0, marginLeft: 12 }}>
+              <span style={{ color: 'var(--cui-primary)', fontSize: 18, flexShrink: 0 }}>
                 {faqOpen === i ? '−' : '+'}
               </span>
             </div>
@@ -446,8 +482,20 @@ export function LandingPage() {
       </section>
 
       {/* ── FOOTER ───────────────────────────────────────────────────────── */}
-      <footer style={{ borderTop: '1px solid var(--cui-border-color)', background: 'var(--cui-card-cap-bg)', padding: '40px 24px' }}>
-        <div style={{ maxWidth: 1180, margin: '0 auto', display: 'flex', flexWrap: 'wrap', gap: 20, alignItems: 'center', justifyContent: 'space-between', color: 'var(--cui-secondary-color)', fontSize: 13 }}>
+      <footer style={{
+        borderTop: '1px solid var(--cui-border-color)',
+        background: 'var(--cui-card-cap-bg)',
+        padding: isMobile ? '28px 18px' : '40px 24px',
+      }}>
+        <div style={{
+          maxWidth: sectionMaxWidth, margin: '0 auto',
+          display: 'flex', flexWrap: 'wrap',
+          gap: isMobile ? 14 : 20,
+          alignItems: 'center',
+          justifyContent: isMobile ? 'center' : 'space-between',
+          textAlign: isMobile ? 'center' : 'left',
+          color: 'var(--cui-secondary-color)', fontSize: 13,
+        }}>
           <Logo size={20} />
           <span>© 2026 Praktikus · Feito no Brasil 🇧🇷</span>
           <div style={{ display: 'flex', gap: 16 }}>

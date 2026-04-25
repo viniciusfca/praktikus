@@ -122,7 +122,7 @@ export function CustomerFormPage() {
         </CCardBody>
       </CCard>
 
-      <CModal visible={Boolean(savedCustomer)} onClose={() => navigate('/workshop/customers')}>
+      <CModal visible={Boolean(savedCustomer)} onClose={() => navigate('/workshop/customers')} className="pk-modal-mobile">
         <CModalHeader>
           <CModalTitle>Cadastrar veículo?</CModalTitle>
         </CModalHeader>

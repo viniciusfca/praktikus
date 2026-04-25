@@ -7,7 +7,6 @@ import {
   CAlert,
   CButton,
   CFormFeedback,
-  CFormInput,
   CFormLabel,
   CFormSelect,
   CFormTextarea,
@@ -27,12 +26,13 @@ import { PrintPromptModal } from '../../../components/PrintPromptModal';
 import { PurchasePdf } from '../../../components/recycling/PurchasePdf';
 import { downloadPdf } from '../../../utils/downloadPdf';
 import { companyService } from '../../../services/company.service';
+import { CurrencyInput, NumericInput } from '../../../components/inputs';
 
 // ── Schema ──────────────────────────────────────────────────────────────────
 const itemSchema = z.object({
   productId: z.string().uuid('Selecione um produto'),
-  quantity: z.number().positive('Quantidade deve ser positiva'),
-  unitPrice: z.number().positive('Preço deve ser positivo').max(999999.9999, 'Preço máximo excedido'),
+  quantity: z.number().positive('Quantidade deve ser positiva').multipleOf(0.001, 'Use até 3 casas decimais'),
+  unitPrice: z.number().positive('Preço deve ser positivo').multipleOf(0.01, 'Use até 2 casas decimais').max(999999.99, 'Preço máximo excedido'),
 });
 
 const schema = z.object({
@@ -270,7 +270,7 @@ export function NewPurchasePage() {
             gridTemplateColumns: 'minmax(0, 1fr) 320px',
             gap: 16,
           }}
-          className="pk-dashboard-grid"
+          className="pk-form-summary"
         >
           {/* ── Main column ───────────────────────────────────── */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -278,7 +278,7 @@ export function NewPurchasePage() {
             <Card
               header={<CardTitle title="Dados da compra" desc="Fornecedor, pagamento e observações" />}
             >
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+              <div className="pk-form-row-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
                 <div>
                   <CFormLabel style={labelStyle}>Fornecedor *</CFormLabel>
                   <CFormSelect {...register('supplierId')} invalid={!!errors.supplierId}>
@@ -408,13 +408,19 @@ export function NewPurchasePage() {
                         </CTableDataCell>
 
                         <CTableDataCell>
-                          <CFormInput
-                            type="number"
-                            step="0.0001"
-                            min="0.0001"
-                            size="sm"
-                            {...register(`items.${index}.quantity`, { valueAsNumber: true })}
-                            invalid={!!errors.items?.[index]?.quantity}
+                          <Controller
+                            control={control}
+                            name={`items.${index}.quantity`}
+                            render={({ field }) => (
+                              <NumericInput
+                                value={field.value ?? null}
+                                onChange={field.onChange}
+                                decimals={3}
+                                size="sm"
+                                placeholder="0,000"
+                                invalid={!!errors.items?.[index]?.quantity}
+                              />
+                            )}
                           />
                           {errors.items?.[index]?.quantity && (
                             <CFormFeedback invalid>
@@ -424,13 +430,18 @@ export function NewPurchasePage() {
                         </CTableDataCell>
 
                         <CTableDataCell>
-                          <CFormInput
-                            type="number"
-                            step="0.0001"
-                            min="0.0001"
-                            size="sm"
-                            {...register(`items.${index}.unitPrice`, { valueAsNumber: true })}
-                            invalid={!!errors.items?.[index]?.unitPrice}
+                          <Controller
+                            control={control}
+                            name={`items.${index}.unitPrice`}
+                            render={({ field }) => (
+                              <CurrencyInput
+                                value={field.value ?? null}
+                                onChange={field.onChange}
+                                size="sm"
+                                placeholder="0,00"
+                                invalid={!!errors.items?.[index]?.unitPrice}
+                              />
+                            )}
                           />
                           {errors.items?.[index]?.unitPrice && (
                             <CFormFeedback invalid>

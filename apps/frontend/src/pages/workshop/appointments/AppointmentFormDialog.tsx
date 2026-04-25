@@ -119,7 +119,7 @@ export function AppointmentFormDialog({ open, editing, onClose, onSaved }: Props
   };
 
   return (
-    <CModal visible={open} onClose={onClose} size="lg">
+    <CModal visible={open} onClose={onClose} size="lg" className="pk-modal-mobile">
       <CModalHeader>
         <CModalTitle>{editing ? 'Editar Agendamento' : 'Novo Agendamento'}</CModalTitle>
       </CModalHeader>

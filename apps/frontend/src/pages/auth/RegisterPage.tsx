@@ -78,7 +78,7 @@ export function RegisterPage() {
         Crie sua conta
       </h1>
       <p style={{ margin: '0 0 10px', color: 'var(--cui-secondary-color)' }}>
-        30 dias grátis. Sem cartão de crédito.
+        30 dias grátis para testar.
       </p>
 
       <Stepper steps={STEPS} current={activeStep} />
@@ -213,7 +213,7 @@ export function RegisterPage() {
             )}
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+          <div className="pk-form-row-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
             <div>
               <CFormLabel style={labelStyle}>Senha</CFormLabel>
               <CFormInput
@@ -265,7 +265,7 @@ export function RegisterPage() {
             </span>
           </label>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 10 }}>
+          <div className="pk-form-row-actions" style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 10 }}>
             <CButton
               color="secondary"
               variant="outline"

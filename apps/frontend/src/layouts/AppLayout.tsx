@@ -116,6 +116,7 @@ export function AppLayout() {
             location.pathname === item.path ||
             location.pathname.startsWith(item.path + '/');
 
+          const showLabel = sidebarOpen || isMobile;
           const navItem = (
             <CNavItem key={item.label}>
               <CNavLink
@@ -125,7 +126,7 @@ export function AppLayout() {
                 onClick={() => isMobile && setMobileVisible(false)}
               >
                 <CIcon icon={item.icon} customClassName="nav-icon" />
-                {item.label}
+                {showLabel && <span className="nav-label">{item.label}</span>}
               </CNavLink>
             </CNavItem>
           );
@@ -158,29 +159,30 @@ export function AppLayout() {
         }}
       >
         <CSidebarBrand
+          as="div"
           className="d-flex align-items-center px-3"
-          style={{ minHeight: 56, gap: 8 }}
+          style={{ minHeight: 56, gap: 8, textDecoration: 'none' }}
         >
           {(sidebarOpen || isMobile) ? (
             <>
               <Logo size={26} />
               {!isMobile && (
                 <button
-                  className="btn btn-sm btn-ghost-secondary ms-auto"
+                  className="sidebar-collapse-btn ms-auto"
                   onClick={handleToggleSidebar}
                   aria-label="Collapse sidebar"
-                  style={{ border: 'none', background: 'none', color: 'inherit', flexShrink: 0 }}
+                  type="button"
                 >
-                  <CIcon icon={cilChevronLeft} />
+                  <CIcon icon={cilChevronLeft} size="sm" />
                 </button>
               )}
             </>
           ) : (
             <button
-              className="btn btn-sm btn-ghost-secondary mx-auto"
+              className="sidebar-collapse-btn sidebar-collapse-btn--expand mx-auto"
               onClick={handleToggleSidebar}
               aria-label="Expand sidebar"
-              style={{ border: 'none', background: 'none', color: 'inherit' }}
+              type="button"
             >
               <Logo variant="icon" size={26} />
             </button>

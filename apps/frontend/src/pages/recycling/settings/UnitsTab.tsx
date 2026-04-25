@@ -208,7 +208,7 @@ export function UnitsTab() {
         </CTable>
       </div>
 
-      <CModal visible={modalOpen} onClose={() => setModalOpen(false)} size="sm">
+      <CModal visible={modalOpen} onClose={() => setModalOpen(false)} size="sm" className="pk-modal-mobile">
         <CModalHeader>
           <CModalTitle>{editing ? 'Editar unidade' : 'Nova unidade'}</CModalTitle>
         </CModalHeader>

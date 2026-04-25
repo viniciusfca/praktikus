@@ -6,6 +6,7 @@ import {
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { TimeInput } from '../../../components/inputs';
 import { coletasService, type Coleta } from '../../../services/recycling/coletas.service';
 import { suppliersService, type Supplier } from '../../../services/recycling/suppliers.service';
 import { employeesService, type Employee } from '../../../services/recycling/employees.service';
@@ -13,7 +14,7 @@ import { employeesService, type Employee } from '../../../services/recycling/emp
 const schema = z.object({
   supplierId: z.string().uuid({ message: 'Selecione um fornecedor' }),
   scheduledDate: z.string().min(1, 'Informe a data'),
-  scheduledTime: z.string().min(1, 'Informe o horário'),
+  scheduledTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Hora inválida (use HH:mm, 24h)'),
   employeeId: z.string().optional(),
   notes: z.string().max(1000).optional(),
 });
@@ -166,7 +167,7 @@ export function ColetaFormDialog({
   const showPanel = panelOpen && supplierQuery.trim().length >= 2;
 
   return (
-    <CModal visible={open} onClose={onClose} alignment="center">
+    <CModal visible={open} onClose={onClose} alignment="center" className="pk-modal-mobile">
       <CModalHeader>
         <CModalTitle>{editing ? 'Editar coleta' : 'Nova coleta'}</CModalTitle>
       </CModalHeader>
@@ -302,7 +303,17 @@ export function ColetaFormDialog({
             </div>
             <div className="col-6 mb-3">
               <CFormLabel>Hora *</CFormLabel>
-              <CFormInput type="time" lang="pt-BR" {...register('scheduledTime')} invalid={!!errors.scheduledTime} />
+              <Controller
+                control={control}
+                name="scheduledTime"
+                render={({ field }) => (
+                  <TimeInput
+                    value={field.value ?? ''}
+                    onChange={field.onChange}
+                    invalid={!!errors.scheduledTime}
+                  />
+                )}
+              />
               {errors.scheduledTime && <div className="invalid-feedback d-block">{errors.scheduledTime.message}</div>}
             </div>
           </div>

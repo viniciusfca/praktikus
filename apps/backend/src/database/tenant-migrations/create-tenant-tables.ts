@@ -127,7 +127,8 @@ export function createTenantTablesSql(schemaName: string, segment: TenantSegment
     `CREATE TABLE IF NOT EXISTS "${schemaName}".buyers (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       name VARCHAR NOT NULL,
-      cnpj VARCHAR(14),
+      document VARCHAR(14),
+      document_type VARCHAR(4),
       phone VARCHAR,
       contact_name VARCHAR,
       created_at TIMESTAMPTZ DEFAULT NOW(),

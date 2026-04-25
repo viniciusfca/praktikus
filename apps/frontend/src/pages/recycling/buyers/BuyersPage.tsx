@@ -8,6 +8,7 @@ import {
   CFormFeedback,
   CFormInput,
   CFormLabel,
+  CFormSelect,
   CModal,
   CModalBody,
   CModalFooter,
@@ -23,26 +24,47 @@ import {
 } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
 import { cilPlus, cilPen, cilTrash, cilSearch, cilFactory } from '@coreui/icons';
+import { Controller } from 'react-hook-form';
+import { DocumentInput, PhoneInput } from '../../../components/inputs';
+import { formatDocument } from '../../../utils/masks';
 import { useBuyers } from '../../../hooks/recycling/useBuyers';
 import { buyersService, type Buyer } from '../../../services/recycling/buyers.service';
 
 // ── Schema ──────────────────────────────────────────────────────────────────
-const schema = z.object({
-  name: z.string().min(2, 'Nome deve ter ao menos 2 caracteres'),
-  cnpj: z.string().regex(/^\d{14}$/, 'CNPJ deve ter 14 dígitos').optional().or(z.literal('')),
-  phone: z.string().optional(),
-  contactName: z.string().optional(),
-});
+const schema = z
+  .object({
+    name: z.string().min(2, 'Nome deve ter ao menos 2 caracteres'),
+    document: z
+      .string()
+      .regex(/^\d{11}$|^\d{14}$/, 'Documento deve ter 11 (CPF) ou 14 (CNPJ) dígitos')
+      .optional()
+      .or(z.literal('')),
+    documentType: z.enum(['CPF', 'CNPJ']).optional(),
+    phone: z.string().optional(),
+    contactName: z.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (!data.document || data.document === '') return;
+    if (!data.documentType) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['documentType'],
+        message: 'Selecione CPF ou CNPJ',
+      });
+      return;
+    }
+    if (data.documentType === 'CPF' && data.document.length !== 11) {
+      ctx.addIssue({ code: 'custom', path: ['document'], message: 'CPF deve ter 11 dígitos' });
+    }
+    if (data.documentType === 'CNPJ' && data.document.length !== 14) {
+      ctx.addIssue({ code: 'custom', path: ['document'], message: 'CNPJ deve ter 14 dígitos' });
+    }
+  });
 
 type FormData = z.infer<typeof schema>;
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 const labelStyle = { fontWeight: 500, fontSize: 13 };
-
-function formatCnpj(cnpj: string | null): string {
-  if (!cnpj) return '—';
-  return cnpj.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
-}
 
 function getInitials(name: string): string {
   return name
@@ -90,10 +112,20 @@ function BuyerFormDialog({ open, editing, onClose, onSaved }: BuyerFormDialogPro
 
   const {
     register,
+    control,
     handleSubmit,
     reset,
+    watch,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<FormData>({ resolver: zodResolver(schema) });
+
+  const watchedDocumentType = watch('documentType');
+
+  useEffect(() => {
+    // When the user switches between CPF/CNPJ, clear the document field so they start fresh.
+    setValue('document', '', { shouldValidate: false, shouldDirty: false });
+  }, [watchedDocumentType, setValue]);
 
   useEffect(() => {
     if (!open) return;
@@ -103,12 +135,13 @@ function BuyerFormDialog({ open, editing, onClose, onSaved }: BuyerFormDialogPro
     if (editing) {
       reset({
         name: editing.name,
-        cnpj: editing.cnpj ?? '',
+        document: editing.document ?? '',
+        documentType: editing.documentType ?? undefined,
         phone: editing.phone ?? '',
         contactName: editing.contactName ?? '',
       });
     } else {
-      reset({ name: '', cnpj: '', phone: '', contactName: '' });
+      reset({ name: '', document: '', documentType: undefined, phone: '', contactName: '' });
     }
   }, [open, editing, reset]);
 
@@ -116,7 +149,8 @@ function BuyerFormDialog({ open, editing, onClose, onSaved }: BuyerFormDialogPro
     setSubmitError(null);
     const payload = {
       name: data.name,
-      cnpj: data.cnpj || null,
+      document: data.document || null,
+      documentType: data.document ? data.documentType ?? null : null,
       phone: data.phone || null,
       contactName: data.contactName || null,
     };
@@ -137,7 +171,7 @@ function BuyerFormDialog({ open, editing, onClose, onSaved }: BuyerFormDialogPro
   };
 
   return (
-    <CModal visible={open} onClose={onClose}>
+    <CModal visible={open} onClose={onClose} className="pk-modal-mobile">
       <CModalHeader>
         <CModalTitle>{editing ? 'Editar comprador' : 'Novo comprador'}</CModalTitle>
       </CModalHeader>
@@ -156,20 +190,53 @@ function BuyerFormDialog({ open, editing, onClose, onSaved }: BuyerFormDialogPro
               {errors.name && <CFormFeedback invalid>{errors.name.message}</CFormFeedback>}
             </div>
 
-            <div>
-              <CFormLabel style={labelStyle}>CNPJ (14 dígitos, opcional)</CFormLabel>
-              <CFormInput
-                {...register('cnpj')}
-                placeholder="00000000000000"
-                invalid={!!errors.cnpj}
-              />
-              {errors.cnpj && <CFormFeedback invalid>{errors.cnpj.message}</CFormFeedback>}
+            <div className="row g-3">
+              <div className="col-md-4">
+                <CFormLabel style={labelStyle}>Tipo de documento</CFormLabel>
+                <CFormSelect {...register('documentType')} invalid={!!errors.documentType}>
+                  <option value="">—</option>
+                  <option value="CPF">CPF</option>
+                  <option value="CNPJ">CNPJ</option>
+                </CFormSelect>
+                {errors.documentType && (
+                  <CFormFeedback invalid>{errors.documentType.message}</CFormFeedback>
+                )}
+              </div>
+              <div className="col-md-8">
+                <CFormLabel style={labelStyle}>
+                  {watchedDocumentType === 'CPF' ? 'CPF' : 'CNPJ'} (opcional)
+                </CFormLabel>
+                <Controller
+                  control={control}
+                  name="document"
+                  render={({ field }) => (
+                    <DocumentInput
+                      type={watchedDocumentType === 'CPF' ? 'CPF' : 'CNPJ'}
+                      value={field.value ?? ''}
+                      onChange={field.onChange}
+                      invalid={!!errors.document}
+                      placeholder={watchedDocumentType === 'CPF' ? '000.000.000-00' : '00.000.000/0000-00'}
+                    />
+                  )}
+                />
+                {errors.document && <CFormFeedback invalid>{errors.document.message}</CFormFeedback>}
+              </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div className="pk-form-row-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               <div>
                 <CFormLabel style={labelStyle}>Telefone</CFormLabel>
-                <CFormInput {...register('phone')} placeholder="(00) 00000-0000" />
+                <Controller
+                  control={control}
+                  name="phone"
+                  render={({ field }) => (
+                    <PhoneInput
+                      value={field.value ?? ''}
+                      onChange={field.onChange}
+                      placeholder="(00) 00000-0000"
+                    />
+                  )}
+                />
               </div>
               <div>
                 <CFormLabel style={labelStyle}>Pessoa de contato</CFormLabel>
@@ -308,7 +375,7 @@ export function BuyersPage() {
           <CTableHead>
             <CTableRow>
               <CTableHeaderCell>Empresa</CTableHeaderCell>
-              <CTableHeaderCell>CNPJ</CTableHeaderCell>
+              <CTableHeaderCell>Documento</CTableHeaderCell>
               <CTableHeaderCell>Telefone</CTableHeaderCell>
               <CTableHeaderCell>Contato</CTableHeaderCell>
               <CTableHeaderCell style={{ textAlign: 'right' }}>Ações</CTableHeaderCell>
@@ -372,7 +439,7 @@ export function BuyersPage() {
                       color: 'var(--cui-secondary-color)',
                     }}
                   >
-                    {formatCnpj(b.cnpj)}
+                    {b.document && b.documentType ? formatDocument(b.document, b.documentType) : '—'}
                   </CTableDataCell>
                   <CTableDataCell style={{ color: 'var(--cui-body-color)', fontSize: 13 }}>
                     {b.phone ?? '—'}
