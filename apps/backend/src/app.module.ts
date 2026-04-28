@@ -16,6 +16,7 @@ import { AppointmentsModule } from './modules/workshop/appointments/appointments
 import { ServiceOrdersModule } from './modules/workshop/service-orders/service-orders.module';
 import { ReportsModule } from './modules/workshop/reports/reports.module';
 import { BillingModule } from './modules/core/billing/billing.module';
+import { CepModule } from './modules/core/cep/cep.module';
 import { RecyclingModule } from './modules/recycling/recycling.module';
 
 @Module({
@@ -26,6 +27,7 @@ import { RecyclingModule } from './modules/recycling/recycling.module';
     TenancyModule,
     AuthModule,
     BillingModule,
+    CepModule,
     CompaniesModule,
     CustomersModule,
     VehiclesModule,

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useForm, Controller } from 'react-hook-form';
+import { isValidCpf, isValidCnpj } from '@praktikus/shared';
 import { DocumentInput, PhoneInput } from '../../../components/inputs';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -26,6 +27,7 @@ import {
 import CIcon from '@coreui/icons-react';
 import { cilPlus, cilPen, cilTrash, cilSearch, cilPeople } from '@coreui/icons';
 import { suppliersService, type Supplier } from '../../../services/recycling/suppliers.service';
+import { AddressFields } from '../../../components/forms/AddressFields';
 
 // ── Schema ──────────────────────────────────────────────────────────────────
 const schema = z
@@ -36,6 +38,7 @@ const schema = z
     phone: z.string().optional(),
     street: z.string().optional(),
     number: z.string().optional(),
+    neighborhood: z.string().optional(),
     complement: z.string().optional(),
     city: z.string().optional(),
     state: z.string().max(2, 'UF deve ter 2 caracteres').optional(),
@@ -49,16 +52,16 @@ const schema = z
           message: 'Documento é obrigatório quando o tipo é selecionado',
           path: ['document'],
         });
-      } else if (data.documentType === 'CPF' && !/^\d{11}$/.test(data.document)) {
+      } else if (data.documentType === 'CPF' && !isValidCpf(data.document)) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: 'CPF deve ter 11 dígitos',
+          message: 'CPF inválido',
           path: ['document'],
         });
-      } else if (data.documentType === 'CNPJ' && !/^\d{14}$/.test(data.document)) {
+      } else if (data.documentType === 'CNPJ' && !isValidCnpj(data.document)) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: 'CNPJ deve ter 14 dígitos',
+          message: 'CNPJ inválido',
           path: ['document'],
         });
       }
@@ -125,6 +128,7 @@ function SupplierFormDialog({ open, editing, onClose, onSaved }: SupplierFormDia
   const {
     register,
     control,
+    setValue,
     handleSubmit,
     reset,
     watch,
@@ -144,6 +148,7 @@ function SupplierFormDialog({ open, editing, onClose, onSaved }: SupplierFormDia
         phone: editing.phone ?? '',
         street: editing.address?.street ?? '',
         number: editing.address?.number ?? '',
+        neighborhood: editing.address?.neighborhood ?? '',
         complement: editing.address?.complement ?? '',
         city: editing.address?.city ?? '',
         state: editing.address?.state ?? '',
@@ -157,6 +162,7 @@ function SupplierFormDialog({ open, editing, onClose, onSaved }: SupplierFormDia
         phone: '',
         street: '',
         number: '',
+        neighborhood: '',
         complement: '',
         city: '',
         state: '',
@@ -177,6 +183,7 @@ function SupplierFormDialog({ open, editing, onClose, onSaved }: SupplierFormDia
         ? {
             street: data.street ?? '',
             number: data.number ?? '',
+            neighborhood: data.neighborhood || undefined,
             complement: data.complement || undefined,
             city: data.city ?? '',
             state: data.state ?? '',
@@ -309,32 +316,7 @@ function SupplierFormDialog({ open, editing, onClose, onSaved }: SupplierFormDia
               Endereço (opcional)
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: 12 }}>
-              <div style={{ gridColumn: 'span 9' }}>
-                <CFormLabel style={labelStyle}>Logradouro</CFormLabel>
-                <CFormInput {...register('street')} />
-              </div>
-              <div style={{ gridColumn: 'span 3' }}>
-                <CFormLabel style={labelStyle}>Número</CFormLabel>
-                <CFormInput {...register('number')} />
-              </div>
-              <div style={{ gridColumn: 'span 12' }}>
-                <CFormLabel style={labelStyle}>Complemento</CFormLabel>
-                <CFormInput {...register('complement')} />
-              </div>
-              <div style={{ gridColumn: 'span 6' }}>
-                <CFormLabel style={labelStyle}>Cidade</CFormLabel>
-                <CFormInput {...register('city')} />
-              </div>
-              <div style={{ gridColumn: 'span 2' }}>
-                <CFormLabel style={labelStyle}>UF</CFormLabel>
-                <CFormInput {...register('state')} maxLength={2} placeholder="SP" />
-              </div>
-              <div style={{ gridColumn: 'span 4' }}>
-                <CFormLabel style={labelStyle}>CEP</CFormLabel>
-                <CFormInput {...register('zip')} placeholder="00000-000" />
-              </div>
-            </div>
+            <AddressFields control={control} setValue={setValue} errors={errors} />
           </div>
         </CModalBody>
         <CModalFooter>

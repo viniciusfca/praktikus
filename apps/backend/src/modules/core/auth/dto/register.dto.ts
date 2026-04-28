@@ -10,6 +10,7 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { TenantSegment } from '@praktikus/shared';
+import { IsValidCnpj, IsStrongPassword } from '../../validation';
 
 export class AddressDto {
   @IsString()
@@ -35,8 +36,7 @@ export class AddressDto {
 }
 
 export class RegisterDto {
-  @IsString()
-  @Matches(/^\d{14}$/, { message: 'CNPJ deve conter 14 dígitos numéricos' })
+  @IsValidCnpj()
   cnpj: string;
 
   @IsString()
@@ -59,8 +59,7 @@ export class RegisterDto {
   @IsEmail()
   email: string;
 
-  @IsString()
-  @MinLength(8)
+  @IsStrongPassword()
   password: string;
 
   @IsString()

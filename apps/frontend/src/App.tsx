@@ -5,6 +5,9 @@ import { LandingPage } from './pages/LandingPage';
 import { LoginPage } from './pages/auth/LoginPage';
 import { RegisterPage } from './pages/auth/RegisterPage';
 import { RegisterRecyclingPage } from './pages/auth/RegisterRecyclingPage';
+import { RegisterSegmentPage } from './pages/auth/RegisterSegmentPage';
+import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage';
+import { ResetPasswordPage } from './pages/auth/ResetPasswordPage';
 import { AppLayout } from './layouts/AppLayout';
 import { RecyclingLayout } from './layouts/RecyclingLayout';
 import { RecyclingDashboardPage } from './pages/recycling/DashboardPage';
@@ -53,8 +56,11 @@ function App() {
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/register" element={<RegisterSegmentPage />} />
+          <Route path="/register/workshop" element={<RegisterPage />} />
           <Route path="/register/recycling" element={<RegisterRecyclingPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
           <Route path="/quotes/:token" element={<QuoteApprovalPage />} />
           <Route path="/suspended" element={<SuspendedPage />} />
           <Route

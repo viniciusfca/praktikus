@@ -25,6 +25,7 @@ import {
 import CIcon from '@coreui/icons-react';
 import { cilPlus, cilPen, cilTrash, cilSearch, cilFactory } from '@coreui/icons';
 import { Controller } from 'react-hook-form';
+import { isValidCpf, isValidCnpj } from '@praktikus/shared';
 import { DocumentInput, PhoneInput } from '../../../components/inputs';
 import { formatDocument } from '../../../utils/masks';
 import { useBuyers } from '../../../hooks/recycling/useBuyers';
@@ -53,11 +54,11 @@ const schema = z
       });
       return;
     }
-    if (data.documentType === 'CPF' && data.document.length !== 11) {
-      ctx.addIssue({ code: 'custom', path: ['document'], message: 'CPF deve ter 11 dígitos' });
+    if (data.documentType === 'CPF' && !isValidCpf(data.document)) {
+      ctx.addIssue({ code: 'custom', path: ['document'], message: 'CPF inválido' });
     }
-    if (data.documentType === 'CNPJ' && data.document.length !== 14) {
-      ctx.addIssue({ code: 'custom', path: ['document'], message: 'CNPJ deve ter 14 dígitos' });
+    if (data.documentType === 'CNPJ' && !isValidCnpj(data.document)) {
+      ctx.addIssue({ code: 'custom', path: ['document'], message: 'CNPJ inválido' });
     }
   });
 

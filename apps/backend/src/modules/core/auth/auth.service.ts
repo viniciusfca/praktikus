@@ -2,15 +2,19 @@ import {
   Injectable,
   ConflictException,
   UnauthorizedException,
+  BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { InjectDataSource } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, IsNull, Repository } from 'typeorm';
+import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 import { UserEntity, UserRole } from './user.entity';
 import { RefreshTokenEntity } from './refresh-token.entity';
+import { PasswordResetTokenEntity } from './password-reset-token.entity';
+import { MailService } from '../mail/mail.service';
 import { TenancyService } from '../tenancy/tenancy.service';
 import { TenantStatus } from '../tenancy/tenant.entity';
 import { TenantSegment } from '@praktikus/shared';
@@ -30,9 +34,13 @@ export class AuthService {
     private readonly userRepo: Repository<UserEntity>,
     @InjectRepository(RefreshTokenEntity)
     private readonly refreshTokenRepo: Repository<RefreshTokenEntity>,
+    @InjectRepository(PasswordResetTokenEntity)
+    private readonly resetTokenRepo: Repository<PasswordResetTokenEntity>,
     private readonly tenancyService: TenancyService,
     private readonly billingService: BillingService,
     private readonly jwtService: JwtService,
+    private readonly mail: MailService,
+    private readonly config: ConfigService,
     @InjectDataSource() private readonly dataSource: DataSource,
   ) {}
 
@@ -149,6 +157,63 @@ export class AuthService {
 
     user.passwordHash = await bcrypt.hash(newPassword, 10);
     await this.userRepo.save(user);
+  }
+
+  async requestPasswordReset(email: string): Promise<void> {
+    const user = await this.userRepo.findOne({ where: { email } });
+    if (!user) {
+      // Anti-enumeration: silent no-op when the email is not registered.
+      return;
+    }
+
+    // Invalidate previous active tokens for this user.
+    await this.resetTokenRepo.update(
+      { userId: user.id, usedAt: IsNull() },
+      { usedAt: new Date() },
+    );
+
+    const token = crypto.randomBytes(32).toString('hex');
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+    await this.resetTokenRepo.save({
+      userId: user.id,
+      tokenHash,
+      expiresAt,
+      usedAt: null,
+    });
+
+    const baseUrl = this.config.get<string>('APP_BASE_URL') ?? 'http://localhost:5173';
+    const resetUrl = `${baseUrl}/reset-password/${token}`;
+
+    await this.mail.sendPasswordReset(user.email, user.name, resetUrl);
+  }
+
+  async resetPassword(token: string, newPassword: string): Promise<void> {
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+    const record = await this.resetTokenRepo.findOne({ where: { tokenHash } });
+
+    const now = new Date();
+    if (!record || record.usedAt !== null || record.expiresAt <= now) {
+      throw new BadRequestException('Link inválido ou expirado.');
+    }
+
+    const user = await this.userRepo.findOne({ where: { id: record.userId } });
+    if (!user) {
+      throw new BadRequestException('Link inválido ou expirado.');
+    }
+
+    const newHash = await bcrypt.hash(newPassword, 10);
+
+    await this.dataSource.transaction(async (manager) => {
+      user.passwordHash = newHash;
+      await manager.save(UserEntity, user);
+      await manager.update(PasswordResetTokenEntity, record.id, { usedAt: new Date() });
+      await manager.delete(RefreshTokenEntity, { userId: user.id });
+    });
+
+    // Fire-and-forget confirmation email (errors are logged inside MailService).
+    void this.mail.sendPasswordChangedConfirmation(user.email, user.name);
   }
 
   private async generateTokens(user: UserEntity, tenantStatus: string, tenantSegment?: TenantSegment): Promise<AuthTokens> {

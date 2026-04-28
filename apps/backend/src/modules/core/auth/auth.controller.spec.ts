@@ -25,7 +25,7 @@ describe('AuthController', () => {
 
   it('should call register and return tokens', async () => {
     const dto = {
-      cnpj: '12345678000199',
+      cnpj: '11222333000181',
       razaoSocial: 'Test Ltda',
       nomeFantasia: 'Test',
       email: 'a@b.com',

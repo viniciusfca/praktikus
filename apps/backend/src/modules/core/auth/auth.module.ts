@@ -9,12 +9,14 @@ import { JwtStrategy } from './jwt.strategy';
 import { RolesGuard } from './roles.guard';
 import { UserEntity } from './user.entity';
 import { RefreshTokenEntity } from './refresh-token.entity';
+import { PasswordResetTokenEntity } from './password-reset-token.entity';
 import { TenancyModule } from '../tenancy/tenancy.module';
 import { BillingModule } from '../billing/billing.module';
+import { MailModule } from '../mail/mail.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([UserEntity, RefreshTokenEntity]),
+    TypeOrmModule.forFeature([UserEntity, RefreshTokenEntity, PasswordResetTokenEntity]),
     PassportModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
@@ -26,6 +28,7 @@ import { BillingModule } from '../billing/billing.module';
     }),
     TenancyModule,
     BillingModule,
+    MailModule,
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy, RolesGuard],

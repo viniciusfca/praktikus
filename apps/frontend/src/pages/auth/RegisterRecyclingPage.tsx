@@ -11,14 +11,16 @@ import {
   CFormLabel,
   CSpinner,
 } from '@coreui/react';
+import { cnpjZodSchema, strongPasswordZodSchema } from '@praktikus/shared';
 import { AuthShell } from '../../components/AuthShell';
 import { Stepper } from '../../components/Stepper';
+import { PasswordStrengthMeter } from '../../components/PasswordStrengthMeter';
 import { authService } from '../../services/auth.service';
 import { useAuthStore } from '../../store/auth.store';
 import { stripDigits, formatCnpj, formatPhone } from '../../utils/masks';
 
 const step1Schema = z.object({
-  cnpj: z.string().regex(/^\d{14}$/, 'CNPJ deve conter 14 dígitos numéricos'),
+  cnpj: cnpjZodSchema,
   razaoSocial: z.string().min(3, 'Razão Social deve ter no mínimo 3 caracteres'),
   nomeFantasia: z.string().min(2, 'Nome Fantasia deve ter no mínimo 2 caracteres'),
   telefone: z.string().optional(),
@@ -28,7 +30,7 @@ const step2Schema = z
   .object({
     ownerName: z.string().min(2, 'Nome deve ter no mínimo 2 caracteres'),
     email: z.string().email('E-mail inválido'),
-    password: z.string().min(8, 'Senha deve ter no mínimo 8 caracteres'),
+    password: strongPasswordZodSchema,
     confirmPassword: z.string(),
   })
   .refine((d) => d.password === d.confirmPassword, {
@@ -238,6 +240,8 @@ export function RegisterRecyclingPage() {
               )}
             </div>
           </div>
+
+          <PasswordStrengthMeter password={form2.watch('password') ?? ''} />
 
           <div className="pk-form-row-actions" style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 10 }}>
             <CButton

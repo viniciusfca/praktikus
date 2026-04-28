@@ -18,13 +18,12 @@ import {
   CModalTitle,
   CSpinner,
 } from '@coreui/react';
+import { cpfOrCnpjZodSchema } from '@praktikus/shared';
 import { customersService } from '../../../services/customers.service';
 
 const schema = z.object({
   nome: z.string().min(2, 'Nome deve ter no mínimo 2 caracteres'),
-  cpfCnpj: z
-    .string()
-    .regex(/^\d{11}$|^\d{14}$/, 'CPF deve ter 11 dígitos ou CNPJ 14 dígitos'),
+  cpfCnpj: cpfOrCnpjZodSchema,
   whatsapp: z.string().optional(),
   email: z.string().email('E-mail inválido').optional().or(z.literal('')),
 });

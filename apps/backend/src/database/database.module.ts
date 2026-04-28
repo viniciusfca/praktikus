@@ -4,6 +4,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TenantEntity } from '../modules/core/tenancy/tenant.entity';
 import { UserEntity } from '../modules/core/auth/user.entity';
 import { RefreshTokenEntity } from '../modules/core/auth/refresh-token.entity';
+import { PasswordResetTokenEntity } from '../modules/core/auth/password-reset-token.entity';
 import { BillingEntity } from '../modules/core/billing/billing.entity';
 import { CustomerEntity } from '../modules/workshop/customers/customer.entity';
 import { VehicleEntity } from '../modules/workshop/vehicles/vehicle.entity';
@@ -41,7 +42,7 @@ import { ColetaCommentEntity } from '../modules/recycling/coletas/coleta-comment
         username: config.get<string>('DB_USER'),
         password: config.get<string>('DB_PASS'),
         database: config.get<string>('DB_NAME'),
-        entities: [TenantEntity, UserEntity, RefreshTokenEntity, BillingEntity, CustomerEntity, VehicleEntity, CatalogServiceEntity, CatalogPartEntity, AppointmentEntity, AppointmentCommentEntity, ServiceOrderEntity, SoItemServiceEntity, SoItemPartEntity, BuyerEntity, CashSessionEntity, CashTransactionEntity, EmployeePermissionsEntity, ProductEntity, PurchaseEntity, PurchaseItemEntity, StockMovementEntity, SaleEntity, SaleItemEntity, SupplierEntity, UnitEntity, ColetaEntity, ColetaCommentEntity],
+        entities: [TenantEntity, UserEntity, RefreshTokenEntity, PasswordResetTokenEntity, BillingEntity, CustomerEntity, VehicleEntity, CatalogServiceEntity, CatalogPartEntity, AppointmentEntity, AppointmentCommentEntity, ServiceOrderEntity, SoItemServiceEntity, SoItemPartEntity, BuyerEntity, CashSessionEntity, CashTransactionEntity, EmployeePermissionsEntity, ProductEntity, PurchaseEntity, PurchaseItemEntity, StockMovementEntity, SaleEntity, SaleItemEntity, SupplierEntity, UnitEntity, ColetaEntity, ColetaCommentEntity],
         synchronize: false,
         logging: config.get('NODE_ENV') === 'development',
         migrations: [__dirname + '/migrations/*.{ts,js}'],

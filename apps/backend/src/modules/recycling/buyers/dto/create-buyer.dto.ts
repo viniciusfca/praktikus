@@ -1,4 +1,5 @@
-import { IsString, IsOptional, Matches, IsIn, ValidateIf, MinLength } from 'class-validator';
+import { IsString, IsOptional, IsIn, ValidateIf, MinLength } from 'class-validator';
+import { IsValidDocument } from '../../../core/validation';
 
 export class CreateBuyerDto {
   @IsString()
@@ -6,7 +7,7 @@ export class CreateBuyerDto {
   name: string;
 
   @IsOptional()
-  @Matches(/^\d{11}$|^\d{14}$/, { message: 'Documento deve ter 11 (CPF) ou 14 (CNPJ) dígitos' })
+  @IsValidDocument()
   document?: string;
 
   @ValidateIf((o) => !!o.document)

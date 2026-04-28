@@ -233,7 +233,7 @@ describe('PurchasesService', () => {
             notes: 'Entregue em 3 sacos',
             supplier_id: 'supplier1',
             supplier_name: 'Sucata Santa Lúcia',
-            supplier_document: '12345678000199',
+            supplier_document: '11222333000181',
             supplier_document_type: 'CNPJ',
             operator_id: 'op1',
             operator_name: 'Vini Silva',
@@ -257,7 +257,7 @@ describe('PurchasesService', () => {
       const result = await service.getById(TENANT, 'purchase1');
       expect(result.id).toBe('purchase1');
       expect(result.supplier.name).toBe('Sucata Santa Lúcia');
-      expect(result.supplier.document).toBe('12345678000199');
+      expect(result.supplier.document).toBe('11222333000181');
       expect(result.supplier.documentType).toBe('CNPJ');
       expect(result.operator.name).toBe('Vini Silva');
       expect(result.paymentMethod).toBe('PIX');

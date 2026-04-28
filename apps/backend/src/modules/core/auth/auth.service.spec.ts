@@ -1,11 +1,14 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConflictException, UnauthorizedException } from '@nestjs/common';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { DataSource } from 'typeorm';
+import { DataSource, IsNull } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 import { AuthService } from './auth.service';
 import { UserEntity, UserRole } from './user.entity';
 import { RefreshTokenEntity } from './refresh-token.entity';
+import { PasswordResetTokenEntity } from './password-reset-token.entity';
+import { MailService } from '../mail/mail.service';
 import { TenancyService } from '../tenancy/tenancy.service';
 import { BillingService } from '../billing/billing.service';
 import { TenantStatus } from '../tenancy/tenant.entity';
@@ -49,6 +52,24 @@ const mockJwtService = {
   sign: jest.fn().mockReturnValue('mock_access_token'),
 };
 
+const mockResetTokenRepo = {
+  save: jest.fn(),
+  findOne: jest.fn(),
+  update: jest.fn(),
+};
+
+const mockMailService = {
+  sendPasswordReset: jest.fn(),
+  sendPasswordChangedConfirmation: jest.fn(),
+};
+
+const mockConfigService = {
+  get: jest.fn((key: string) => {
+    if (key === 'APP_BASE_URL') return 'http://localhost:5173';
+    return undefined;
+  }),
+};
+
 describe('AuthService', () => {
   let service: AuthService;
 
@@ -58,9 +79,12 @@ describe('AuthService', () => {
         AuthService,
         { provide: getRepositoryToken(UserEntity), useValue: mockUserRepo },
         { provide: getRepositoryToken(RefreshTokenEntity), useValue: mockRefreshTokenRepo },
+        { provide: getRepositoryToken(PasswordResetTokenEntity), useValue: mockResetTokenRepo },
         { provide: TenancyService, useValue: mockTenancyService },
         { provide: BillingService, useValue: mockBillingService },
         { provide: JwtService, useValue: mockJwtService },
+        { provide: MailService, useValue: mockMailService },
+        { provide: ConfigService, useValue: mockConfigService },
         { provide: DataSource, useValue: mockDataSource },
       ],
     }).compile();
@@ -71,7 +95,7 @@ describe('AuthService', () => {
 
   describe('register', () => {
     const dto = {
-      cnpj: '12345678000199',
+      cnpj: '11222333000181',
       razaoSocial: 'Auto Center Ltda',
       nomeFantasia: 'Auto Center',
       email: 'owner@autocenter.com',
@@ -231,6 +255,115 @@ describe('AuthService', () => {
 
       await expect(service.changePassword('u1', 'any', 'newPass12')).rejects.toThrow(
         UnauthorizedException,
+      );
+    });
+  });
+
+  describe('requestPasswordReset', () => {
+    it('does nothing when email does not exist', async () => {
+      mockUserRepo.findOne.mockResolvedValue(null);
+
+      await service.requestPasswordReset('ghost@example.com');
+
+      expect(mockResetTokenRepo.save).not.toHaveBeenCalled();
+      expect(mockMailService.sendPasswordReset).not.toHaveBeenCalled();
+    });
+
+    it('creates a token (storing only its hash) and sends email when user exists', async () => {
+      mockUserRepo.findOne.mockResolvedValue({ id: 'u1', email: 'a@b.com', name: 'Ana' });
+      mockResetTokenRepo.save.mockResolvedValue({});
+      mockResetTokenRepo.update.mockResolvedValue({});
+
+      await service.requestPasswordReset('a@b.com');
+
+      // Previous active tokens for this user are invalidated first.
+      expect(mockResetTokenRepo.update).toHaveBeenCalledWith(
+        { userId: 'u1', usedAt: IsNull() },
+        expect.objectContaining({ usedAt: expect.any(Date) }),
+      );
+      expect(mockResetTokenRepo.save).toHaveBeenCalledTimes(1);
+      const saved = mockResetTokenRepo.save.mock.calls[0][0];
+      expect(saved.userId).toBe('u1');
+      expect(saved.tokenHash).toMatch(/^[a-f0-9]{64}$/);
+      expect(saved.expiresAt).toBeInstanceOf(Date);
+
+      expect(mockMailService.sendPasswordReset).toHaveBeenCalledTimes(1);
+      const [toEmail, toName, resetUrl] = mockMailService.sendPasswordReset.mock.calls[0];
+      expect(toEmail).toBe('a@b.com');
+      expect(toName).toBe('Ana');
+      expect(resetUrl).toMatch(
+        /^http:\/\/localhost:5173\/reset-password\/[a-f0-9]{64}$/,
+      );
+
+      // The plaintext token in the URL must NOT equal the hash stored in DB.
+      const tokenInUrl = resetUrl.split('/').pop()!;
+      expect(tokenInUrl).not.toBe(saved.tokenHash);
+    });
+  });
+
+  describe('resetPassword', () => {
+    function makeValidRecord(overrides: Partial<{ id: string; userId: string; expiresAt: Date; usedAt: Date | null }> = {}) {
+      return {
+        id: 'rt1',
+        userId: 'u1',
+        tokenHash: 'a'.repeat(64),
+        expiresAt: new Date(Date.now() + 30 * 60 * 1000),
+        usedAt: null,
+        ...overrides,
+      };
+    }
+
+    it('updates password, marks token used, and deletes refresh tokens (in a transaction)', async () => {
+      mockResetTokenRepo.findOne.mockResolvedValue(makeValidRecord());
+      mockUserRepo.findOne.mockResolvedValue({ id: 'u1', email: 'a@b.com', name: 'Ana', passwordHash: 'old' });
+
+      // Capture transaction callback
+      const managerMock = {
+        save: jest.fn().mockResolvedValue({}),
+        update: jest.fn().mockResolvedValue({}),
+        delete: jest.fn().mockResolvedValue({}),
+      };
+      (mockDataSource.transaction as jest.Mock).mockImplementation(async (cb) => cb(managerMock));
+
+      await service.resetPassword('plaintext-token-here', 'newStrongPass123');
+
+      expect(managerMock.save).toHaveBeenCalled();
+      expect(managerMock.update).toHaveBeenCalledWith(
+        PasswordResetTokenEntity,
+        'rt1',
+        expect.objectContaining({ usedAt: expect.any(Date) }),
+      );
+      expect(managerMock.delete).toHaveBeenCalledWith(
+        RefreshTokenEntity,
+        { userId: 'u1' },
+      );
+
+      expect(mockMailService.sendPasswordChangedConfirmation).toHaveBeenCalledWith('a@b.com', 'Ana');
+    });
+
+    it('rejects when the token is unknown', async () => {
+      mockResetTokenRepo.findOne.mockResolvedValue(null);
+
+      await expect(service.resetPassword('bad', 'newStrongPass123')).rejects.toThrow(
+        /inválido ou expirado/i,
+      );
+    });
+
+    it('rejects when the token is already used', async () => {
+      mockResetTokenRepo.findOne.mockResolvedValue(makeValidRecord({ usedAt: new Date() }));
+
+      await expect(service.resetPassword('used', 'newStrongPass123')).rejects.toThrow(
+        /inválido ou expirado/i,
+      );
+    });
+
+    it('rejects when the token is expired', async () => {
+      mockResetTokenRepo.findOne.mockResolvedValue(
+        makeValidRecord({ expiresAt: new Date(Date.now() - 1000) }),
+      );
+
+      await expect(service.resetPassword('expired', 'newStrongPass123')).rejects.toThrow(
+        /inválido ou expirado/i,
       );
     });
   });

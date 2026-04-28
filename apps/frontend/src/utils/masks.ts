@@ -1,6 +1,5 @@
-export function stripDigits(value: string): string {
-  return value.replace(/\D/g, '');
-}
+import { stripDigits } from '@praktikus/shared';
+export { stripDigits };
 
 export function formatCnpj(digits: string): string {
   const d = digits.slice(0, 14);

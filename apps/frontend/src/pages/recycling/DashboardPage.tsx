@@ -439,7 +439,9 @@ export function RecyclingDashboardPage() {
         const map: Record<string, { name: string; address: string | null }> = {};
         results.forEach((s) => {
           if (!s) return;
-          const addr = s.address ? `${s.address.street}, ${s.address.number}` : null;
+          const addr = s.address
+            ? `${s.address.street}, ${s.address.number}${s.address.neighborhood ? ' - ' + s.address.neighborhood : ''}`
+            : null;
           map[s.id] = { name: s.name, address: addr };
         });
         setSupplierMap(map);

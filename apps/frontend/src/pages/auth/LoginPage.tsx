@@ -105,28 +105,9 @@ export function LoginPage() {
           )}
         </div>
 
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginTop: 2,
-          }}
-        >
-          <label
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              fontSize: 13,
-              color: 'var(--cui-secondary-color)',
-              cursor: 'pointer',
-            }}
-          >
-            <input type="checkbox" /> Lembrar de mim
-          </label>
-          <a
-            href="#"
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 2 }}>
+          <Link
+            to="/forgot-password"
             style={{
               fontSize: 13,
               color: 'var(--cui-primary)',
@@ -135,7 +116,7 @@ export function LoginPage() {
             }}
           >
             Esqueci a senha
-          </a>
+          </Link>
         </div>
 
         <CButton
