@@ -185,7 +185,7 @@ describe('SalesService', () => {
             notes: 'Retirada em 2 cargas',
             buyer_id: 'buyer1',
             buyer_name: 'MGLU Recicla',
-            buyer_document: '12345678000199',
+            buyer_document: '11222333000181',
             buyer_document_type: null,
             operator_id: 'op1',
             operator_name: 'Vini Silva',

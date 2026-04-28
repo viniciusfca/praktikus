@@ -69,14 +69,14 @@ describe('BuyersService', () => {
 
   describe('create', () => {
     it('creates a buyer with CNPJ', async () => {
-      mockBuyerRepo.create.mockReturnValue({ id: 'b1', name: 'ACME', document: '12345678000199', documentType: 'CNPJ' });
-      mockBuyerRepo.save.mockResolvedValue({ id: 'b1', name: 'ACME', document: '12345678000199', documentType: 'CNPJ' });
+      mockBuyerRepo.create.mockReturnValue({ id: 'b1', name: 'ACME', document: '11222333000181', documentType: 'CNPJ' });
+      mockBuyerRepo.save.mockResolvedValue({ id: 'b1', name: 'ACME', document: '11222333000181', documentType: 'CNPJ' });
       const result = await service.create(TENANT, {
         name: 'ACME',
-        document: '12345678000199',
+        document: '11222333000181',
         documentType: 'CNPJ',
       });
-      expect(result.document).toBe('12345678000199');
+      expect(result.document).toBe('11222333000181');
       expect(result.documentType).toBe('CNPJ');
     });
 
@@ -116,7 +116,7 @@ describe('BuyersService', () => {
   describe('update', () => {
     it('rejects update that leaves document and documentType inconsistent', async () => {
       mockBuyerRepo.findOne.mockResolvedValue({
-        id: 'b1', name: 'X', document: '12345678000199', documentType: 'CNPJ',
+        id: 'b1', name: 'X', document: '11222333000181', documentType: 'CNPJ',
       });
       await expect(
         service.update(TENANT, 'b1', { documentType: null } as any),

@@ -95,7 +95,7 @@ describe('AuthService', () => {
 
   describe('register', () => {
     const dto = {
-      cnpj: '12345678000199',
+      cnpj: '11222333000181',
       razaoSocial: 'Auto Center Ltda',
       nomeFantasia: 'Auto Center',
       email: 'owner@autocenter.com',

@@ -70,7 +70,7 @@ describe('TenancyService', () => {
   describe('createTenant', () => {
     it('should create tenant with TRIAL status and trialEndsAt 30 days from now', async () => {
       const input = {
-        cnpj: '12345678000199',
+        cnpj: '11222333000181',
         razaoSocial: 'Auto Center Ltda',
         nomeFantasia: 'Auto Center',
         telefone: '11999999999',
@@ -144,7 +144,7 @@ describe('TenancyService', () => {
       mockTenantRepo.create.mockReturnValue({ id: 'uuid-1', status: TenantStatus.TRIAL, schemaName: 'pending', trialEndsAt: new Date() });
       mockTenantRepo.save.mockResolvedValue({ id: 'uuid-1', status: TenantStatus.TRIAL, schemaName: 'pending', trialEndsAt: new Date() });
 
-      const input = { cnpj: '12345678000199', razaoSocial: 'Test', nomeFantasia: 'Test' };
+      const input = { cnpj: '11222333000181', razaoSocial: 'Test', nomeFantasia: 'Test' };
       await expect(service.createTenant(input)).rejects.toThrow('Invalid schema name');
     });
   });
@@ -168,10 +168,10 @@ describe('TenancyService', () => {
 
   describe('findByCnpj', () => {
     it('should return tenant when found by CNPJ', async () => {
-      const tenant = { id: 'uuid-1', cnpj: '12345678000199' };
+      const tenant = { id: 'uuid-1', cnpj: '11222333000181' };
       mockTenantRepo.findOne.mockResolvedValue(tenant);
 
-      const result = await service.findByCnpj('12345678000199');
+      const result = await service.findByCnpj('11222333000181');
       expect(result).toEqual(tenant);
     });
 
