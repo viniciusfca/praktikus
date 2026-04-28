@@ -18,7 +18,7 @@ Após o teste, os 5 gaps de alta severidade foram validados contra o código-fon
 
 | Gap | Status | Evidência no código |
 |-----|--------|---------------------|
-| GAP-01 (Vendas → Caixa) | **Confirmado** | [`sales.service.ts:154`](../../../apps/backend/src/modules/recycling/sales/sales.service.ts#L154) — comentário explícito `// 3. Create sale_items + stock_movements (OUT) — NO cash_transaction` |
+| GAP-01 (Vendas → Caixa) | **Reclassificado: decisão de produto** (2026-04-28) | A IA do plugin presumiu que vendas deveriam mover o caixa automaticamente. **Não é o caso:** caixa é fluxo independente, com lançamentos manuais pelo operador. O comentário em [`sales.service.ts:154`](../../../apps/backend/src/modules/recycling/sales/sales.service.ts#L154) (`// NO cash_transaction`) reflete o desenho intencional. Escopo retido: adicionar `paymentMethod` na venda apenas para histórico/relatório (plano em [`docs/superpowers/plans/2026-04-28-sales-payment-method.md`](../../superpowers/plans/2026-04-28-sales-payment-method.md)). |
 | GAP-02 (Preço único) | **Confirmado** | [`product.entity.ts:15`](../../../apps/backend/src/modules/recycling/products/product.entity.ts#L15) — apenas `pricePerUnit` (sem `purchase_price`/`sale_price`). Nuance: o cálculo R$ 300 vs R$ 392 reportado pela IA pode ser inferido — `unitPrice` vem do DTO ([sales.service.ts:156](../../../apps/backend/src/modules/recycling/sales/sales.service.ts#L156)) |
 | GAP-03 (Invalid Date) | **Confirmado** | [`ReportsPage.tsx:53`](../../../apps/frontend/src/pages/recycling/reports/ReportsPage.tsx#L53) — `new Date(iso + 'T00:00:00')` sem guard contra `null`/`undefined` |
 | GAP-04 (Sem seed de unidades) | **Plausível** | Módulo `units` existe; não foi encontrado seed automático no fluxo de signup |
@@ -119,11 +119,11 @@ J1 → J18, **18/18 completas**. J8.3 (sub-login funcionário) marcada opcional 
 
 ### 🔴 Alta (5)
 
-#### GAP-01 · 🐞 · J12/J14 · Vendas não geram entrada no Caixa
-- **Sintoma:** Após registrar venda de 40kg Al = R$ 300, o caixa segue com saldo `-R$ 1.410,00` (apenas a saída da compra).
-- **Causa provável:** Form `/recycling/sales/new` **não tem campo "Forma de pagamento"**, e o handler de venda não dispara `cash_register_entries.insert`.
-- **Impacto:** Operadora real não consegue conciliar caixa. Bloqueador de produção.
-- **Fix sugerido:** (a) adicionar campo `payment_method` no form de venda; (b) no service `SalesService.create`, após persistir venda, criar registro em `CashRegisterEntries` (type=`income`, ref_id=sale.id, amount=sale.total). Tratar transação para rollback.
+#### GAP-01 · ⚠️ Reclassificado em 2026-04-28: decisão de produto · J12/J14
+- **Sintoma observado pela IA:** Após registrar venda de 40kg Al, o caixa não recebeu entrada correspondente.
+- **Reavaliação (2026-04-28):** **Não é bug.** O Praktikus desenhou o caixa como **fluxo independente das vendas** — o operador registra entradas/saídas manualmente. A automação que a IA esperou não faz parte do produto.
+- **Escopo retido (de fato gap):** o form de venda **não permitia registrar a forma de pagamento** (Dinheiro/PIX/Cartão/A prazo). Esse campo é útil para histórico e relatórios. Plano de implementação: [`docs/superpowers/plans/2026-04-28-sales-payment-method.md`](../../superpowers/plans/2026-04-28-sales-payment-method.md).
+- **Severidade revista:** 🟡 média (em vez de 🔴 alta).
 
 #### GAP-02 · 🐞 · J7/J12 · Produto tem um único preço (sem compra vs venda)
 - **Sintoma:** Cadastro de produto aceita apenas um campo "Preço". Roteiro pedia 7,50/9,80 (compra/venda); só foi possível salvar um.
