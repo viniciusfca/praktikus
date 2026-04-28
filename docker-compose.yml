@@ -88,6 +88,9 @@ services:
       SONAR_JDBC_URL: jdbc:postgresql://sonar-postgres:5432/sonar
       SONAR_JDBC_USERNAME: sonar
       SONAR_JDBC_PASSWORD: sonar_dev
+      # Desabilita o flood-stage watermark do Elasticsearch (95%) — ambiente
+      # de dev local pode ter o disco apertado. NÃO usar em produção.
+      SONAR_SEARCH_JAVAADDITIONALOPTS: '-Dcluster.routing.allocation.disk.threshold_enabled=false'
     ports:
       - '9000:9000'
     volumes:
