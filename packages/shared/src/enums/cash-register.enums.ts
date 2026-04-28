@@ -12,4 +12,5 @@ export enum PaymentMethod {
   CASH = 'CASH',
   PIX = 'PIX',
   CARD = 'CARD',
+  ON_CREDIT = 'ON_CREDIT',
 }
