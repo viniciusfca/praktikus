@@ -23,10 +23,13 @@ import {
   CTableRow,
 } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
-import { cilPlus, cilPen, cilRecycle } from '@coreui/icons';
+import { cilPlus, cilPen, cilPrint, cilRecycle } from '@coreui/icons';
 import { productsService, type Product } from '../../../services/recycling/products.service';
 import { unitsService, type Unit } from '../../../services/recycling/units.service';
 import { CurrencyInput } from '../../../components/inputs';
+import { downloadPdf } from '../../../utils/downloadPdf';
+import { PriceListPdf } from '../../../components/recycling/PriceListPdf';
+import { companyService } from '../../../services/company.service';
 
 // ── Schema ──────────────────────────────────────────────────────────────────
 const schema = z.object({
@@ -180,6 +183,8 @@ export function ProductsPage() {
   const [error, setError] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
+  const [printing, setPrinting] = useState(false);
+  const [printError, setPrintError] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -215,6 +220,43 @@ export function ProductsPage() {
   const getUnitAbbreviation = (unitId: string): string => {
     const unit = units.find((u) => u.id === unitId);
     return unit ? unit.abbreviation : '—';
+  };
+
+  const handlePrint = async () => {
+    setPrintError(null);
+    const active = products
+      .filter((p) => p.active)
+      .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
+    if (active.length === 0) {
+      setPrintError('Nenhum produto ativo para imprimir.');
+      return;
+    }
+    const rows = active.map((p) => {
+      const unit = units.find((u) => u.id === p.unitId);
+      return {
+        name: p.name,
+        unitSymbol: unit?.abbreviation ?? '—',
+        pricePerUnit: Number(p.pricePerUnit),
+      };
+    });
+    setPrinting(true);
+    try {
+      const company = await companyService.getProfile();
+      const printedAt = new Date();
+      const dateStr = printedAt.toISOString().slice(0, 10);
+      await downloadPdf(
+        <PriceListPdf
+          rows={rows}
+          empresa={{ nomeFantasia: company.nomeFantasia, cnpj: company.cnpj }}
+          printedAt={printedAt}
+        />,
+        `tabela-precos-${dateStr}.pdf`,
+      );
+    } catch {
+      setPrintError('Erro ao gerar PDF. Tente novamente.');
+    } finally {
+      setPrinting(false);
+    }
   };
 
   const openCreate = () => {
@@ -259,16 +301,29 @@ export function ProductsPage() {
               : 'Cadastre os materiais recicláveis que você opera'}
           </p>
         </div>
-        <CButton
-          color="primary"
-          onClick={openCreate}
-          style={{ borderRadius: 8, display: 'inline-flex', alignItems: 'center', gap: 6 }}
-        >
-          <CIcon icon={cilPlus} size="sm" /> Novo produto
-        </CButton>
+        <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+          <CButton
+            color="secondary"
+            variant="outline"
+            onClick={handlePrint}
+            disabled={printing || products.length === 0}
+            style={{ borderRadius: 8, display: 'inline-flex', alignItems: 'center', gap: 6 }}
+          >
+            {printing ? <CSpinner size="sm" /> : <CIcon icon={cilPrint} size="sm" />}
+            Imprimir tabela
+          </CButton>
+          <CButton
+            color="primary"
+            onClick={openCreate}
+            style={{ borderRadius: 8, display: 'inline-flex', alignItems: 'center', gap: 6 }}
+          >
+            <CIcon icon={cilPlus} size="sm" /> Novo produto
+          </CButton>
+        </div>
       </div>
 
       {error && <CAlert color="danger" className="mb-0">{error}</CAlert>}
+      {printError && <CAlert color="danger" className="mb-0">{printError}</CAlert>}
 
       {/* Table card */}
       <div className="pk-table-card">
