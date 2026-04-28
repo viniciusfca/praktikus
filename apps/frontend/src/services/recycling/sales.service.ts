@@ -1,3 +1,4 @@
+import { PaymentMethod } from '@praktikus/shared';
 import { api } from '../api';
 
 export interface SaleItemPayload {
@@ -54,6 +55,7 @@ export interface SaleDetail {
 export interface CreateSalePayload {
   buyerId: string;
   items: SaleItemPayload[];
+  paymentMethod: PaymentMethod;
   notes?: string;
 }
 
