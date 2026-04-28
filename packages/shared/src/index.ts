@@ -7,3 +7,4 @@ export * from './types/top-material';
 export * from './types/coleta';
 export * from './types/cep';
 export * from './utils';
+export * from './validators';
