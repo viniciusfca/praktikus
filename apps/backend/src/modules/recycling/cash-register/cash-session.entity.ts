@@ -19,10 +19,24 @@ export class CashSessionEntity {
   @Column({ name: 'closed_at', type: 'timestamptz', nullable: true })
   closedAt: Date | null;
 
-  @Column({ name: 'opening_balance', type: 'numeric', precision: 12, scale: 2, default: 0, transformer: numericTransformer })
+  @Column({
+    name: 'opening_balance',
+    type: 'numeric',
+    precision: 12,
+    scale: 2,
+    default: 0,
+    transformer: numericTransformer,
+  })
   openingBalance: number;
 
-  @Column({ name: 'closing_balance', type: 'numeric', precision: 12, scale: 2, nullable: true, transformer: numericTransformer })
+  @Column({
+    name: 'closing_balance',
+    type: 'numeric',
+    precision: 12,
+    scale: 2,
+    nullable: true,
+    transformer: numericTransformer,
+  })
   closingBalance: number | null;
 
   @Column({ type: 'varchar', default: CashSessionStatus.OPEN })

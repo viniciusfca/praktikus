@@ -52,7 +52,10 @@ export class CompaniesController implements OnModuleInit {
 
   @Patch()
   @Roles(UserRole.OWNER)
-  updateProfile(@Request() req: RequestWithUser, @Body() dto: UpdateCompanyDto) {
+  updateProfile(
+    @Request() req: RequestWithUser,
+    @Body() dto: UpdateCompanyDto,
+  ) {
     return this.companiesService.updateProfile(req.user.tenantId, dto);
   }
 

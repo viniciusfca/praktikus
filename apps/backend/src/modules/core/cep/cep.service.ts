@@ -47,7 +47,10 @@ export class CepService {
     const viacepOutcome = await this.tryViaCep(cep);
     if (viacepOutcome.kind === 'ok') return viacepOutcome.value;
 
-    if (cepliteOutcome.kind === 'not-found' && viacepOutcome.kind === 'not-found') {
+    if (
+      cepliteOutcome.kind === 'not-found' &&
+      viacepOutcome.kind === 'not-found'
+    ) {
       throw new NotFoundException('CEP não encontrado');
     }
 
@@ -93,7 +96,10 @@ export class CepService {
     }
   }
 
-  private normalizeCeplite(raw: CepliteRaw | null | undefined, cep: string): CepLookupResponseDto | null {
+  private normalizeCeplite(
+    raw: CepliteRaw | null | undefined,
+    cep: string,
+  ): CepLookupResponseDto | null {
     if (!raw || typeof raw !== 'object') return null;
     if (raw.cidade === undefined || raw.uf === undefined) return null;
     return {
@@ -105,7 +111,10 @@ export class CepService {
     };
   }
 
-  private normalizeViaCep(raw: ViaCepRaw | null | undefined, cep: string): CepLookupResponseDto | null {
+  private normalizeViaCep(
+    raw: ViaCepRaw | null | undefined,
+    cep: string,
+  ): CepLookupResponseDto | null {
     if (!raw || typeof raw !== 'object') return null;
     if (raw.localidade === undefined || raw.uf === undefined) return null;
     return {

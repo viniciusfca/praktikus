@@ -1,6 +1,16 @@
 import {
-  Body, Controller, Delete, Get, HttpCode, Param,
-  ParseUUIDPipe, Patch, Post, Query, Request, UseGuards,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Query,
+  Request,
+  UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../../core/auth/jwt-auth.guard';
 import { RolesGuard } from '../../core/auth/roles.guard';
@@ -30,11 +40,18 @@ export class ServiceOrdersController {
     @Query('date_start') dateStart?: string,
     @Query('date_end') dateEnd?: string,
   ) {
-    return this.soService.list(req.user.tenantId, { status, dateStart, dateEnd });
+    return this.soService.list(req.user.tenantId, {
+      status,
+      dateStart,
+      dateEnd,
+    });
   }
 
   @Get(':id')
-  getById(@Request() req: RequestWithUser, @Param('id', ParseUUIDPipe) id: string) {
+  getById(
+    @Request() req: RequestWithUser,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
     return this.soService.getById(req.user.tenantId, id);
   }
 
@@ -58,7 +75,12 @@ export class ServiceOrdersController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: PatchStatusDto,
   ) {
-    return this.soService.patchStatus(req.user.tenantId, id, dto.status, req.user.role);
+    return this.soService.patchStatus(
+      req.user.tenantId,
+      id,
+      dto.status,
+      req.user.role,
+    );
   }
 
   @Patch(':id/payment-status')
@@ -68,11 +90,18 @@ export class ServiceOrdersController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: PatchPaymentStatusDto,
   ) {
-    return this.soService.patchPaymentStatus(req.user.tenantId, id, dto.statusPagamento);
+    return this.soService.patchPaymentStatus(
+      req.user.tenantId,
+      id,
+      dto.statusPagamento,
+    );
   }
 
   @Post(':id/approval-token')
-  generateApprovalToken(@Request() req: RequestWithUser, @Param('id', ParseUUIDPipe) id: string) {
+  generateApprovalToken(
+    @Request() req: RequestWithUser,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
     return this.soService.generateApprovalToken(req.user.tenantId, id);
   }
 
@@ -117,7 +146,10 @@ export class ServiceOrdersController {
   @Delete(':id')
   @Roles(UserRole.OWNER)
   @HttpCode(204)
-  delete(@Request() req: RequestWithUser, @Param('id', ParseUUIDPipe) id: string) {
+  delete(
+    @Request() req: RequestWithUser,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
     return this.soService.delete(req.user.tenantId, id);
   }
 }

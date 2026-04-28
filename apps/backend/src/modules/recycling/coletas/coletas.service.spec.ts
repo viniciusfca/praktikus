@@ -30,7 +30,9 @@ const mockQueryRunner = {
     }),
   },
 };
-const mockDataSource = { createQueryRunner: jest.fn().mockReturnValue(mockQueryRunner) };
+const mockDataSource = {
+  createQueryRunner: jest.fn().mockReturnValue(mockQueryRunner),
+};
 
 describe('ColetasService', () => {
   let service: ColetasService;
@@ -38,7 +40,10 @@ describe('ColetasService', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [ColetasService, { provide: DataSource, useValue: mockDataSource }],
+      providers: [
+        ColetasService,
+        { provide: DataSource, useValue: mockDataSource },
+      ],
     }).compile();
     service = module.get<ColetasService>(ColetasService);
     jest.clearAllMocks();
@@ -46,7 +51,10 @@ describe('ColetasService', () => {
 
   it('throws on invalid tenantId', async () => {
     await expect(
-      service.create('bad-id', { supplierId: 'x', scheduledAt: '2026-04-20T10:00:00Z' } as any),
+      service.create('bad-id', {
+        supplierId: 'x',
+        scheduledAt: '2026-04-20T10:00:00Z',
+      } as any),
     ).rejects.toThrow('Invalid tenantId');
   });
 
@@ -54,8 +62,12 @@ describe('ColetasService', () => {
     it('creates coleta when supplier exists', async () => {
       supplierRepo.findOne.mockResolvedValue({ id: 'sup1', name: 'S' });
       coletaRepo.save.mockResolvedValue({
-        id: 'c1', supplierId: 'sup1', employeeId: null,
-        scheduledAt: new Date(), status: ColetaStatus.AGENDADA, notes: null,
+        id: 'c1',
+        supplierId: 'sup1',
+        employeeId: null,
+        scheduledAt: new Date(),
+        status: ColetaStatus.AGENDADA,
+        notes: null,
       });
 
       const result = await service.create(TENANT, {
@@ -70,7 +82,10 @@ describe('ColetasService', () => {
     it('throws if supplier does not exist', async () => {
       supplierRepo.findOne.mockResolvedValue(null);
       await expect(
-        service.create(TENANT, { supplierId: 'missing', scheduledAt: '2026-04-20T10:00:00Z' } as any),
+        service.create(TENANT, {
+          supplierId: 'missing',
+          scheduledAt: '2026-04-20T10:00:00Z',
+        } as any),
       ).rejects.toThrow(NotFoundException);
     });
 
@@ -79,7 +94,9 @@ describe('ColetasService', () => {
       userRepo.findOne.mockResolvedValue({ id: 'u1', role: 'OWNER' });
       await expect(
         service.create(TENANT, {
-          supplierId: 'sup1', employeeId: 'u1', scheduledAt: '2026-04-20T10:00:00Z',
+          supplierId: 'sup1',
+          employeeId: 'u1',
+          scheduledAt: '2026-04-20T10:00:00Z',
         } as any),
       ).rejects.toThrow(BadRequestException);
     });
@@ -88,68 +105,110 @@ describe('ColetasService', () => {
   describe('update', () => {
     it('allows field updates on AGENDADA coleta', async () => {
       coletaRepo.findOne.mockResolvedValue({
-        id: 'c1', status: ColetaStatus.AGENDADA, supplierId: 'sup1',
-        employeeId: null, scheduledAt: new Date(), notes: null,
+        id: 'c1',
+        status: ColetaStatus.AGENDADA,
+        supplierId: 'sup1',
+        employeeId: null,
+        scheduledAt: new Date(),
+        notes: null,
       });
       supplierRepo.findOne.mockResolvedValue({ id: 'sup2' });
       coletaRepo.save.mockResolvedValue({
-        id: 'c1', supplierId: 'sup2', status: ColetaStatus.AGENDADA,
+        id: 'c1',
+        supplierId: 'sup2',
+        status: ColetaStatus.AGENDADA,
       });
 
-      const result = await service.update(TENANT, 'c1', { supplierId: 'sup2' } as any);
+      const result = await service.update(TENANT, 'c1', {
+        supplierId: 'sup2',
+      } as any);
       expect(result.supplierId).toBe('sup2');
     });
 
     it('rejects update on CONCLUIDA coleta', async () => {
-      coletaRepo.findOne.mockResolvedValue({ id: 'c1', status: ColetaStatus.CONCLUIDA });
-      await expect(service.update(TENANT, 'c1', { notes: 'new note' } as any))
-        .rejects.toThrow(BadRequestException);
+      coletaRepo.findOne.mockResolvedValue({
+        id: 'c1',
+        status: ColetaStatus.CONCLUIDA,
+      });
+      await expect(
+        service.update(TENANT, 'c1', { notes: 'new note' } as any),
+      ).rejects.toThrow(BadRequestException);
     });
 
     it('rejects update on CANCELADA coleta', async () => {
-      coletaRepo.findOne.mockResolvedValue({ id: 'c1', status: ColetaStatus.CANCELADA });
-      await expect(service.update(TENANT, 'c1', { scheduledAt: '2026-05-01T10:00:00Z' } as any))
-        .rejects.toThrow(BadRequestException);
+      coletaRepo.findOne.mockResolvedValue({
+        id: 'c1',
+        status: ColetaStatus.CANCELADA,
+      });
+      await expect(
+        service.update(TENANT, 'c1', {
+          scheduledAt: '2026-05-01T10:00:00Z',
+        } as any),
+      ).rejects.toThrow(BadRequestException);
     });
 
     it('404 if coleta not found', async () => {
       coletaRepo.findOne.mockResolvedValue(null);
-      await expect(service.update(TENANT, 'x', { notes: 'n' } as any))
-        .rejects.toThrow(NotFoundException);
+      await expect(
+        service.update(TENANT, 'x', { notes: 'n' } as any),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 
   describe('updateStatus', () => {
     it('allows AGENDADA → CONCLUIDA', async () => {
-      coletaRepo.findOne.mockResolvedValue({ id: 'c1', status: ColetaStatus.AGENDADA });
-      coletaRepo.save.mockResolvedValue({ id: 'c1', status: ColetaStatus.CONCLUIDA });
-      const result = await service.updateStatus(TENANT, 'c1', ColetaStatus.CONCLUIDA);
+      coletaRepo.findOne.mockResolvedValue({
+        id: 'c1',
+        status: ColetaStatus.AGENDADA,
+      });
+      coletaRepo.save.mockResolvedValue({
+        id: 'c1',
+        status: ColetaStatus.CONCLUIDA,
+      });
+      const result = await service.updateStatus(
+        TENANT,
+        'c1',
+        ColetaStatus.CONCLUIDA,
+      );
       expect(result.status).toBe(ColetaStatus.CONCLUIDA);
     });
 
     it('rejects CONCLUIDA → CANCELADA', async () => {
-      coletaRepo.findOne.mockResolvedValue({ id: 'c1', status: ColetaStatus.CONCLUIDA });
-      await expect(service.updateStatus(TENANT, 'c1', ColetaStatus.CANCELADA))
-        .rejects.toThrow(BadRequestException);
+      coletaRepo.findOne.mockResolvedValue({
+        id: 'c1',
+        status: ColetaStatus.CONCLUIDA,
+      });
+      await expect(
+        service.updateStatus(TENANT, 'c1', ColetaStatus.CANCELADA),
+      ).rejects.toThrow(BadRequestException);
     });
 
     it('404 if not found', async () => {
       coletaRepo.findOne.mockResolvedValue(null);
-      await expect(service.updateStatus(TENANT, 'x', ColetaStatus.CONCLUIDA))
-        .rejects.toThrow(NotFoundException);
+      await expect(
+        service.updateStatus(TENANT, 'x', ColetaStatus.CONCLUIDA),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 
   describe('delete', () => {
     it('deletes AGENDADA coleta', async () => {
-      coletaRepo.findOne.mockResolvedValue({ id: 'c1', status: ColetaStatus.AGENDADA });
+      coletaRepo.findOne.mockResolvedValue({
+        id: 'c1',
+        status: ColetaStatus.AGENDADA,
+      });
       await service.delete(TENANT, 'c1');
       expect(coletaRepo.remove).toHaveBeenCalled();
     });
 
     it('refuses to delete CONCLUIDA', async () => {
-      coletaRepo.findOne.mockResolvedValue({ id: 'c1', status: ColetaStatus.CONCLUIDA });
-      await expect(service.delete(TENANT, 'c1')).rejects.toThrow(BadRequestException);
+      coletaRepo.findOne.mockResolvedValue({
+        id: 'c1',
+        status: ColetaStatus.CONCLUIDA,
+      });
+      await expect(service.delete(TENANT, 'c1')).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 
@@ -166,7 +225,9 @@ describe('ColetasService', () => {
 
       const result = await service.upcoming(TENANT, 4);
       expect(result).toHaveLength(2);
-      expect(qb.where).toHaveBeenCalledWith('c.status = :status', { status: ColetaStatus.AGENDADA });
+      expect(qb.where).toHaveBeenCalledWith('c.status = :status', {
+        status: ColetaStatus.AGENDADA,
+      });
       expect(qb.orderBy).toHaveBeenCalledWith('c.scheduledAt', 'ASC');
       expect(qb.limit).toHaveBeenCalledWith(4);
     });

@@ -10,7 +10,9 @@ function makeCtx(user: any): ExecutionContext {
 describe('TenantStatusGuard', () => {
   let guard: TenantStatusGuard;
 
-  beforeEach(() => { guard = new TenantStatusGuard(); });
+  beforeEach(() => {
+    guard = new TenantStatusGuard();
+  });
 
   it('should allow ACTIVE tenants', () => {
     expect(guard.canActivate(makeCtx({ tenantStatus: 'ACTIVE' }))).toBe(true);
@@ -25,9 +27,9 @@ describe('TenantStatusGuard', () => {
   });
 
   it('should throw ForbiddenException for SUSPENDED tenants', () => {
-    expect(() => guard.canActivate(makeCtx({ tenantStatus: 'SUSPENDED' }))).toThrow(
-      ForbiddenException,
-    );
+    expect(() =>
+      guard.canActivate(makeCtx({ tenantStatus: 'SUSPENDED' })),
+    ).toThrow(ForbiddenException);
   });
 
   it('should allow requests without user (unauthenticated routes)', () => {

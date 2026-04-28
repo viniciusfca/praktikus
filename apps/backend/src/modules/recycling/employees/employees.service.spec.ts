@@ -5,7 +5,13 @@ import { EmployeesService } from './employees.service';
 import { UserEntity } from '../../core/auth/user.entity';
 import { EmployeePermissionsEntity } from './employee-permissions.entity';
 
-const mockUserRepo = { findOne: jest.fn(), create: jest.fn(), save: jest.fn(), find: jest.fn(), remove: jest.fn() };
+const mockUserRepo = {
+  findOne: jest.fn(),
+  create: jest.fn(),
+  save: jest.fn(),
+  find: jest.fn(),
+  remove: jest.fn(),
+};
 const mockPermRepo = { findOne: jest.fn(), create: jest.fn(), save: jest.fn() };
 
 const mockQueryRunner = {
@@ -56,8 +62,10 @@ describe('EmployeesService', () => {
       mockUserRepo.findOne.mockResolvedValue({ id: 'existing' });
       await expect(
         service.create('00000000-0000-0000-0000-000000000001', {
-          name: 'Ana', email: 'ana@test.com', password: 'senha123',
-        })
+          name: 'Ana',
+          email: 'ana@test.com',
+          password: 'senha123',
+        }),
       ).rejects.toThrow(ConflictException);
     });
 
@@ -69,9 +77,14 @@ describe('EmployeesService', () => {
       mockPermRepo.create.mockReturnValue({ userId: 'u1' });
       mockPermRepo.save.mockResolvedValue({ userId: 'u1' });
 
-      const result = await service.create('00000000-0000-0000-0000-000000000001', {
-        name: 'Ana', email: 'ana@test.com', password: 'senha123',
-      });
+      const result = await service.create(
+        '00000000-0000-0000-0000-000000000001',
+        {
+          name: 'Ana',
+          email: 'ana@test.com',
+          password: 'senha123',
+        },
+      );
 
       expect(mockPermRepo.save).toHaveBeenCalled();
       expect(result).toEqual(newUser);
@@ -82,7 +95,7 @@ describe('EmployeesService', () => {
     it('should throw NotFoundException when employee not found', async () => {
       mockUserRepo.findOne.mockResolvedValue(null);
       await expect(
-        service.delete('00000000-0000-0000-0000-000000000001', 'missing')
+        service.delete('00000000-0000-0000-0000-000000000001', 'missing'),
       ).rejects.toThrow(NotFoundException);
     });
 
@@ -99,14 +112,17 @@ describe('EmployeesService', () => {
     it('should throw NotFoundException when permissions not found', async () => {
       mockPermRepo.findOne.mockResolvedValue(null);
       await expect(
-        service.getPermissions('00000000-0000-0000-0000-000000000001', 'u1')
+        service.getPermissions('00000000-0000-0000-0000-000000000001', 'u1'),
       ).rejects.toThrow(NotFoundException);
     });
 
     it('should return permissions for employee', async () => {
       const perms = { userId: 'u1', canManageSuppliers: true };
       mockPermRepo.findOne.mockResolvedValue(perms);
-      const result = await service.getPermissions('00000000-0000-0000-0000-000000000001', 'u1');
+      const result = await service.getPermissions(
+        '00000000-0000-0000-0000-000000000001',
+        'u1',
+      );
       expect(result).toEqual(perms);
     });
   });
@@ -115,16 +131,28 @@ describe('EmployeesService', () => {
     it('should throw NotFoundException when permissions not found', async () => {
       mockPermRepo.findOne.mockResolvedValue(null);
       await expect(
-        service.updatePermissions('00000000-0000-0000-0000-000000000001', 'u1', { canManageBuyers: true })
+        service.updatePermissions(
+          '00000000-0000-0000-0000-000000000001',
+          'u1',
+          { canManageBuyers: true },
+        ),
       ).rejects.toThrow(NotFoundException);
     });
 
     it('should update and return permissions', async () => {
-      const perms = { userId: 'u1', canManageSuppliers: true, canManageBuyers: false };
+      const perms = {
+        userId: 'u1',
+        canManageSuppliers: true,
+        canManageBuyers: false,
+      };
       mockPermRepo.findOne.mockResolvedValue(perms);
       mockPermRepo.save.mockResolvedValue({ ...perms, canManageBuyers: true });
 
-      const result = await service.updatePermissions('00000000-0000-0000-0000-000000000001', 'u1', { canManageBuyers: true });
+      const result = await service.updatePermissions(
+        '00000000-0000-0000-0000-000000000001',
+        'u1',
+        { canManageBuyers: true },
+      );
       expect(result.canManageBuyers).toBe(true);
     });
   });

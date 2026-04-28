@@ -11,12 +11,17 @@ export class MailService {
   constructor(private readonly config: ConfigService) {
     const apiKey = this.config.get<string>('RESEND_API_KEY');
     this.resend = apiKey ? new Resend(apiKey) : null;
-    this.from = this.config.get<string>('MAIL_FROM') ?? 'Praktikus <no-reply@praktikus.com.br>';
+    this.from =
+      this.config.get<string>('MAIL_FROM') ??
+      'Praktikus <no-reply@praktikus.com.br>';
   }
 
-  async sendPasswordReset(email: string, name: string, resetUrl: string): Promise<void> {
+  async sendPasswordReset(
+    email: string,
+    name: string,
+    resetUrl: string,
+  ): Promise<void> {
     if (!this.resend) {
-      // eslint-disable-next-line no-console -- dev-only path; surfaces link to terminal
       console.log(`[mail dev] password reset for ${email}: ${resetUrl}`);
       return;
     }
@@ -28,16 +33,22 @@ export class MailService {
         html: this.passwordResetHtml(name, resetUrl),
       });
       if (error) {
-        this.logger.warn(`Resend error sending reset to ${email}: ${error.message}`);
+        this.logger.warn(
+          `Resend error sending reset to ${email}: ${error.message}`,
+        );
       }
     } catch (err) {
-      this.logger.warn(`Exception sending reset to ${email}: ${(err as Error).message}`);
+      this.logger.warn(
+        `Exception sending reset to ${email}: ${(err as Error).message}`,
+      );
     }
   }
 
-  async sendPasswordChangedConfirmation(email: string, name: string): Promise<void> {
+  async sendPasswordChangedConfirmation(
+    email: string,
+    name: string,
+  ): Promise<void> {
     if (!this.resend) {
-      // eslint-disable-next-line no-console -- dev-only path
       console.log(`[mail dev] password changed for ${email} (${name})`);
       return;
     }
@@ -49,10 +60,14 @@ export class MailService {
         html: this.passwordChangedHtml(name),
       });
       if (error) {
-        this.logger.warn(`Resend error sending confirmation to ${email}: ${error.message}`);
+        this.logger.warn(
+          `Resend error sending confirmation to ${email}: ${error.message}`,
+        );
       }
     } catch (err) {
-      this.logger.warn(`Exception sending confirmation to ${email}: ${(err as Error).message}`);
+      this.logger.warn(
+        `Exception sending confirmation to ${email}: ${(err as Error).message}`,
+      );
     }
   }
 

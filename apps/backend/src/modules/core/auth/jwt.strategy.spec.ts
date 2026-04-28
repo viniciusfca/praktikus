@@ -40,7 +40,11 @@ describe('JwtStrategy', () => {
       };
       mockUserRepo.findOne.mockResolvedValue(user);
 
-      const payload = { sub: 'user-uuid-1', tenant_id: 'tenant-uuid-1', role: 'OWNER' };
+      const payload = {
+        sub: 'user-uuid-1',
+        tenant_id: 'tenant-uuid-1',
+        role: 'OWNER',
+      };
       const result = await strategy.validate(payload);
 
       expect(result).toEqual({
@@ -51,14 +55,22 @@ describe('JwtStrategy', () => {
         tenantStatus: 'ACTIVE',
         tenantSegment: 'WORKSHOP',
       });
-      expect(mockUserRepo.findOne).toHaveBeenCalledWith({ where: { id: 'user-uuid-1' } });
+      expect(mockUserRepo.findOne).toHaveBeenCalledWith({
+        where: { id: 'user-uuid-1' },
+      });
     });
 
     it('should throw UnauthorizedException when user does not exist', async () => {
       mockUserRepo.findOne.mockResolvedValue(null);
 
-      const payload = { sub: 'nonexistent', tenant_id: 'tenant-1', role: 'OWNER' };
-      await expect(strategy.validate(payload)).rejects.toThrow(UnauthorizedException);
+      const payload = {
+        sub: 'nonexistent',
+        tenant_id: 'tenant-1',
+        role: 'OWNER',
+      };
+      await expect(strategy.validate(payload)).rejects.toThrow(
+        UnauthorizedException,
+      );
     });
 
     it('should work for EMPLOYEE role', async () => {

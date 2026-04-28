@@ -1,6 +1,16 @@
 import {
-  Body, Controller, Delete, Get, HttpCode, Param,
-  ParseUUIDPipe, Patch, Post, Query, Request, UseGuards,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Query,
+  Request,
+  UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../../core/auth/jwt-auth.guard';
 import { RolesGuard } from '../../core/auth/roles.guard';
@@ -27,11 +37,19 @@ export class CatalogPartsController {
     @Query('limit') limit = '20',
     @Query('search') search?: string,
   ) {
-    return this.catalogPartsService.list(req.user.tenantId, Number(page), Number(limit), search);
+    return this.catalogPartsService.list(
+      req.user.tenantId,
+      Number(page),
+      Number(limit),
+      search,
+    );
   }
 
   @Get(':id')
-  getById(@Request() req: RequestWithUser, @Param('id', ParseUUIDPipe) id: string) {
+  getById(
+    @Request() req: RequestWithUser,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
     return this.catalogPartsService.getById(req.user.tenantId, id);
   }
 
@@ -52,7 +70,10 @@ export class CatalogPartsController {
   @Delete(':id')
   @Roles(UserRole.OWNER)
   @HttpCode(204)
-  delete(@Request() req: RequestWithUser, @Param('id', ParseUUIDPipe) id: string) {
+  delete(
+    @Request() req: RequestWithUser,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
     return this.catalogPartsService.delete(req.user.tenantId, id);
   }
 }

@@ -1,6 +1,14 @@
 import {
-  Body, Controller, Delete, Get, HttpCode, Param,
-  ParseUUIDPipe, Post, Request, UseGuards,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  Request,
+  UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../../core/auth/jwt-auth.guard';
 import { RolesGuard } from '../../core/auth/roles.guard';
@@ -49,6 +57,10 @@ export class AppointmentCommentsController {
     @Param('appointmentId', ParseUUIDPipe) appointmentId: string,
     @Param('commentId', ParseUUIDPipe) commentId: string,
   ) {
-    return this.commentsService.deleteComment(req.user.tenantId, appointmentId, commentId);
+    return this.commentsService.deleteComment(
+      req.user.tenantId,
+      appointmentId,
+      commentId,
+    );
   }
 }

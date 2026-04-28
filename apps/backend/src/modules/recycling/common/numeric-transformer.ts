@@ -5,5 +5,6 @@
  */
 export const numericTransformer = {
   to: (value: number | null | undefined): number | null | undefined => value,
-  from: (value: string | null): number | null => (value === null ? null : parseFloat(value)),
+  from: (value: string | null): number | null =>
+    value === null ? null : parseFloat(value),
 };

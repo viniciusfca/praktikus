@@ -1,15 +1,28 @@
 import {
-  Body, Controller, Get, Param, ParseUUIDPipe,
-  Patch, Post, Query, Request, UseGuards,
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Query,
+  Request,
+  UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../../core/auth/jwt-auth.guard';
-import { EmployeePermissionsGuard, RequirePermission } from '../employees/employee-permissions.guard';
+import {
+  EmployeePermissionsGuard,
+  RequirePermission,
+} from '../employees/employee-permissions.guard';
 import { AuthUser } from '../../core/auth/jwt.strategy';
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 
-interface RequestWithUser extends Request { user: AuthUser; }
+interface RequestWithUser extends Request {
+  user: AuthUser;
+}
 
 @Controller('recycling/products')
 @UseGuards(JwtAuthGuard, EmployeePermissionsGuard)
@@ -21,11 +34,17 @@ export class ProductsController {
     @Request() req: RequestWithUser,
     @Query('includeInactive') includeInactive?: string,
   ) {
-    return this.productsService.list(req.user.tenantId, includeInactive === 'true');
+    return this.productsService.list(
+      req.user.tenantId,
+      includeInactive === 'true',
+    );
   }
 
   @Get(':id')
-  getById(@Request() req: RequestWithUser, @Param('id', ParseUUIDPipe) id: string) {
+  getById(
+    @Request() req: RequestWithUser,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
     return this.productsService.getById(req.user.tenantId, id);
   }
 

@@ -1,4 +1,11 @@
-import { IsEnum, IsNumber, IsPositive, IsOptional, IsString, Max } from 'class-validator';
+import {
+  IsEnum,
+  IsNumber,
+  IsPositive,
+  IsOptional,
+  IsString,
+  Max,
+} from 'class-validator';
 import { TransactionType, PaymentMethod } from '@praktikus/shared';
 
 export class AddTransactionDto {

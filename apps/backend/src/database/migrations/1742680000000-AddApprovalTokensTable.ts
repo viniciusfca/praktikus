@@ -15,11 +15,13 @@ export class AddApprovalTokensTable1742680000000 implements MigrationInterface {
       )
     `);
     await queryRunner.query(
-      `CREATE INDEX "IDX_so_approval_tokens_tenant" ON "public"."service_order_approval_tokens" ("tenant_id")`
+      `CREATE INDEX "IDX_so_approval_tokens_tenant" ON "public"."service_order_approval_tokens" ("tenant_id")`,
     );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`DROP TABLE IF EXISTS "public"."service_order_approval_tokens"`);
+    await queryRunner.query(
+      `DROP TABLE IF EXISTS "public"."service_order_approval_tokens"`,
+    );
   }
 }

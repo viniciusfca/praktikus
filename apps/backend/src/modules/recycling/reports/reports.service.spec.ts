@@ -10,7 +10,9 @@ const mockQueryRunner = {
   query: jest.fn(),
   release: jest.fn().mockResolvedValue(undefined),
 };
-const mockDataSource = { createQueryRunner: jest.fn().mockReturnValue(mockQueryRunner) };
+const mockDataSource = {
+  createQueryRunner: jest.fn().mockReturnValue(mockQueryRunner),
+};
 
 describe('RecyclingReportsService', () => {
   let service: RecyclingReportsService;
@@ -18,18 +20,25 @@ describe('RecyclingReportsService', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [RecyclingReportsService, { provide: DataSource, useValue: mockDataSource }],
+      providers: [
+        RecyclingReportsService,
+        { provide: DataSource, useValue: mockDataSource },
+      ],
     }).compile();
     service = module.get<RecyclingReportsService>(RecyclingReportsService);
     jest.clearAllMocks();
   });
 
   it('should throw on invalid tenantId (getDashboardSummary)', async () => {
-    await expect(service.getDashboardSummary('bad-id')).rejects.toThrow('Invalid tenantId');
+    await expect(service.getDashboardSummary('bad-id')).rejects.toThrow(
+      'Invalid tenantId',
+    );
   });
 
   it('should throw on invalid tenantId (getPurchasesByPeriod)', async () => {
-    await expect(service.getPurchasesByPeriod('bad-id', '2026-04-01', '2026-04-30')).rejects.toThrow('Invalid tenantId');
+    await expect(
+      service.getPurchasesByPeriod('bad-id', '2026-04-01', '2026-04-30'),
+    ).rejects.toThrow('Invalid tenantId');
   });
 
   describe('getDashboardSummary', () => {
@@ -42,8 +51,10 @@ describe('RecyclingReportsService', () => {
         if (sql.includes("date_trunc('month'") && sql.includes('total_month')) {
           return [{ total_month: '14820.00', purchases_count_month: '42' }];
         }
-        if (sql.includes('cash_sessions')) return [{ id: 'sess1', status: 'OPEN', opening_balance: '200.00' }];
-        if (sql.includes('cash_transactions')) return [{ total_in: '800.00', total_out: '340.00' }];
+        if (sql.includes('cash_sessions'))
+          return [{ id: 'sess1', status: 'OPEN', opening_balance: '200.00' }];
+        if (sql.includes('cash_transactions'))
+          return [{ total_in: '800.00', total_out: '340.00' }];
         return [];
       });
 
@@ -82,7 +93,11 @@ describe('RecyclingReportsService', () => {
         return [{ date: '2026-04-07', total: '1500.00', count: '3' }];
       });
 
-      const result = await service.getPurchasesByPeriod(TENANT, '2026-04-01', '2026-04-07');
+      const result = await service.getPurchasesByPeriod(
+        TENANT,
+        '2026-04-01',
+        '2026-04-07',
+      );
       expect(result).toHaveLength(1);
       expect(result[0].total).toBe(1500);
       expect(result[0].count).toBe(3);
@@ -91,7 +106,9 @@ describe('RecyclingReportsService', () => {
 
   describe('getSalesSummary', () => {
     it('should throw on invalid tenantId', async () => {
-      await expect(service.getSalesSummary('bad-id')).rejects.toThrow('Invalid tenantId');
+      await expect(service.getSalesSummary('bad-id')).rejects.toThrow(
+        'Invalid tenantId',
+      );
     });
 
     it('should return totals for today, week and month', async () => {
@@ -130,7 +147,9 @@ describe('RecyclingReportsService', () => {
 
   describe('getPurchasesSummary', () => {
     it('should throw on invalid tenantId', async () => {
-      await expect(service.getPurchasesSummary('bad-id')).rejects.toThrow('Invalid tenantId');
+      await expect(service.getPurchasesSummary('bad-id')).rejects.toThrow(
+        'Invalid tenantId',
+      );
     });
 
     it('should return totals for today, week and month', async () => {
@@ -169,21 +188,31 @@ describe('RecyclingReportsService', () => {
 
   describe('getTopMaterials', () => {
     it('should throw on invalid tenantId', async () => {
-      await expect(service.getTopMaterials('bad-id')).rejects.toThrow('Invalid tenantId');
+      await expect(service.getTopMaterials('bad-id')).rejects.toThrow(
+        'Invalid tenantId',
+      );
     });
 
     it('should return top materials for current month with change vs previous', async () => {
       mockQueryRunner.query.mockImplementation(async (sql: string) => {
         if (sql.includes('SET LOCAL')) return undefined;
         if (sql.includes("date_trunc('month', CURRENT_DATE) - interval")) {
-          return [
-            { product_id: 'p1', volume_kg: '720.0000' },
-          ];
+          return [{ product_id: 'p1', volume_kg: '720.0000' }];
         }
         if (sql.includes("date_trunc('month', CURRENT_DATE)")) {
           return [
-            { product_id: 'p1', name: 'Alumínio', volume_kg: '820.0000', avg_price: '8.5000' },
-            { product_id: 'p2', name: 'PET', volume_kg: '640.0000', avg_price: '2.2000' },
+            {
+              product_id: 'p1',
+              name: 'Alumínio',
+              volume_kg: '820.0000',
+              avg_price: '8.5000',
+            },
+            {
+              product_id: 'p2',
+              name: 'PET',
+              volume_kg: '640.0000',
+              avg_price: '2.2000',
+            },
           ];
         }
         return [];

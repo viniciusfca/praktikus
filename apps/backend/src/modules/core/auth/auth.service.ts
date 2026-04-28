@@ -51,42 +51,50 @@ export class AuthService {
       throw new ConflictException('CNPJ já cadastrado.');
     }
 
-    const existingUser = await this.userRepo.findOne({ where: { email: dto.email } });
+    const existingUser = await this.userRepo.findOne({
+      where: { email: dto.email },
+    });
     if (existingUser) {
       throw new ConflictException('E-mail já cadastrado.');
     }
 
     // Transactional: create tenant + user atomically
-    const { tenant, user } = await this.dataSource.transaction(async (manager) => {
-      const tenant = await this.tenancyService.createTenantWithManager(
-        {
-          cnpj: dto.cnpj,
-          razaoSocial: dto.razaoSocial,
-          nomeFantasia: dto.nomeFantasia,
-          telefone: dto.telefone,
-          endereco: dto.endereco,
-          segment: dto.segment,
-        },
-        manager,
-      );
+    const { tenant, user } = await this.dataSource.transaction(
+      async (manager) => {
+        const tenant = await this.tenancyService.createTenantWithManager(
+          {
+            cnpj: dto.cnpj,
+            razaoSocial: dto.razaoSocial,
+            nomeFantasia: dto.nomeFantasia,
+            telefone: dto.telefone,
+            endereco: dto.endereco,
+            segment: dto.segment,
+          },
+          manager,
+        );
 
-      const passwordHash = await bcrypt.hash(dto.password, 10);
-      const user = manager.create(UserEntity, {
-        tenantId: tenant.id,
-        email: dto.email,
-        passwordHash,
-        name: dto.ownerName,
-        role: UserRole.OWNER,
-      });
-      const savedUser = await manager.save(user);
+        const passwordHash = await bcrypt.hash(dto.password, 10);
+        const user = manager.create(UserEntity, {
+          tenantId: tenant.id,
+          email: dto.email,
+          passwordHash,
+          name: dto.ownerName,
+          role: UserRole.OWNER,
+        });
+        const savedUser = await manager.save(user);
 
-      return { tenant, user: savedUser };
-    });
+        return { tenant, user: savedUser };
+      },
+    );
 
     // Billing is OUTSIDE the transaction (external API, cannot roll back Asaas)
     // If this fails, tenant + user exist but without billing. The user can still log in
     // and billing can be retried via a separate flow.
-    await this.billingService.setupTrial(tenant.id, dto.email, dto.nomeFantasia);
+    await this.billingService.setupTrial(
+      tenant.id,
+      dto.email,
+      dto.nomeFantasia,
+    );
 
     return this.generateTokens(user, tenant.status, tenant.segment);
   }
@@ -103,7 +111,11 @@ export class AuthService {
     }
 
     const tenant = await this.tenancyService.findById(user.tenantId);
-    return this.generateTokens(user, tenant?.status ?? TenantStatus.ACTIVE, tenant?.segment);
+    return this.generateTokens(
+      user,
+      tenant?.status ?? TenantStatus.ACTIVE,
+      tenant?.segment,
+    );
   }
 
   async refresh(refreshToken: string): Promise<AuthTokens> {
@@ -129,7 +141,11 @@ export class AuthService {
     }
 
     const tenant = await this.tenancyService.findById(user.tenantId);
-    return this.generateTokens(user, tenant?.status ?? TenantStatus.ACTIVE, tenant?.segment);
+    return this.generateTokens(
+      user,
+      tenant?.status ?? TenantStatus.ACTIVE,
+      tenant?.segment,
+    );
   }
 
   async logout(refreshToken: string): Promise<void> {
@@ -183,7 +199,8 @@ export class AuthService {
       usedAt: null,
     });
 
-    const baseUrl = this.config.get<string>('APP_BASE_URL') ?? 'http://localhost:5173';
+    const baseUrl =
+      this.config.get<string>('APP_BASE_URL') ?? 'http://localhost:5173';
     const resetUrl = `${baseUrl}/reset-password/${token}`;
 
     await this.mail.sendPasswordReset(user.email, user.name, resetUrl);
@@ -208,7 +225,9 @@ export class AuthService {
     await this.dataSource.transaction(async (manager) => {
       user.passwordHash = newHash;
       await manager.save(UserEntity, user);
-      await manager.update(PasswordResetTokenEntity, record.id, { usedAt: new Date() });
+      await manager.update(PasswordResetTokenEntity, record.id, {
+        usedAt: new Date(),
+      });
       await manager.delete(RefreshTokenEntity, { userId: user.id });
     });
 
@@ -216,7 +235,11 @@ export class AuthService {
     void this.mail.sendPasswordChangedConfirmation(user.email, user.name);
   }
 
-  private async generateTokens(user: UserEntity, tenantStatus: string, tenantSegment?: TenantSegment): Promise<AuthTokens> {
+  private async generateTokens(
+    user: UserEntity,
+    tenantStatus: string,
+    tenantSegment?: TenantSegment,
+  ): Promise<AuthTokens> {
     // name and email are included for UI display only.
     // Backend guards must never rely on these JWT claims as authoritative —
     // always re-fetch from the database for any security-sensitive operation.

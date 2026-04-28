@@ -6,14 +6,20 @@ export class RecyclingReportsService {
   constructor(private readonly dataSource: DataSource) {}
 
   private getSchemaName(tenantId: string): string {
-    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(tenantId)) {
+    if (
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+        tenantId,
+      )
+    ) {
       throw new Error('Invalid tenantId');
     }
     return `tenant_${tenantId.replace(/-/g, '')}`;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private async withQueryRunner<T>(tenantId: string, fn: (qr: any) => Promise<T>): Promise<T> {
+  private async withQueryRunner<T>(
+    tenantId: string,
+    fn: (qr: any) => Promise<T>,
+  ): Promise<T> {
     const schemaName = this.getSchemaName(tenantId);
     const qr = this.dataSource.createQueryRunner();
     await qr.connect();
@@ -36,7 +42,11 @@ export class RecyclingReportsService {
     purchasesCountToday: number;
     totalPurchasedMonth: number;
     purchasesCountMonth: number;
-    cashSession: { status: string; openingBalance: number; currentBalance: number } | null;
+    cashSession: {
+      status: string;
+      openingBalance: number;
+      currentBalance: number;
+    } | null;
   }> {
     const schemaName = this.getSchemaName(tenantId);
     return this.withQueryRunner(tenantId, async (qr) => {
@@ -64,20 +74,31 @@ export class RecyclingReportsService {
         LIMIT 1
       `);
 
-      let cashSession: { status: string; openingBalance: number; currentBalance: number } | null = null;
+      let cashSession: {
+        status: string;
+        openingBalance: number;
+        currentBalance: number;
+      } | null = null;
       if (cashSessions.length > 0) {
         const session = cashSessions[0];
         const opening = Number(session.opening_balance);
-        const [tx] = await qr.query(`
+        const [tx] = await qr.query(
+          `
           SELECT
             COALESCE(SUM(CASE WHEN type = 'IN'  THEN amount ELSE 0 END), 0) as total_in,
             COALESCE(SUM(CASE WHEN type = 'OUT' THEN amount ELSE 0 END), 0) as total_out
           FROM "${schemaName}".cash_transactions
           WHERE cash_session_id = $1
             AND payment_method = 'CASH'
-        `, [session.id]);
+        `,
+          [session.id],
+        );
         const current = opening + Number(tx.total_in) - Number(tx.total_out);
-        cashSession = { status: session.status, openingBalance: opening, currentBalance: current };
+        cashSession = {
+          status: session.status,
+          openingBalance: opening,
+          currentBalance: current,
+        };
       }
 
       return {
@@ -97,8 +118,8 @@ export class RecyclingReportsService {
   ): Promise<Array<{ date: string; total: number; count: number }>> {
     const schemaName = this.getSchemaName(tenantId);
     return this.withQueryRunner(tenantId, async (qr) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const rows = await qr.query(`
+      const rows = await qr.query(
+        `
         SELECT
           DATE(purchased_at) as date,
           SUM(total_amount) as total,
@@ -107,8 +128,10 @@ export class RecyclingReportsService {
         WHERE DATE(purchased_at) BETWEEN $1 AND $2
         GROUP BY DATE(purchased_at)
         ORDER BY date ASC
-      `, [startDate, endDate]);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      `,
+        [startDate, endDate],
+      );
+
       return rows.map((r: any) => ({
         date: r.date,
         total: Number(r.total),
@@ -121,13 +144,15 @@ export class RecyclingReportsService {
     tenantId: string,
     month?: string,
     limit: number = 5,
-  ): Promise<Array<{
-    productId: string;
-    name: string;
-    volumeKg: number;
-    avgPricePerKg: number;
-    changePct: number | null;
-  }>> {
+  ): Promise<
+    Array<{
+      productId: string;
+      name: string;
+      volumeKg: number;
+      avgPricePerKg: number;
+      changePct: number | null;
+    }>
+  > {
     const schemaName = this.getSchemaName(tenantId);
     return this.withQueryRunner(tenantId, async (qr) => {
       const safeLimit = Math.max(1, Math.min(20, Math.floor(limit)));
@@ -171,7 +196,9 @@ export class RecyclingReportsService {
 
       if (currentRows.length === 0) return [];
 
-      const prevRows: Array<{ product_id: string; volume_kg: string }> = await qr.query(`
+      const prevRows: Array<{ product_id: string; volume_kg: string }> =
+        await qr.query(
+          `
         SELECT pi.product_id as product_id, SUM(pi.quantity) as volume_kg
         FROM "${schemaName}".purchase_items pi
         JOIN "${schemaName}".purchases pu ON pu.id = pi.purchase_id
@@ -179,16 +206,21 @@ export class RecyclingReportsService {
           AND pu.purchased_at < ${prevMonthEndExpr}
           AND pi.product_id = ANY($1)
         GROUP BY pi.product_id
-      `, [currentRows.map((r) => r.product_id)]);
+      `,
+          [currentRows.map((r) => r.product_id)],
+        );
 
-      const prevMap = new Map(prevRows.map((r) => [r.product_id, Number(r.volume_kg)]));
+      const prevMap = new Map(
+        prevRows.map((r) => [r.product_id, Number(r.volume_kg)]),
+      );
 
       return currentRows.map((r) => {
         const current = Number(r.volume_kg);
         const prev = prevMap.get(r.product_id);
-        const changePct = prev && prev > 0
-          ? Math.round(((current - prev) / prev) * 1000) / 10
-          : null;
+        const changePct =
+          prev && prev > 0
+            ? Math.round(((current - prev) / prev) * 1000) / 10
+            : null;
         return {
           productId: r.product_id,
           name: r.name,

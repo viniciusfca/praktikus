@@ -1,4 +1,9 @@
-import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 
 @Entity({ name: 'so_items_parts' })
 export class SoItemPartEntity {
@@ -8,5 +13,6 @@ export class SoItemPartEntity {
   @Column({ name: 'nome_peca' }) nomePeca: string;
   @Column({ type: 'int' }) quantidade: number;
   @Column({ name: 'valor_unitario', type: 'numeric' }) valorUnitario: number;
-  @CreateDateColumn({ name: 'created_at', type: 'timestamptz' }) createdAt: Date;
+  @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
+  createdAt: Date;
 }

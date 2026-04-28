@@ -24,7 +24,11 @@ export class ReportsController {
     @Request() req: RequestWithUser,
     @Query() query: PeriodQueryDto,
   ) {
-    return this.reportsService.getPurchasesByPeriod(req.user.tenantId, query.startDate, query.endDate);
+    return this.reportsService.getPurchasesByPeriod(
+      req.user.tenantId,
+      query.startDate,
+      query.endDate,
+    );
   }
 
   @Get('top-materials')
@@ -32,7 +36,11 @@ export class ReportsController {
     @Request() req: RequestWithUser,
     @Query() query: TopMaterialsQueryDto,
   ) {
-    return this.reportsService.getTopMaterials(req.user.tenantId, query.month, query.limit);
+    return this.reportsService.getTopMaterials(
+      req.user.tenantId,
+      query.month,
+      query.limit,
+    );
   }
 
   @Get('sales-summary')

@@ -9,13 +9,20 @@ export class ProductsService {
   constructor(private readonly dataSource: DataSource) {}
 
   private getSchemaName(tenantId: string): string {
-    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(tenantId)) {
+    if (
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+        tenantId,
+      )
+    ) {
       throw new Error('Invalid tenantId');
     }
     return `tenant_${tenantId.replace(/-/g, '')}`;
   }
 
-  private async withSchema<T>(tenantId: string, fn: (manager: EntityManager) => Promise<T>): Promise<T> {
+  private async withSchema<T>(
+    tenantId: string,
+    fn: (manager: EntityManager) => Promise<T>,
+  ): Promise<T> {
     const schemaName = this.getSchemaName(tenantId);
     const qr = this.dataSource.createQueryRunner();
     await qr.connect();
@@ -27,10 +34,15 @@ export class ProductsService {
     }
   }
 
-  async list(tenantId: string, includeInactive = false): Promise<ProductEntity[]> {
+  async list(
+    tenantId: string,
+    includeInactive = false,
+  ): Promise<ProductEntity[]> {
     return this.withSchema(tenantId, async (manager) => {
       const repo = manager.getRepository(ProductEntity);
-      const qb = repo.createQueryBuilder('product').orderBy('product.name', 'ASC');
+      const qb = repo
+        .createQueryBuilder('product')
+        .orderBy('product.name', 'ASC');
       if (!includeInactive) {
         qb.where('product.active = :active', { active: true });
       }
@@ -47,7 +59,10 @@ export class ProductsService {
     });
   }
 
-  async create(tenantId: string, dto: CreateProductDto): Promise<ProductEntity> {
+  async create(
+    tenantId: string,
+    dto: CreateProductDto,
+  ): Promise<ProductEntity> {
     return this.withSchema(tenantId, async (manager) => {
       const repo = manager.getRepository(ProductEntity);
       const product = repo.create({
@@ -60,7 +75,11 @@ export class ProductsService {
     });
   }
 
-  async update(tenantId: string, id: string, dto: UpdateProductDto): Promise<ProductEntity> {
+  async update(
+    tenantId: string,
+    id: string,
+    dto: UpdateProductDto,
+  ): Promise<ProductEntity> {
     return this.withSchema(tenantId, async (manager) => {
       const repo = manager.getRepository(ProductEntity);
       const product = await repo.findOne({ where: { id } });

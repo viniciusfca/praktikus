@@ -6,7 +6,11 @@ export class ReportsService {
   constructor(private readonly dataSource: DataSource) {}
 
   private getSchemaName(tenantId: string): string {
-    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(tenantId)) {
+    if (
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+        tenantId,
+      )
+    ) {
       throw new Error('Invalid tenantId');
     }
     return `tenant_${tenantId.replace(/-/g, '')}`;
@@ -29,7 +33,9 @@ export class ReportsService {
 
   async getReport(tenantId: string, dateStart: string, dateEnd: string) {
     if (new Date(dateStart) > new Date(dateEnd)) {
-      throw new BadRequestException('date_start não pode ser maior que date_end.');
+      throw new BadRequestException(
+        'date_start não pode ser maior que date_end.',
+      );
     }
 
     return this.withSchema(tenantId, async (manager) => {
@@ -114,17 +120,23 @@ export class ReportsService {
         [dateStart, dateEnd],
       );
 
-      const faturamentoServicos = Math.round(Number(svRow.faturamentoServicos ?? 0) * 100) / 100;
-      const faturamentoPecas = Math.round(Number(pvRow.faturamentoPecas ?? 0) * 100) / 100;
+      const faturamentoServicos =
+        Math.round(Number(svRow.faturamentoServicos ?? 0) * 100) / 100;
+      const faturamentoPecas =
+        Math.round(Number(pvRow.faturamentoPecas ?? 0) * 100) / 100;
 
       return {
         periodo: { dateStart, dateEnd },
-        faturamentoTotal: Math.round((faturamentoServicos + faturamentoPecas) * 100) / 100,
+        faturamentoTotal:
+          Math.round((faturamentoServicos + faturamentoPecas) * 100) / 100,
         faturamentoServicos,
         faturamentoPecas,
         totalOs: Number(kpi.totalOs),
         osPagas: Number(kpi.osPagas),
-        osPorStatus: statusRows.map((r) => ({ status: r.status, count: Number(r.count) })),
+        osPorStatus: statusRows.map((r) => ({
+          status: r.status,
+          count: Number(r.count),
+        })),
         faturamentoPorMes: mesRows.map((r) => ({
           mes: r.mes,
           servicos: Math.round(Number(r.servicos) * 100) / 100,

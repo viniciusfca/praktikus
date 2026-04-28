@@ -1,4 +1,9 @@
-import { ConflictException, GoneException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  GoneException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { ServiceOrderEntity } from './service-order.entity';
 import { SoItemServiceEntity } from './so-item-service.entity';
@@ -9,22 +14,31 @@ export class PublicQuotesService {
   constructor(private readonly dataSource: DataSource) {}
 
   private getSchemaName(tenantId: string): string {
-    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(tenantId)) {
+    if (
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+        tenantId,
+      )
+    ) {
       throw new Error('Invalid tenantId');
     }
     return `tenant_${tenantId.replace(/-/g, '')}`;
   }
 
   private async lookupToken(token: string) {
-    const rows: Array<{ tenant_id: string; so_id: string; expires_at: string; used_at: string | null }> =
-      await this.dataSource.query(
-        `SELECT tenant_id, so_id, expires_at, used_at FROM public.service_order_approval_tokens WHERE token = $1`,
-        [token],
-      );
+    const rows: Array<{
+      tenant_id: string;
+      so_id: string;
+      expires_at: string;
+      used_at: string | null;
+    }> = await this.dataSource.query(
+      `SELECT tenant_id, so_id, expires_at, used_at FROM public.service_order_approval_tokens WHERE token = $1`,
+      [token],
+    );
     if (!rows.length) throw new NotFoundException('Token inválido.');
     const row = rows[0];
     if (row.used_at) throw new ConflictException('Token já utilizado.');
-    if (new Date(row.expires_at) < new Date()) throw new GoneException('Token expirado.');
+    if (new Date(row.expires_at) < new Date())
+      throw new GoneException('Token expirado.');
     return row;
   }
 
@@ -35,17 +49,37 @@ export class PublicQuotesService {
     await qr.connect();
     try {
       await qr.query(`SET search_path TO "${schemaName}", public`);
-      const so = await qr.manager.getRepository(ServiceOrderEntity).findOne({ where: { id: so_id } });
+      const so = await qr.manager
+        .getRepository(ServiceOrderEntity)
+        .findOne({ where: { id: so_id } });
       if (!so) throw new NotFoundException('OS não encontrada.');
-      const itemsServices = await qr.manager.getRepository(SoItemServiceEntity).find({ where: { soId: so_id } });
-      const itemsParts = await qr.manager.getRepository(SoItemPartEntity).find({ where: { soId: so_id } });
+      const itemsServices = await qr.manager
+        .getRepository(SoItemServiceEntity)
+        .find({ where: { soId: so_id } });
+      const itemsParts = await qr.manager
+        .getRepository(SoItemPartEntity)
+        .find({ where: { soId: so_id } });
       const [clienteRows, veiculoRows, tenantRows] = await Promise.all([
-        qr.query(`SELECT nome, cpf_cnpj FROM customers WHERE id = $1`, [so.clienteId]),
-        qr.query(`SELECT placa, marca, modelo, ano FROM vehicles WHERE id = $1`, [so.veiculoId]),
-        this.dataSource.query(`SELECT nome_fantasia FROM public.tenants WHERE id = $1`, [tenant_id]),
+        qr.query(`SELECT nome, cpf_cnpj FROM customers WHERE id = $1`, [
+          so.clienteId,
+        ]),
+        qr.query(
+          `SELECT placa, marca, modelo, ano FROM vehicles WHERE id = $1`,
+          [so.veiculoId],
+        ),
+        this.dataSource.query(
+          `SELECT nome_fantasia FROM public.tenants WHERE id = $1`,
+          [tenant_id],
+        ),
       ]);
-      const totalServices = itemsServices.reduce((s, i) => s + Number(i.valor), 0);
-      const totalParts = itemsParts.reduce((s, i) => s + Number(i.valorUnitario) * i.quantidade, 0);
+      const totalServices = itemsServices.reduce(
+        (s, i) => s + Number(i.valor),
+        0,
+      );
+      const totalParts = itemsParts.reduce(
+        (s, i) => s + Number(i.valorUnitario) * i.quantidade,
+        0,
+      );
       return {
         so: { id: so.id, status: so.status, createdAt: so.createdAt },
         empresa: tenantRows[0] ?? null,

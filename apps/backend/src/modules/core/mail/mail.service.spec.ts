@@ -79,8 +79,13 @@ describe('MailService', () => {
     });
 
     it('does not throw when Resend returns an error', async () => {
-      mockResendSend.mockResolvedValue({ data: null, error: { message: 'rate limited' } });
-      const module: TestingModule = await buildModule({ RESEND_API_KEY: 'rk_test' });
+      mockResendSend.mockResolvedValue({
+        data: null,
+        error: { message: 'rate limited' },
+      });
+      const module: TestingModule = await buildModule({
+        RESEND_API_KEY: 'rk_test',
+      });
       const service = module.get<MailService>(MailService);
 
       await expect(

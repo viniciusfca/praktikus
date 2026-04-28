@@ -21,7 +21,10 @@ export class CompaniesService {
     return tenant;
   }
 
-  async updateProfile(tenantId: string, dto: UpdateCompanyDto): Promise<TenantEntity> {
+  async updateProfile(
+    tenantId: string,
+    dto: UpdateCompanyDto,
+  ): Promise<TenantEntity> {
     const tenant = await this.getProfile(tenantId);
     Object.assign(tenant, dto);
     return this.tenantRepo.save(tenant);

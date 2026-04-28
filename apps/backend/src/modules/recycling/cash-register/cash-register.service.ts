@@ -1,4 +1,8 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { DataSource, EntityManager } from 'typeorm';
 import { CashSessionStatus } from '@praktikus/shared';
 import { CashSessionEntity } from './cash-session.entity';
@@ -10,14 +14,20 @@ export class CashRegisterService {
   constructor(private readonly dataSource: DataSource) {}
 
   private getSchemaName(tenantId: string): string {
-    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(tenantId)) {
+    if (
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+        tenantId,
+      )
+    ) {
       throw new Error('Invalid tenantId');
     }
     return `tenant_${tenantId.replace(/-/g, '')}`;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private async withSchema<T>(tenantId: string, fn: (manager: EntityManager, qr: any) => Promise<T>): Promise<T> {
+  private async withSchema<T>(
+    tenantId: string,
+    fn: (manager: EntityManager, qr: any) => Promise<T>,
+  ): Promise<T> {
     const schemaName = this.getSchemaName(tenantId);
     const qr = this.dataSource.createQueryRunner();
     await qr.connect();
@@ -33,12 +43,15 @@ export class CashRegisterService {
     return this.withSchema(tenantId, async (manager) => {
       const sessionRepo = manager.getRepository(CashSessionEntity);
 
-      const existing = await sessionRepo.findOne({ where: { status: CashSessionStatus.OPEN } });
-      if (existing) throw new BadRequestException('Já existe uma sessão de caixa aberta.');
+      const existing = await sessionRepo.findOne({
+        where: { status: CashSessionStatus.OPEN },
+      });
+      if (existing)
+        throw new BadRequestException('Já existe uma sessão de caixa aberta.');
 
       const lastClosed = await sessionRepo.findOne({
         where: { status: CashSessionStatus.CLOSED },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         order: { closedAt: 'DESC' } as any,
       });
 
@@ -64,7 +77,9 @@ export class CashRegisterService {
 
       await qr.startTransaction();
       try {
-        const session = await sessionRepo.findOne({ where: { status: CashSessionStatus.OPEN } });
+        const session = await sessionRepo.findOne({
+          where: { status: CashSessionStatus.OPEN },
+        });
         if (!session) {
           throw new BadRequestException('Não há sessão de caixa aberta.');
         }
@@ -80,7 +95,8 @@ export class CashRegisterService {
 
         const cashIn = Number(cashInResult.sum);
         const cashOut = Number(cashOutResult.sum);
-        const closingBalance = Number(session.openingBalance) + cashIn - cashOut;
+        const closingBalance =
+          Number(session.openingBalance) + cashIn - cashOut;
 
         Object.assign(session, {
           closedBy,
@@ -101,17 +117,27 @@ export class CashRegisterService {
   async getCurrent(tenantId: string): Promise<CashSessionEntity | null> {
     return this.withSchema(tenantId, async (manager) => {
       const sessionRepo = manager.getRepository(CashSessionEntity);
-      return (await sessionRepo.findOne({ where: { status: CashSessionStatus.OPEN } })) ?? null;
+      return (
+        (await sessionRepo.findOne({
+          where: { status: CashSessionStatus.OPEN },
+        })) ?? null
+      );
     });
   }
 
-  async addTransaction(tenantId: string, dto: AddTransactionDto): Promise<CashTransactionEntity> {
+  async addTransaction(
+    tenantId: string,
+    dto: AddTransactionDto,
+  ): Promise<CashTransactionEntity> {
     return this.withSchema(tenantId, async (manager) => {
       const sessionRepo = manager.getRepository(CashSessionEntity);
       const txRepo = manager.getRepository(CashTransactionEntity);
 
-      const session = await sessionRepo.findOne({ where: { status: CashSessionStatus.OPEN } });
-      if (!session) throw new BadRequestException('Não há sessão de caixa aberta.');
+      const session = await sessionRepo.findOne({
+        where: { status: CashSessionStatus.OPEN },
+      });
+      if (!session)
+        throw new BadRequestException('Não há sessão de caixa aberta.');
 
       const tx = txRepo.create({
         cashSessionId: session.id,
@@ -126,7 +152,10 @@ export class CashRegisterService {
     });
   }
 
-  async getTransactions(tenantId: string, sessionId: string): Promise<CashTransactionEntity[]> {
+  async getTransactions(
+    tenantId: string,
+    sessionId: string,
+  ): Promise<CashTransactionEntity[]> {
     return this.withSchema(tenantId, async (manager) => {
       const sessionRepo = manager.getRepository(CashSessionEntity);
       const txRepo = manager.getRepository(CashTransactionEntity);
@@ -136,7 +165,7 @@ export class CashRegisterService {
 
       return txRepo.find({
         where: { cashSessionId: session.id },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         order: { createdAt: 'ASC' } as any,
       });
     });

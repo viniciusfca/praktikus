@@ -53,7 +53,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       tenantId: payload.tenant_id,
       role: payload.role,
       email: user.email,
-      tenantStatus: (payload.tenant_status as TenantStatus) ?? TenantStatus.ACTIVE,
+      tenantStatus:
+        (payload.tenant_status as TenantStatus) ?? TenantStatus.ACTIVE,
       tenantSegment: payload.tenant_segment ?? TenantSegment.WORKSHOP,
     };
   }

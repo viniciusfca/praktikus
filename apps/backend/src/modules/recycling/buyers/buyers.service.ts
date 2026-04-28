@@ -1,4 +1,9 @@
-import { Injectable, BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
 import { DataSource, EntityManager } from 'typeorm';
 import { BuyerEntity } from './buyer.entity';
 import { CreateBuyerDto } from './dto/create-buyer.dto';
@@ -8,8 +13,12 @@ import { UpdateBuyerDto } from './dto/update-buyer.dto';
 export class BuyersService {
   constructor(private readonly dataSource: DataSource) {}
 
-  private assertDocumentConsistency(document: string | null | undefined, documentType: 'CPF' | 'CNPJ' | null | undefined): void {
-    const hasDoc = document !== null && document !== undefined && document !== '';
+  private assertDocumentConsistency(
+    document: string | null | undefined,
+    documentType: 'CPF' | 'CNPJ' | null | undefined,
+  ): void {
+    const hasDoc =
+      document !== null && document !== undefined && document !== '';
     const hasType = documentType !== null && documentType !== undefined;
     if (hasDoc !== hasType) {
       throw new BadRequestException(
@@ -19,14 +28,20 @@ export class BuyersService {
   }
 
   private getSchemaName(tenantId: string): string {
-    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(tenantId)) {
+    if (
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+        tenantId,
+      )
+    ) {
       throw new Error('Invalid tenantId');
     }
     return `tenant_${tenantId.replace(/-/g, '')}`;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private async withSchema<T>(tenantId: string, fn: (manager: EntityManager, qr: any) => Promise<T>): Promise<T> {
+  private async withSchema<T>(
+    tenantId: string,
+    fn: (manager: EntityManager, qr: any) => Promise<T>,
+  ): Promise<T> {
     const schemaName = this.getSchemaName(tenantId);
     const qr = this.dataSource.createQueryRunner();
     await qr.connect();
@@ -49,7 +64,12 @@ export class BuyersService {
     page: number,
     limit: number,
     search?: string,
-  ): Promise<{ data: BuyerEntity[]; total: number; page: number; limit: number }> {
+  ): Promise<{
+    data: BuyerEntity[];
+    total: number;
+    page: number;
+    limit: number;
+  }> {
     return this.withSchema(tenantId, async (manager) => {
       const repo = manager.getRepository(BuyerEntity);
       const qb = repo.createQueryBuilder('b');
@@ -89,7 +109,11 @@ export class BuyersService {
     });
   }
 
-  async update(tenantId: string, id: string, dto: UpdateBuyerDto): Promise<BuyerEntity> {
+  async update(
+    tenantId: string,
+    id: string,
+    dto: UpdateBuyerDto,
+  ): Promise<BuyerEntity> {
     return this.withSchema(tenantId, async (manager) => {
       const repo = manager.getRepository(BuyerEntity);
       const buyer = await repo.findOne({ where: { id } });
@@ -109,7 +133,8 @@ export class BuyersService {
         `SELECT COUNT(*) as count FROM sales WHERE buyer_id = $1`,
         [id],
       );
-      if (Number(count) > 0) throw new ConflictException('Comprador possui vendas registradas.');
+      if (Number(count) > 0)
+        throw new ConflictException('Comprador possui vendas registradas.');
       await repo.remove(buyer);
     });
   }

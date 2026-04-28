@@ -8,7 +8,11 @@ export class CatalogServicesService {
   constructor(private readonly dataSource: DataSource) {}
 
   private getSchemaName(tenantId: string): string {
-    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(tenantId)) {
+    if (
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+        tenantId,
+      )
+    ) {
       throw new Error('Invalid tenantId');
     }
     return `tenant_${tenantId.replace(/-/g, '')}`;
@@ -34,7 +38,12 @@ export class CatalogServicesService {
     page: number,
     limit: number,
     search?: string,
-  ): Promise<{ data: CatalogServiceEntity[]; total: number; page: number; limit: number }> {
+  ): Promise<{
+    data: CatalogServiceEntity[];
+    total: number;
+    page: number;
+    limit: number;
+  }> {
     return this.withSchema(tenantId, async (manager) => {
       const repo = manager.getRepository(CatalogServiceEntity);
       const qb = repo.createQueryBuilder('s');
@@ -57,14 +66,19 @@ export class CatalogServicesService {
     });
   }
 
-  async create(tenantId: string, dto: CreateCatalogServiceDto): Promise<CatalogServiceEntity> {
+  async create(
+    tenantId: string,
+    dto: CreateCatalogServiceDto,
+  ): Promise<CatalogServiceEntity> {
     return this.withSchema(tenantId, async (manager) => {
       const repo = manager.getRepository(CatalogServiceEntity);
-      return repo.save(repo.create({
-        nome: dto.nome,
-        descricao: dto.descricao ?? null,
-        precoPadrao: dto.precoPadrao,
-      }));
+      return repo.save(
+        repo.create({
+          nome: dto.nome,
+          descricao: dto.descricao ?? null,
+          precoPadrao: dto.precoPadrao,
+        }),
+      );
     });
   }
 

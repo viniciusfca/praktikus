@@ -86,13 +86,18 @@ describe('ServiceOrdersService', () => {
       mockQb.getMany.mockResolvedValue(items);
       const result = await service.list(TENANT_ID, {});
       expect(result).toEqual(items);
-      expect(mockQueryRunner.query).toHaveBeenCalledWith(expect.stringContaining('SET search_path'));
+      expect(mockQueryRunner.query).toHaveBeenCalledWith(
+        expect.stringContaining('SET search_path'),
+      );
     });
 
     it('should apply status filter', async () => {
       mockQb.getMany.mockResolvedValue([]);
       await service.list(TENANT_ID, { status: 'APROVADO' });
-      expect(mockQb.andWhere).toHaveBeenCalledWith(expect.stringContaining('status'), expect.any(Object));
+      expect(mockQb.andWhere).toHaveBeenCalledWith(
+        expect.stringContaining('status'),
+        expect.any(Object),
+      );
     });
   });
 
@@ -110,7 +115,9 @@ describe('ServiceOrdersService', () => {
 
     it('should throw NotFoundException when not found', async () => {
       mockSoRepo.findOne.mockResolvedValue(null);
-      await expect(service.getById(TENANT_ID, SO_ID)).rejects.toThrow(NotFoundException);
+      await expect(service.getById(TENANT_ID, SO_ID)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -134,26 +141,40 @@ describe('ServiceOrdersService', () => {
       const so = { id: SO_ID, status: 'ORCAMENTO', approvalToken: null };
       mockSoRepo.findOne.mockResolvedValue(so);
       mockSoRepo.save.mockResolvedValue({ ...so, status: 'APROVADO' });
-      const result = await service.patchStatus(TENANT_ID, SO_ID, 'APROVADO', 'OWNER');
+      const result = await service.patchStatus(
+        TENANT_ID,
+        SO_ID,
+        'APROVADO',
+        'OWNER',
+      );
       expect(result.status).toBe('APROVADO');
     });
 
     it('should throw BadRequestException for invalid transition', async () => {
       const so = { id: SO_ID, status: 'ORCAMENTO' };
       mockSoRepo.findOne.mockResolvedValue(so);
-      await expect(service.patchStatus(TENANT_ID, SO_ID, 'ENTREGUE', 'OWNER')).rejects.toThrow(BadRequestException);
+      await expect(
+        service.patchStatus(TENANT_ID, SO_ID, 'ENTREGUE', 'OWNER'),
+      ).rejects.toThrow(BadRequestException);
     });
 
     it('should throw BadRequestException if EMPLOYEE tries to transition from APROVADO', async () => {
       const so = { id: SO_ID, status: 'APROVADO' };
       mockSoRepo.findOne.mockResolvedValue(so);
-      await expect(service.patchStatus(TENANT_ID, SO_ID, 'EM_EXECUCAO', 'EMPLOYEE')).rejects.toThrow(BadRequestException);
+      await expect(
+        service.patchStatus(TENANT_ID, SO_ID, 'EM_EXECUCAO', 'EMPLOYEE'),
+      ).rejects.toThrow(BadRequestException);
     });
   });
 
   describe('generateApprovalToken', () => {
     it('should generate token for ORCAMENTO status', async () => {
-      const so = { id: SO_ID, status: 'ORCAMENTO', approvalToken: null, approvalExpiresAt: null };
+      const so = {
+        id: SO_ID,
+        status: 'ORCAMENTO',
+        approvalToken: null,
+        approvalExpiresAt: null,
+      };
       mockSoRepo.findOne.mockResolvedValue(so);
       mockSoRepo.save.mockResolvedValue(so);
       mockDataSource.query.mockResolvedValue(undefined);
@@ -165,7 +186,9 @@ describe('ServiceOrdersService', () => {
     it('should throw BadRequestException if status is not ORCAMENTO', async () => {
       const so = { id: SO_ID, status: 'APROVADO' };
       mockSoRepo.findOne.mockResolvedValue(so);
-      await expect(service.generateApprovalToken(TENANT_ID, SO_ID)).rejects.toThrow(BadRequestException);
+      await expect(
+        service.generateApprovalToken(TENANT_ID, SO_ID),
+      ).rejects.toThrow(BadRequestException);
     });
   });
 
@@ -176,14 +199,20 @@ describe('ServiceOrdersService', () => {
       mockSoRepo.findOne.mockResolvedValue(so);
       mockItemServiceRepo.create.mockReturnValue(item);
       mockItemServiceRepo.save.mockResolvedValue(item);
-      const dto = { catalogServiceId: '00000000-0000-0000-0000-000000000099', nomeServico: 'Troca de óleo', valor: 150 };
+      const dto = {
+        catalogServiceId: '00000000-0000-0000-0000-000000000099',
+        nomeServico: 'Troca de óleo',
+        valor: 150,
+      };
       const result = await service.addItemService(TENANT_ID, SO_ID, dto as any);
       expect(result.id).toBe('item1');
     });
 
     it('should throw NotFoundException when SO not found', async () => {
       mockSoRepo.findOne.mockResolvedValue(null);
-      await expect(service.addItemService(TENANT_ID, SO_ID, {} as any)).rejects.toThrow(NotFoundException);
+      await expect(
+        service.addItemService(TENANT_ID, SO_ID, {} as any),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -198,7 +227,9 @@ describe('ServiceOrdersService', () => {
 
     it('should throw NotFoundException when not found', async () => {
       mockSoRepo.findOne.mockResolvedValue(null);
-      await expect(service.delete(TENANT_ID, SO_ID)).rejects.toThrow(NotFoundException);
+      await expect(service.delete(TENANT_ID, SO_ID)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 });

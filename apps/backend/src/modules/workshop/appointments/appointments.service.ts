@@ -8,7 +8,11 @@ export class AppointmentsService {
   constructor(private readonly dataSource: DataSource) {}
 
   private getSchemaName(tenantId: string): string {
-    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(tenantId)) {
+    if (
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+        tenantId,
+      )
+    ) {
       throw new Error('Invalid tenantId');
     }
     return `tenant_${tenantId.replace(/-/g, '')}`;
@@ -34,7 +38,9 @@ export class AppointmentsService {
     dataHora: string,
     duracaoMin: number,
     excludeId?: string,
-  ): Promise<Array<{ id: string; data_hora: Date; tipo_servico: string | null }>> {
+  ): Promise<
+    Array<{ id: string; data_hora: Date; tipo_servico: string | null }>
+  > {
     const startTime = new Date(dataHora);
     const endTime = new Date(startTime.getTime() + duracaoMin * 60 * 1000);
     const excludeUuid = excludeId ?? '00000000-0000-0000-0000-000000000000';
@@ -59,9 +65,14 @@ export class AppointmentsService {
     return this.withSchema(tenantId, async (qr) => {
       const repo = this.getRepo(qr);
       const qb = repo.createQueryBuilder('a').orderBy('a.dataHora', 'ASC');
-      if (params.dateStart) qb.andWhere('a.dataHora >= :dateStart', { dateStart: params.dateStart });
-      if (params.dateEnd) qb.andWhere('a.dataHora <= :dateEnd', { dateEnd: params.dateEnd });
-      if (params.status) qb.andWhere('a.status = :status', { status: params.status });
+      if (params.dateStart)
+        qb.andWhere('a.dataHora >= :dateStart', {
+          dateStart: params.dateStart,
+        });
+      if (params.dateEnd)
+        qb.andWhere('a.dataHora <= :dateEnd', { dateEnd: params.dateEnd });
+      if (params.status)
+        qb.andWhere('a.status = :status', { status: params.status });
       return qb.getMany();
     });
   }

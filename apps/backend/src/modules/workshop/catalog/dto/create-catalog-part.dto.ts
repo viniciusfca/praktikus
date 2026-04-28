@@ -1,4 +1,10 @@
-import { IsString, IsOptional, IsNumber, Min, MinLength } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsNumber,
+  Min,
+  MinLength,
+} from 'class-validator';
 
 export class CreateCatalogPartDto {
   @IsString()
