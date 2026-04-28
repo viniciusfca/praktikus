@@ -1,4 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn } from 'typeorm';
+import { PaymentMethod } from '@praktikus/shared';
 
 @Entity({ name: 'sales' })
 export class SaleEntity {
@@ -6,6 +7,7 @@ export class SaleEntity {
   @Column({ name: 'buyer_id', type: 'uuid' }) buyerId: string;
   @Column({ name: 'operator_id', type: 'uuid' }) operatorId: string;
   @Column({ name: 'sold_at', type: 'timestamptz', default: () => 'NOW()' }) soldAt: Date;
+  @Column({ name: 'payment_method', type: 'varchar' }) paymentMethod: PaymentMethod;
   @Column({ type: 'varchar', nullable: true }) notes: string | null;
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' }) createdAt: Date;
 }
