@@ -48,7 +48,7 @@ describe('authService', () => {
   it('should call api.post on register and return tokens', async () => {
     mockApi.post.mockResolvedValue({ data: { access_token: 'a', refresh_token: 'r' } });
     const result = await authService.register({
-      cnpj: '12345678000199',
+      cnpj: '11222333000181',
       razaoSocial: 'Test',
       nomeFantasia: 'Test',
       email: 'a@b.com',

@@ -31,20 +31,31 @@ describe('RegisterPage', () => {
     expect(screen.getByLabelText(/nome fantasia/i)).toBeInTheDocument();
   });
 
-  it('shows CNPJ validation error for non-14-digit input', async () => {
+  it('shows CNPJ validation error for invalid input', async () => {
     renderPage();
     fireEvent.change(screen.getByLabelText(/cnpj/i), { target: { value: '123' } });
     fireEvent.change(screen.getByLabelText(/raz[aã]o social/i), { target: { value: 'Test' } });
     fireEvent.change(screen.getByLabelText(/nome fantasia/i), { target: { value: 'Test' } });
     fireEvent.click(screen.getByRole('button', { name: /pr[oó]ximo/i }));
     await waitFor(() => {
-      expect(screen.getByText(/14 d[ií]gitos/i)).toBeInTheDocument();
+      expect(screen.getByText(/cnpj inv[aá]lido/i)).toBeInTheDocument();
+    });
+  });
+
+  it('shows error when CNPJ has correct format but invalid check digit', async () => {
+    renderPage();
+    fireEvent.change(screen.getByLabelText(/cnpj/i), { target: { value: '12345678000199' } });
+    fireEvent.change(screen.getByLabelText(/raz[aã]o social/i), { target: { value: 'Empresa X' } });
+    fireEvent.change(screen.getByLabelText(/nome fantasia/i), { target: { value: 'X' } });
+    fireEvent.click(screen.getByRole('button', { name: /pr[oó]ximo/i }));
+    await waitFor(() => {
+      expect(screen.getByText(/cnpj inv[aá]lido/i)).toBeInTheDocument();
     });
   });
 
   it('advances to step 2 with valid step 1 data', async () => {
     renderPage();
-    fireEvent.change(screen.getByLabelText(/cnpj/i), { target: { value: '12345678000199' } });
+    fireEvent.change(screen.getByLabelText(/cnpj/i), { target: { value: '11222333000181' } });
     fireEvent.change(screen.getByLabelText(/raz[aã]o social/i), { target: { value: 'Auto Center Ltda' } });
     fireEvent.change(screen.getByLabelText(/nome fantasia/i), { target: { value: 'Auto Center' } });
     fireEvent.click(screen.getByRole('button', { name: /pr[oó]ximo/i }));
@@ -69,7 +80,7 @@ describe('RegisterPage', () => {
     renderPage();
 
     // Step 1
-    fireEvent.change(screen.getByLabelText(/cnpj/i), { target: { value: '12345678000199' } });
+    fireEvent.change(screen.getByLabelText(/cnpj/i), { target: { value: '11222333000181' } });
     fireEvent.change(screen.getByLabelText(/raz[aã]o social/i), { target: { value: 'Auto Center Ltda' } });
     fireEvent.change(screen.getByLabelText(/nome fantasia/i), { target: { value: 'Auto Center' } });
     fireEvent.click(screen.getByRole('button', { name: /pr[oó]ximo/i }));
@@ -78,8 +89,8 @@ describe('RegisterPage', () => {
     await waitFor(() => expect(screen.getByLabelText(/e-mail/i)).toBeInTheDocument());
     fireEvent.change(screen.getByLabelText(/seu nome/i), { target: { value: 'João Silva' } });
     fireEvent.change(screen.getByLabelText(/e-mail/i), { target: { value: 'a@b.com' } });
-    fireEvent.change(screen.getByLabelText(/^senha$/i), { target: { value: 'pass1234' } });
-    fireEvent.change(screen.getByLabelText(/confirmar/i), { target: { value: 'pass1234' } });
+    fireEvent.change(screen.getByLabelText(/^senha$/i), { target: { value: 'Strong1!Pass' } });
+    fireEvent.change(screen.getByLabelText(/confirmar/i), { target: { value: 'Strong1!Pass' } });
     fireEvent.click(screen.getByRole('button', { name: /cadastrar/i }));
 
     await waitFor(() => {
