@@ -13,6 +13,7 @@ import {
 import CIcon from '@coreui/icons-react';
 import { cilCloudUpload } from '@coreui/icons';
 import { Card, CardTitle, labelStyle } from './Card';
+import { AddressFields } from '../forms/AddressFields';
 import {
   companyService,
   type CompanyProfile,
@@ -25,6 +26,7 @@ const companySchema = z.object({
   telefone: z.string().optional(),
   street: z.string().optional(),
   number: z.string().optional(),
+  neighborhood: z.string().optional(),
   complement: z.string().optional(),
   city: z.string().optional(),
   state: z.string().optional(),
@@ -40,7 +42,7 @@ export function CompanyTab() {
   const [logoUploading, setLogoUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } =
+  const { register, control, setValue, handleSubmit, reset, formState: { errors, isSubmitting } } =
     useForm<CompanyForm>({ resolver: zodResolver(companySchema) });
 
   useEffect(() => {
@@ -52,6 +54,7 @@ export function CompanyTab() {
         telefone: p.telefone ?? '',
         street: p.endereco?.street ?? '',
         number: p.endereco?.number ?? '',
+        neighborhood: p.endereco?.neighborhood ?? '',
         complement: p.endereco?.complement ?? '',
         city: p.endereco?.city ?? '',
         state: p.endereco?.state ?? '',
@@ -75,6 +78,7 @@ export function CompanyTab() {
         endereco: {
           street: data.street ?? '',
           number: data.number ?? '',
+          neighborhood: data.neighborhood,
           complement: data.complement,
           city: data.city ?? '',
           state: data.state ?? '',
@@ -205,32 +209,7 @@ export function CompanyTab() {
         {/* Endereço */}
         <div style={{ marginTop: 16 }}>
           <Card header={<CardTitle title="Endereço" desc="Endereço fiscal da empresa" />}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: 14 }}>
-              <div style={{ gridColumn: 'span 8' }}>
-                <CFormLabel style={labelStyle}>Rua</CFormLabel>
-                <CFormInput {...register('street')} />
-              </div>
-              <div style={{ gridColumn: 'span 2' }}>
-                <CFormLabel style={labelStyle}>Número</CFormLabel>
-                <CFormInput {...register('number')} />
-              </div>
-              <div style={{ gridColumn: 'span 2' }}>
-                <CFormLabel style={labelStyle}>CEP</CFormLabel>
-                <CFormInput {...register('zip')} placeholder="00000-000" />
-              </div>
-              <div style={{ gridColumn: 'span 4' }}>
-                <CFormLabel style={labelStyle}>Complemento</CFormLabel>
-                <CFormInput {...register('complement')} />
-              </div>
-              <div style={{ gridColumn: 'span 6' }}>
-                <CFormLabel style={labelStyle}>Cidade</CFormLabel>
-                <CFormInput {...register('city')} />
-              </div>
-              <div style={{ gridColumn: 'span 2' }}>
-                <CFormLabel style={labelStyle}>Estado</CFormLabel>
-                <CFormInput {...register('state')} maxLength={2} placeholder="SP" />
-              </div>
-            </div>
+            <AddressFields control={control} setValue={setValue} errors={errors} />
           </Card>
         </div>
 
