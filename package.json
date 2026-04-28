@@ -13,12 +13,13 @@
     "lint": "pnpm -r lint",
     "sonar:bootstrap": "node scripts/sonar-bootstrap.mjs",
     "sonar:wait-gate": "node scripts/sonar-wait-gate.mjs",
-    "sonar:scan": "pnpm dlx sonar-scanner",
+    "sonar:scan": "sonar-scanner",
     "sonar:check": "pnpm test:cov && pnpm sonar:scan && pnpm sonar:wait-gate",
     "prepare": "husky"
   },
   "devDependencies": {
     "husky": "^9.1.7",
+    "sonar-scanner": "^3.1.0",
     "typescript": "^5.3.3"
   },
   "engines": {

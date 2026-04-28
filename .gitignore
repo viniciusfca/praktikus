@@ -12,4 +12,4 @@ coverage/
 .pnpm-debug.log*
 Thumbs.db
 .worktrees/
-_design-reference/
+_design-reference/.scannerwork/

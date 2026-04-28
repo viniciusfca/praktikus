@@ -11,6 +11,9 @@ importers:
       husky:
         specifier: ^9.1.7
         version: 9.1.7
+      sonar-scanner:
+        specifier: ^3.1.0
+        version: 3.1.0
       typescript:
         specifier: ^5.3.3
         version: 5.9.3
@@ -6844,6 +6847,12 @@ packages:
   /slash@3.0.0:
     resolution: {integrity: sha512-g9Q1haeby36OSStwb4ntCGGGaKsaVSjQ68fBxoQcutl5fS1vuY18H3wSt3jFyFtrkx+Kz0V1G85A4MyAdDMi2Q==}
     engines: {node: '>=8'}
+    dev: true
+
+  /sonar-scanner@3.1.0:
+    resolution: {integrity: sha512-KD7W3wHCKJKAakhn8ckxNYTxkdb1cnJa3ot0NVvO8CCeJjb0yvF0fW2yGdI09zMHsqxCRsl4dLtyCL2SUv47WA==}
+    hasBin: true
+    requiresBuild: true
     dev: true
 
   /source-map-js@1.2.1:
