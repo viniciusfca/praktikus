@@ -3,6 +3,7 @@ import { api } from './api';
 export interface CompanyAddress {
   street: string;
   number: string;
+  neighborhood?: string;
   complement?: string;
   city: string;
   state: string;
