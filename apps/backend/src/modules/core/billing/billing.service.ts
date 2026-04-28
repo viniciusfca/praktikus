@@ -20,11 +20,17 @@ export class BillingService {
     const apiKey = this.config.get<string>('ASAAS_API_KEY');
     this.isMock = !apiKey || apiKey === 'mock';
     if (this.isMock) {
-      this.logger.warn('Asaas em modo MOCK — nenhuma cobrança real será criada.');
+      this.logger.warn(
+        'Asaas em modo MOCK — nenhuma cobrança real será criada.',
+      );
     }
   }
 
-  async setupTrial(tenantId: string, email: string, name: string): Promise<void> {
+  async setupTrial(
+    tenantId: string,
+    email: string,
+    name: string,
+  ): Promise<void> {
     let asaasCustomerId: string;
     let asaasSubscriptionId: string;
 
@@ -33,8 +39,13 @@ export class BillingService {
       asaasSubscriptionId = `mock_subscription_${tenantId}`;
     } else {
       const apiKey = this.config.get<string>('ASAAS_API_KEY')!;
-      const baseUrl = this.config.get<string>('ASAAS_API_URL', 'https://sandbox.asaas.com/api/v3');
-      const planValue = parseFloat(this.config.get<string>('ASAAS_PLAN_VALUE', '69.90'));
+      const baseUrl = this.config.get<string>(
+        'ASAAS_API_URL',
+        'https://sandbox.asaas.com/api/v3',
+      );
+      const planValue = parseFloat(
+        this.config.get<string>('ASAAS_PLAN_VALUE', '69.90'),
+      );
 
       let customerResponse: Response;
       try {
@@ -44,12 +55,16 @@ export class BillingService {
           body: JSON.stringify({ name, email }),
         });
       } catch (err) {
-        throw new Error(`Asaas network error on createCustomer: ${(err as Error).message}`);
+        throw new Error(
+          `Asaas network error on createCustomer: ${(err as Error).message}`,
+        );
       }
 
       if (!customerResponse.ok) {
         const body = await customerResponse.text();
-        throw new Error(`Asaas createCustomer failed: ${customerResponse.status} ${body}`);
+        throw new Error(
+          `Asaas createCustomer failed: ${customerResponse.status} ${body}`,
+        );
       }
 
       const customer = (await customerResponse.json()) as { id?: string };
@@ -78,30 +93,48 @@ export class BillingService {
           }),
         });
       } catch (err) {
-        this.logger.error(`Asaas createSubscription network error. Orphaned customerId: ${asaasCustomerId}`);
-        throw new Error(`Asaas network error on createSubscription: ${(err as Error).message}`);
+        this.logger.error(
+          `Asaas createSubscription network error. Orphaned customerId: ${asaasCustomerId}`,
+        );
+        throw new Error(
+          `Asaas network error on createSubscription: ${(err as Error).message}`,
+        );
       }
 
       if (!subscriptionResponse.ok) {
         const body = await subscriptionResponse.text();
-        this.logger.error(`Asaas createSubscription failed. Orphaned customerId: ${asaasCustomerId}`);
-        throw new Error(`Asaas createSubscription failed: ${subscriptionResponse.status} ${body}`);
+        this.logger.error(
+          `Asaas createSubscription failed. Orphaned customerId: ${asaasCustomerId}`,
+        );
+        throw new Error(
+          `Asaas createSubscription failed: ${subscriptionResponse.status} ${body}`,
+        );
       }
 
-      const subscription = (await subscriptionResponse.json()) as { id?: string };
+      const subscription = (await subscriptionResponse.json()) as {
+        id?: string;
+      };
       if (!subscription.id) {
-        this.logger.error(`Asaas createSubscription returned no ID. Orphaned customerId: ${asaasCustomerId}`);
+        this.logger.error(
+          `Asaas createSubscription returned no ID. Orphaned customerId: ${asaasCustomerId}`,
+        );
         throw new Error('Asaas createSubscription returned no subscription ID');
       }
       asaasSubscriptionId = subscription.id;
     }
 
     await this.billingRepo.save(
-      this.billingRepo.create({ tenantId, asaasCustomerId, asaasSubscriptionId }),
+      this.billingRepo.create({
+        tenantId,
+        asaasCustomerId,
+        asaasSubscriptionId,
+      }),
     );
   }
 
-  async findTenantIdBySubscriptionId(subscriptionId: string): Promise<string | null> {
+  async findTenantIdBySubscriptionId(
+    subscriptionId: string,
+  ): Promise<string | null> {
     const billing = await this.billingRepo.findOne({
       where: { asaasSubscriptionId: subscriptionId },
     });
@@ -127,35 +160,56 @@ export class BillingService {
       try {
         ipcaRate = await this.fetchIpcaAccumulado12Months();
       } catch (err) {
-        this.logger.error(`IBGE IPCA fetch failed for tenant ${billing.tenantId}: ${(err as Error).message}`);
+        this.logger.error(
+          `IBGE IPCA fetch failed for tenant ${billing.tenantId}: ${(err as Error).message}`,
+        );
         continue;
       }
 
-      const currentValue = parseFloat(this.config.get<string>('ASAAS_PLAN_VALUE', '69.90'));
+      const currentValue = parseFloat(
+        this.config.get<string>('ASAAS_PLAN_VALUE', '69.90'),
+      );
       const newValue = parseFloat((currentValue * (1 + ipcaRate)).toFixed(2));
 
       if (this.isMock) {
-        this.logger.log(`[MOCK] Reajuste anual tenant ${billing.tenantId}: R$${currentValue} → R$${newValue} (IPCA ${(ipcaRate * 100).toFixed(2)}%)`);
+        this.logger.log(
+          `[MOCK] Reajuste anual tenant ${billing.tenantId}: R$${currentValue} → R$${newValue} (IPCA ${(ipcaRate * 100).toFixed(2)}%)`,
+        );
         continue;
       }
 
       const apiKey = this.config.get<string>('ASAAS_API_KEY')!;
-      const baseUrl = this.config.get<string>('ASAAS_API_URL', 'https://sandbox.asaas.com/api/v3');
+      const baseUrl = this.config.get<string>(
+        'ASAAS_API_URL',
+        'https://sandbox.asaas.com/api/v3',
+      );
 
       try {
-        const patchRes = await fetch(`${baseUrl}/subscriptions/${billing.asaasSubscriptionId}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json', access_token: apiKey },
-          body: JSON.stringify({ value: newValue }),
-        });
+        const patchRes = await fetch(
+          `${baseUrl}/subscriptions/${billing.asaasSubscriptionId}`,
+          {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+              access_token: apiKey,
+            },
+            body: JSON.stringify({ value: newValue }),
+          },
+        );
         if (!patchRes.ok) {
           const body = await patchRes.text();
-          this.logger.error(`Asaas PATCH failed for tenant ${billing.tenantId}: ${patchRes.status} ${body}`);
+          this.logger.error(
+            `Asaas PATCH failed for tenant ${billing.tenantId}: ${patchRes.status} ${body}`,
+          );
         } else {
-          this.logger.log(`Reajuste anual aplicado tenant ${billing.tenantId}: R$${currentValue} → R$${newValue}`);
+          this.logger.log(
+            `Reajuste anual aplicado tenant ${billing.tenantId}: R$${currentValue} → R$${newValue}`,
+          );
         }
       } catch (err) {
-        this.logger.error(`Asaas PATCH subscription failed for tenant ${billing.tenantId}: ${(err as Error).message}`);
+        this.logger.error(
+          `Asaas PATCH subscription failed for tenant ${billing.tenantId}: ${(err as Error).message}`,
+        );
       }
     }
   }
@@ -173,10 +227,10 @@ export class BillingService {
 
     const data = (await res.json()) as any[];
     const series = data?.[0]?.resultados?.[0]?.series?.[0]?.serie ?? {};
-    const values = Object.values(series) as string[];
+    const values = Object.values(series);
     if (values.length === 0) throw new Error('IBGE returned empty series');
 
-    const latest = parseFloat(values[values.length - 1]);
+    const latest = parseFloat(String(values[values.length - 1]));
     if (isNaN(latest)) throw new Error('IBGE value is not a number');
 
     return latest / 100;
