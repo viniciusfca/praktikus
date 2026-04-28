@@ -1,0 +1,29 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh" 2>/dev/null || true
+set -e
+
+# Carrega SONAR_TOKEN do apps/backend/.env, se existir
+if [ -f apps/backend/.env ]; then
+  export $(grep -E '^SONAR_TOKEN=' apps/backend/.env | xargs) 2>/dev/null || true
+fi
+
+if [ -z "$SONAR_TOKEN" ]; then
+  echo "❌ SONAR_TOKEN não definido. Rode: pnpm sonar:bootstrap e copie o token pra apps/backend/.env"
+  exit 1
+fi
+
+if ! curl -sf http://localhost:9000/api/system/status | grep -q '"status":"UP"'; then
+  echo "❌ SonarQube não está rodando. Suba com: docker compose --profile sonar up -d"
+  exit 1
+fi
+
+echo "🧪 Rodando coverage (backend + frontend + shared)..."
+pnpm test:cov
+
+echo "🔍 Rodando sonar-scanner..."
+pnpm sonar:scan
+
+echo "⏳ Aguardando quality gate..."
+pnpm sonar:wait-gate
+
+echo "✅ Quality gate verde. Push liberado."
