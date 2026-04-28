@@ -10,7 +10,7 @@ const segments = [
     name: 'Oficina Mecânica',
     desc: 'Gestão completa de OS, agendamentos, peças e clientes para oficinas de todo porte.',
     live: true,
-    path: '/register',
+    path: '/register/workshop',
   },
   {
     emoji: '♻️',
