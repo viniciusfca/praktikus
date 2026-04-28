@@ -3,6 +3,7 @@ import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateCol
 export type SupplierAddress = {
   street: string;
   number: string;
+  neighborhood?: string;
   complement?: string;
   city: string;
   state: string;

@@ -21,6 +21,7 @@ export class CreateSupplierDto {
   address?: {
     street: string;
     number: string;
+    neighborhood?: string;
     complement?: string;
     city: string;
     state: string;

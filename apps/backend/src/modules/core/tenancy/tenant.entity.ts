@@ -17,6 +17,7 @@ export enum TenantStatus {
 export type TenantAddress = {
   street: string;
   number: string;
+  neighborhood?: string;
   complement?: string;
   city: string;
   state: string;

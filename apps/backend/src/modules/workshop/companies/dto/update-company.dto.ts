@@ -12,6 +12,10 @@ class AddressUpdateDto {
 
   @IsOptional()
   @IsString()
+  neighborhood?: string;
+
+  @IsOptional()
+  @IsString()
   complement?: string;
 
   @IsOptional()
