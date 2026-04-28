@@ -11,12 +11,14 @@ import {
   CFormLabel,
   CSpinner,
 } from '@coreui/react';
+import { strongPasswordZodSchema } from '@praktikus/shared';
 import { AuthShell } from '../../components/AuthShell';
+import { PasswordStrengthMeter } from '../../components/PasswordStrengthMeter';
 import { authService } from '../../services/auth.service';
 
 const schema = z
   .object({
-    password: z.string().min(8, 'Senha deve ter no mínimo 8 caracteres'),
+    password: strongPasswordZodSchema,
     confirmPassword: z.string(),
   })
   .refine((d) => d.password === d.confirmPassword, {
@@ -34,6 +36,7 @@ export function ResetPasswordPage() {
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<FormData>({ resolver: zodResolver(schema) });
 
@@ -119,6 +122,8 @@ export function ResetPasswordPage() {
           />
           {errors.password && <CFormFeedback invalid>{errors.password.message}</CFormFeedback>}
         </div>
+
+        <PasswordStrengthMeter password={watch('password') ?? ''} />
 
         <div>
           <CFormLabel style={{ fontWeight: 500, fontSize: 13 }}>Confirmar senha</CFormLabel>
