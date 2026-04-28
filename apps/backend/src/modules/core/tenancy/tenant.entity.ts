@@ -5,7 +5,7 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { TenantSegment } from '@praktikus/shared';
+import { TenantSegment, WhatsappPlan } from '@praktikus/shared';
 
 export enum TenantStatus {
   TRIAL = 'TRIAL',
@@ -77,4 +77,29 @@ export class TenantEntity {
 
   @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' })
   updatedAt: Date;
+
+  @Column({ name: 'whatsapp_enabled', type: 'boolean', default: false })
+  whatsappEnabled: boolean;
+
+  @Column({
+    name: 'whatsapp_plan',
+    type: 'enum',
+    enum: WhatsappPlan,
+    nullable: true,
+  })
+  whatsappPlan: WhatsappPlan | null;
+
+  @Column({
+    name: 'whatsapp_asaas_subscription_id',
+    type: 'varchar',
+    nullable: true,
+  })
+  whatsappAsaasSubscriptionId: string | null;
+
+  @Column({
+    name: 'whatsapp_agent_limit_override',
+    type: 'int',
+    nullable: true,
+  })
+  whatsappAgentLimitOverride: number | null;
 }
