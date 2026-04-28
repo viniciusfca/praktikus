@@ -181,9 +181,15 @@ export function NewSalePage() {
 
   const handleProductChange = (index: number, productId: string) => {
     const product = products.find((p) => p.id === productId);
-    if (product) {
-      setValue(`items.${index}.unitPrice`, product.pricePerUnit);
-    }
+    if (!product) return;
+    setValue(`items.${index}.unitPrice`, product.pricePerUnit);
+
+    // Auto-focus na quantidade da mesma linha após o re-render do Controller.
+    requestAnimationFrame(() => {
+      const el = document.getElementById(`item-quantity-${index}`) as HTMLInputElement | null;
+      el?.focus();
+      el?.select();
+    });
   };
 
   const getBalance = (productId: string): number | null => {
@@ -445,6 +451,7 @@ export function NewSalePage() {
                             name={`items.${index}.quantity`}
                             render={({ field }) => (
                               <NumericInput
+                                id={`item-quantity-${index}`}
                                 value={field.value ?? null}
                                 onChange={field.onChange}
                                 decimals={3}
