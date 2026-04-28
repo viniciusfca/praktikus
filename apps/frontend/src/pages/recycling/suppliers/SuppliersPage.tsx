@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useForm, Controller } from 'react-hook-form';
+import { isValidCpf, isValidCnpj } from '@praktikus/shared';
 import { DocumentInput, PhoneInput } from '../../../components/inputs';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -51,16 +52,16 @@ const schema = z
           message: 'Documento é obrigatório quando o tipo é selecionado',
           path: ['document'],
         });
-      } else if (data.documentType === 'CPF' && !/^\d{11}$/.test(data.document)) {
+      } else if (data.documentType === 'CPF' && !isValidCpf(data.document)) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: 'CPF deve ter 11 dígitos',
+          message: 'CPF inválido',
           path: ['document'],
         });
-      } else if (data.documentType === 'CNPJ' && !/^\d{14}$/.test(data.document)) {
+      } else if (data.documentType === 'CNPJ' && !isValidCnpj(data.document)) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: 'CNPJ deve ter 14 dígitos',
+          message: 'CNPJ inválido',
           path: ['document'],
         });
       }
