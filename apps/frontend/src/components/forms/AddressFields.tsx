@@ -1,6 +1,6 @@
 import { Controller } from 'react-hook-form';
 import type { Control, FieldErrors, FieldValues, UseFormSetValue, Path } from 'react-hook-form';
-import { CFormFeedback, CFormInput, CFormLabel, CSpinner } from '@coreui/react';
+import { CFormInput, CFormLabel, CSpinner } from '@coreui/react';
 import { useCepLookup } from '../../hooks/useCepLookup';
 
 const labelStyle: React.CSSProperties = { fontWeight: 500, fontSize: 13 };
@@ -50,7 +50,11 @@ export function AddressFields<T extends FieldValues>({
             </div>
           )}
         </div>
-        {error && <CFormFeedback invalid>{error}</CFormFeedback>}
+        {error && (
+          <small style={{ color: 'var(--cui-form-invalid-color, #dc3545)', fontSize: 12, marginTop: 4, display: 'block' }}>
+            {error}
+          </small>
+        )}
       </div>
 
       <div style={{ gridColumn: 'span 8' }}>
