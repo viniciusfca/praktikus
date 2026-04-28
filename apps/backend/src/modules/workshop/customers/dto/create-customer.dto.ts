@@ -1,14 +1,12 @@
-import { IsString, IsEmail, IsOptional, MinLength, Matches } from 'class-validator';
+import { IsString, IsEmail, IsOptional, MinLength } from 'class-validator';
+import { IsValidDocument } from '../../../core/validation';
 
 export class CreateCustomerDto {
   @IsString()
   @MinLength(2)
   nome: string;
 
-  @IsString()
-  @Matches(/^\d{11}$|^\d{14}$/, {
-    message: 'CPF deve ter 11 dígitos ou CNPJ 14 dígitos numéricos',
-  })
+  @IsValidDocument()
   cpfCnpj: string;
 
   @IsOptional()
