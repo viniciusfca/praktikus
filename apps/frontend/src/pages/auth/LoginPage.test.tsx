@@ -20,6 +20,12 @@ vi.mock('react-router-dom', async () => {
 import { authService } from '../../services/auth.service';
 const mockAuthService = authService as any;
 
+const fakeJwt = (payload: Record<string, unknown>): string => {
+  const b64 = (obj: unknown) =>
+    Buffer.from(JSON.stringify(obj)).toString('base64url');
+  return `${b64({ alg: 'HS256', typ: 'JWT' })}.${b64(payload)}.sig`;
+};
+
 describe('LoginPage', () => {
   beforeEach(() => vi.clearAllMocks());
 
@@ -43,7 +49,7 @@ describe('LoginPage', () => {
   });
 
   it('calls authService.login with form values on submit', async () => {
-    mockAuthService.login.mockResolvedValue({ access_token: 'tok', refresh_token: 'ref' });
+    mockAuthService.login.mockResolvedValue({ access_token: fakeJwt({ tenant_segment: 'WORKSHOP' }), refresh_token: 'ref' });
     renderLogin();
     fireEvent.change(screen.getByLabelText(/e-mail/i), { target: { value: 'owner@test.com' } });
     fireEvent.change(screen.getByLabelText(/senha/i), { target: { value: 'senha1234' } });
@@ -57,7 +63,7 @@ describe('LoginPage', () => {
   });
 
   it('navigates to dashboard after successful login', async () => {
-    mockAuthService.login.mockResolvedValue({ access_token: 'tok', refresh_token: 'ref' });
+    mockAuthService.login.mockResolvedValue({ access_token: fakeJwt({ tenant_segment: 'WORKSHOP' }), refresh_token: 'ref' });
     renderLogin();
     fireEvent.change(screen.getByLabelText(/e-mail/i), { target: { value: 'a@b.com' } });
     fireEvent.change(screen.getByLabelText(/senha/i), { target: { value: 'pass1234' } });
