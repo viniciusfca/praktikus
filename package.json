@@ -9,7 +9,7 @@
     "dev:frontend": "pnpm --filter frontend dev",
     "build": "pnpm -r build",
     "test": "pnpm -r test",
-    "test:cov": "pnpm -r test:cov",
+    "test:cov": "pnpm -r --workspace-concurrency=1 test:cov",
     "lint": "pnpm -r lint",
     "sonar:bootstrap": "node scripts/sonar-bootstrap.mjs",
     "sonar:wait-gate": "node scripts/sonar-wait-gate.mjs",
