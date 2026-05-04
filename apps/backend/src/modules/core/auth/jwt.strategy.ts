@@ -27,6 +27,7 @@ export interface AuthUser {
   email: string;
   tenantStatus: TenantStatus;
   tenantSegment: TenantSegment;
+  whatsappEnabled?: boolean;
 }
 
 @Injectable()
