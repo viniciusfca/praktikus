@@ -95,7 +95,8 @@ export function ProductDialog({
   const onSubmit = handleSubmit(async (data) => {
     const prices: Record<string, number | null> = {};
     for (const [k, v] of Object.entries(data.prices)) {
-      prices[k] = v == null || v === '' ? null : Number(v);
+      const raw = v as number | string | null;
+      prices[k] = raw == null || raw === '' ? null : Number(raw);
     }
     await onSave({
       name: data.name,

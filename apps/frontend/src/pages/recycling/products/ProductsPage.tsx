@@ -1,19 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Controller, useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import {
   CAlert,
+  CBadge,
   CButton,
-  CFormFeedback,
-  CFormInput,
-  CFormLabel,
-  CFormSelect,
-  CModal,
-  CModalBody,
-  CModalFooter,
-  CModalHeader,
-  CModalTitle,
+  CCard,
+  CCardBody,
   CSpinner,
   CTable,
   CTableBody,
@@ -24,178 +15,47 @@ import {
 } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
 import { cilPlus, cilPen, cilPrint, cilRecycle } from '@coreui/icons';
-import { productsService, type Product } from '../../../services/recycling/products.service';
-import { unitsService, type Unit } from '../../../services/recycling/units.service';
-import { CurrencyInput } from '../../../components/inputs';
-import { downloadPdf } from '../../../utils/downloadPdf';
-import { PriceListPdf } from '../../../components/recycling/PriceListPdf';
-import { companyService } from '../../../services/company.service';
-
-// ── Schema ──────────────────────────────────────────────────────────────────
-const schema = z.object({
-  name: z.string().min(1, 'Nome é obrigatório'),
-  unitId: z.string().uuid('Selecione uma unidade válida'),
-  pricePerUnit: z.number().positive('Preço deve ser maior que zero').multipleOf(0.01, 'Use até 2 casas decimais'),
-});
-
-type FormData = z.infer<typeof schema>;
-
-// ── Helpers ─────────────────────────────────────────────────────────────────
-const labelStyle = { fontWeight: 500, fontSize: 13 };
-
-function formatPrice(price: number): string {
-  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(price);
-}
-
-// ── Form Dialog ─────────────────────────────────────────────────────────────
-
-interface ProductFormDialogProps {
-  open: boolean;
-  editing: Product | null;
-  units: Unit[];
-  onClose: () => void;
-  onSaved: () => void;
-}
-
-function ProductFormDialog({ open, editing, units, onClose, onSaved }: ProductFormDialogProps) {
-  const [submitError, setSubmitError] = useState<string | null>(null);
-
-  const {
-    register,
-    control,
-    handleSubmit,
-    reset,
-    formState: { errors, isSubmitting },
-  } = useForm<FormData>({ resolver: zodResolver(schema) });
-
-  useEffect(() => {
-    if (!open) return;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- clear stale UI state on dialog open
-    setSubmitError(null);
-    if (editing) {
-      reset({
-        name: editing.name,
-        unitId: editing.unitId,
-        pricePerUnit: Number(editing.pricePerUnit),
-      });
-    } else {
-      reset({ name: '', unitId: '', pricePerUnit: 0 });
-    }
-  }, [open, editing, reset]);
-
-  const onSubmit = async (data: FormData) => {
-    setSubmitError(null);
-    try {
-      if (editing) {
-        await productsService.update(editing.id, data);
-      } else {
-        await productsService.create(data);
-      }
-      onSaved();
-      onClose();
-    } catch (err: unknown) {
-      const e = err as { response?: { data?: { message?: string } } };
-      setSubmitError(e?.response?.data?.message ?? 'Erro ao salvar produto.');
-    }
-  };
-
-  return (
-    <CModal visible={open} onClose={onClose} size="sm" className="pk-modal-mobile">
-      <CModalHeader>
-        <CModalTitle>{editing ? 'Editar produto' : 'Novo produto'}</CModalTitle>
-      </CModalHeader>
-      <form onSubmit={handleSubmit(onSubmit)} noValidate>
-        <CModalBody>
-          {submitError && (
-            <CAlert color="danger" className="mb-3">
-              {submitError}
-            </CAlert>
-          )}
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <div>
-              <CFormLabel style={labelStyle}>Nome *</CFormLabel>
-              <CFormInput
-                placeholder="Ex.: Alumínio latinha"
-                {...register('name')}
-                invalid={!!errors.name}
-              />
-              {errors.name && <CFormFeedback invalid>{errors.name.message}</CFormFeedback>}
-            </div>
-
-            <div>
-              <CFormLabel style={labelStyle}>Unidade de medida *</CFormLabel>
-              <CFormSelect {...register('unitId')} invalid={!!errors.unitId}>
-                <option value="">Selecione...</option>
-                {units.map((u) => (
-                  <option key={u.id} value={u.id}>
-                    {u.name} ({u.abbreviation})
-                  </option>
-                ))}
-              </CFormSelect>
-              {errors.unitId && <CFormFeedback invalid>{errors.unitId.message}</CFormFeedback>}
-              {units.length === 0 && (
-                <div style={{ fontSize: 11.5, color: '#b45309', marginTop: 4 }}>
-                  Nenhuma unidade cadastrada. Crie em Configurações → Unidades de medida.
-                </div>
-              )}
-            </div>
-
-            <div>
-              <CFormLabel style={labelStyle}>Preço por unidade (R$) *</CFormLabel>
-              <Controller
-                control={control}
-                name="pricePerUnit"
-                render={({ field }) => (
-                  <CurrencyInput
-                    value={field.value ?? null}
-                    onChange={field.onChange}
-                    invalid={!!errors.pricePerUnit}
-                    placeholder="0,00"
-                  />
-                )}
-              />
-              {errors.pricePerUnit && (
-                <CFormFeedback invalid>{errors.pricePerUnit.message}</CFormFeedback>
-              )}
-            </div>
-          </div>
-        </CModalBody>
-        <CModalFooter>
-          <CButton color="secondary" variant="outline" onClick={onClose} disabled={isSubmitting}>
-            Cancelar
-          </CButton>
-          <CButton type="submit" color="primary" disabled={isSubmitting}>
-            {isSubmitting ? <CSpinner size="sm" /> : 'Salvar'}
-          </CButton>
-        </CModalFooter>
-      </form>
-    </CModal>
-  );
-}
+import {
+  productsService,
+  type Product,
+} from '../../../services/recycling/products.service';
+import {
+  unitsService,
+  type Unit,
+} from '../../../services/recycling/units.service';
+import { usePriceTables } from '../../../hooks/recycling/usePriceTables';
+import { ProductDialog } from '../../../components/recycling/ProductDialog';
+import { PrintTableDialog } from '../../../components/recycling/PrintTableDialog';
+import { companyService, type CompanyProfile } from '../../../services/company.service';
+import { formatBRL } from '../../../utils/format';
 
 // ── Main page ───────────────────────────────────────────────────────────────
 
 export function ProductsPage() {
+  const { priceTables, loading: ptLoading } = usePriceTables();
   const [products, setProducts] = useState<Product[]>([]);
   const [units, setUnits] = useState<Unit[]>([]);
+  const [empresa, setEmpresa] = useState<CompanyProfile | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [editing, setEditing] = useState<Product | null>(null);
-  const [printing, setPrinting] = useState(false);
-  const [printError, setPrintError] = useState<string | null>(null);
+
+  const [editing, setEditing] = useState<Product | null | 'new'>(null);
+  const [printOpen, setPrintOpen] = useState(false);
+
+  const sortedTables = [...priceTables].sort((a, b) => a.sortOrder - b.sortOrder);
 
   const loadData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const [productsData, unitsData] = await Promise.all([
+      const [productsData, unitsData, companyData] = await Promise.all([
         productsService.list(true),
         unitsService.list(),
+        companyService.getProfile(),
       ]);
       setProducts(productsData);
       setUnits(unitsData);
+      setEmpresa(companyData);
     } catch {
       setError('Erro ao carregar produtos.');
     } finally {
@@ -204,17 +64,22 @@ export function ProductsPage() {
   }, []);
 
   useEffect(() => {
-    loadData();
+    void loadData();
   }, [loadData]);
 
-  const handleToggleActive = async (product: Product) => {
-    try {
-      await productsService.update(product.id, { active: !product.active });
-      loadData();
-    } catch (err: unknown) {
-      const e = err as { response?: { data?: { message?: string } } };
-      alert(e?.response?.data?.message ?? 'Erro ao atualizar produto.');
+  const handleSave = async (data: {
+    name: string;
+    unitId: string;
+    active: boolean;
+    prices: Record<string, number | null>;
+  }) => {
+    if (editing && editing !== 'new') {
+      await productsService.update(editing.id, data);
+    } else {
+      await productsService.create({ ...data, prices: data.prices });
     }
+    setEditing(null);
+    await loadData();
   };
 
   const getUnitAbbreviation = (unitId: string): string => {
@@ -222,54 +87,8 @@ export function ProductsPage() {
     return unit ? unit.abbreviation : '—';
   };
 
-  const handlePrint = async () => {
-    setPrintError(null);
-    const active = products
-      .filter((p) => p.active)
-      .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
-    if (active.length === 0) {
-      setPrintError('Nenhum produto ativo para imprimir.');
-      return;
-    }
-    const rows = active.map((p) => {
-      const unit = units.find((u) => u.id === p.unitId);
-      return {
-        name: p.name,
-        unitSymbol: unit?.abbreviation ?? '—',
-        pricePerUnit: Number(p.pricePerUnit),
-      };
-    });
-    setPrinting(true);
-    try {
-      const company = await companyService.getProfile();
-      const printedAt = new Date();
-      const dateStr = printedAt.toISOString().slice(0, 10);
-      await downloadPdf(
-        <PriceListPdf
-          rows={rows}
-          empresa={{ nomeFantasia: company.nomeFantasia, cnpj: company.cnpj }}
-          printedAt={printedAt}
-        />,
-        `tabela-precos-${dateStr}.pdf`,
-      );
-    } catch {
-      setPrintError('Erro ao gerar PDF. Tente novamente.');
-    } finally {
-      setPrinting(false);
-    }
-  };
-
-  const openCreate = () => {
-    setEditing(null);
-    setModalOpen(true);
-  };
-
-  const openEdit = (product: Product) => {
-    setEditing(product);
-    setModalOpen(true);
-  };
-
   const activeCount = products.filter((p) => p.active).length;
+  const isLoading = loading || ptLoading;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -297,7 +116,7 @@ export function ProductsPage() {
           </h1>
           <p style={{ margin: '4px 0 0', fontSize: 13.5, color: 'var(--cui-secondary-color)' }}>
             {products.length > 0
-              ? `${products.length} ${products.length === 1 ? 'produto' : 'produtos'}${activeCount < products.length ? ` · ${activeCount} ${activeCount === 1 ? 'ativo' : 'ativos'}` : ''}`
+              ? `${products.length} ${products.length === 1 ? 'produto' : 'produtos'}${activeCount < products.length ? ` · ${activeCount} ${activeCount === 1 ? 'ativo' : 'ativos'}` : ''} · ${sortedTables.length} ${sortedTables.length === 1 ? 'tabela' : 'tabelas'} de preço`
               : 'Cadastre os materiais recicláveis que você opera'}
           </p>
         </div>
@@ -305,16 +124,16 @@ export function ProductsPage() {
           <CButton
             color="secondary"
             variant="outline"
-            onClick={handlePrint}
-            disabled={printing || products.length === 0}
+            onClick={() => setPrintOpen(true)}
+            disabled={products.length === 0}
             style={{ borderRadius: 8, display: 'inline-flex', alignItems: 'center', gap: 6 }}
           >
-            {printing ? <CSpinner size="sm" /> : <CIcon icon={cilPrint} size="sm" />}
+            <CIcon icon={cilPrint} size="sm" />
             Imprimir tabela
           </CButton>
           <CButton
             color="primary"
-            onClick={openCreate}
+            onClick={() => setEditing('new')}
             style={{ borderRadius: 8, display: 'inline-flex', alignItems: 'center', gap: 6 }}
           >
             <CIcon icon={cilPlus} size="sm" /> Novo produto
@@ -323,165 +142,161 @@ export function ProductsPage() {
       </div>
 
       {error && <CAlert color="danger" className="mb-0">{error}</CAlert>}
-      {printError && <CAlert color="danger" className="mb-0">{printError}</CAlert>}
 
       {/* Table card */}
-      <div className="pk-table-card">
-        <CTable hover responsive className="mb-0">
-          <CTableHead>
-            <CTableRow>
-              <CTableHeaderCell>Produto</CTableHeaderCell>
-              <CTableHeaderCell>Unidade</CTableHeaderCell>
-              <CTableHeaderCell style={{ textAlign: 'right' }}>Preço unit.</CTableHeaderCell>
-              <CTableHeaderCell>Status</CTableHeaderCell>
-              <CTableHeaderCell style={{ textAlign: 'right' }}>Ações</CTableHeaderCell>
-            </CTableRow>
-          </CTableHead>
-          <CTableBody>
-            {loading ? (
+      <CCard>
+        <CCardBody style={{ padding: 0 }}>
+          <CTable hover responsive className="mb-0">
+            <CTableHead>
               <CTableRow>
-                <CTableDataCell colSpan={5} className="text-center py-4">
-                  <CSpinner size="sm" color="primary" />
-                </CTableDataCell>
+                <CTableHeaderCell>Produto</CTableHeaderCell>
+                <CTableHeaderCell>Unidade</CTableHeaderCell>
+                {sortedTables.map((t) => (
+                  <CTableHeaderCell
+                    key={t.id}
+                    style={{ textAlign: 'right', whiteSpace: 'nowrap' }}
+                  >
+                    {t.name}
+                  </CTableHeaderCell>
+                ))}
+                <CTableHeaderCell>Status</CTableHeaderCell>
+                <CTableHeaderCell style={{ textAlign: 'right' }}>Ações</CTableHeaderCell>
               </CTableRow>
-            ) : products.length === 0 ? (
-              <CTableRow>
-                <CTableDataCell colSpan={5} className="text-center py-5">
-                  <div
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      gap: 8,
-                    }}
-                  >
-                    <div
-                      style={{
-                        width: 44,
-                        height: 44,
-                        borderRadius: 12,
-                        background: 'rgba(52,142,145,0.1)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <CIcon icon={cilRecycle} size="lg" style={{ color: 'var(--cui-primary)' }} />
-                    </div>
-                    <div style={{ fontWeight: 600, color: 'var(--cui-body-color)' }}>
-                      Nenhum produto cadastrado
-                    </div>
-                    <div style={{ fontSize: 13, color: 'var(--cui-secondary-color)' }}>
-                      Cadastre o primeiro material para começar.
-                    </div>
-                  </div>
-                </CTableDataCell>
-              </CTableRow>
-            ) : (
-              products.map((p) => (
-                <CTableRow key={p.id}>
-                  <CTableDataCell>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <div
-                        aria-hidden
-                        style={{
-                          width: 32,
-                          height: 32,
-                          borderRadius: 8,
-                          background: 'rgba(52,142,145,0.1)',
-                          color: 'var(--cui-primary)',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          flexShrink: 0,
-                        }}
-                      >
-                        <CIcon icon={cilRecycle} size="sm" />
-                      </div>
-                      <span style={{ fontWeight: 500, color: 'var(--cui-body-color)' }}>{p.name}</span>
-                    </div>
-                  </CTableDataCell>
-                  <CTableDataCell
-                    style={{
-                      color: 'var(--cui-secondary-color)',
-                      fontSize: 13,
-                      fontFamily: "'JetBrains Mono', monospace",
-                    }}
-                  >
-                    {getUnitAbbreviation(p.unitId)}
-                  </CTableDataCell>
-                  <CTableDataCell
-                    style={{
-                      textAlign: 'right',
-                      fontVariantNumeric: 'tabular-nums',
-                      fontWeight: 600,
-                      color: 'var(--cui-body-color)',
-                    }}
-                  >
-                    {formatPrice(p.pricePerUnit)}
-                  </CTableDataCell>
-                  <CTableDataCell>
-                    <span
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: 6,
-                        padding: '3px 10px',
-                        borderRadius: 999,
-                        fontSize: 11.5,
-                        fontWeight: 600,
-                        color: p.active ? '#15803d' : 'var(--cui-secondary-color)',
-                        background: p.active
-                          ? 'rgba(22,163,74,0.12)'
-                          : 'var(--cui-card-cap-bg)',
-                        border: p.active ? 'none' : '1px solid var(--cui-border-color)',
-                      }}
-                    >
-                      <span
-                        style={{
-                          width: 6,
-                          height: 6,
-                          borderRadius: '50%',
-                          background: p.active ? '#16a34a' : 'var(--cui-secondary-color)',
-                        }}
-                      />
-                      {p.active ? 'Ativo' : 'Inativo'}
-                    </span>
-                  </CTableDataCell>
-                  <CTableDataCell style={{ textAlign: 'right' }}>
-                    <CButton
-                      color="secondary"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => openEdit(p)}
-                      title="Editar"
-                    >
-                      <CIcon icon={cilPen} />
-                    </CButton>
-                    <CButton
-                      color={p.active ? 'warning' : 'success'}
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleToggleActive(p)}
-                      title={p.active ? 'Desativar' : 'Ativar'}
-                    >
-                      {p.active ? 'Desativar' : 'Ativar'}
-                    </CButton>
+            </CTableHead>
+            <CTableBody>
+              {isLoading ? (
+                <CTableRow>
+                  <CTableDataCell colSpan={4 + sortedTables.length} className="text-center py-4">
+                    <CSpinner size="sm" color="primary" />
                   </CTableDataCell>
                 </CTableRow>
-              ))
-            )}
-          </CTableBody>
-        </CTable>
-      </div>
+              ) : products.length === 0 ? (
+                <CTableRow>
+                  <CTableDataCell colSpan={4 + sortedTables.length} className="text-center py-5">
+                    <div
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: 8,
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: 44,
+                          height: 44,
+                          borderRadius: 12,
+                          background: 'rgba(52,142,145,0.1)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <CIcon icon={cilRecycle} size="lg" style={{ color: 'var(--cui-primary)' }} />
+                      </div>
+                      <div style={{ fontWeight: 600, color: 'var(--cui-body-color)' }}>
+                        Nenhum produto cadastrado
+                      </div>
+                      <div style={{ fontSize: 13, color: 'var(--cui-secondary-color)' }}>
+                        Cadastre o primeiro material para começar.
+                      </div>
+                    </div>
+                  </CTableDataCell>
+                </CTableRow>
+              ) : (
+                products.map((p) => (
+                  <CTableRow key={p.id}>
+                    <CTableDataCell>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <div
+                          aria-hidden
+                          style={{
+                            width: 32,
+                            height: 32,
+                            borderRadius: 8,
+                            background: 'rgba(52,142,145,0.1)',
+                            color: 'var(--cui-primary)',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0,
+                          }}
+                        >
+                          <CIcon icon={cilRecycle} size="sm" />
+                        </div>
+                        <span style={{ fontWeight: 500, color: 'var(--cui-body-color)' }}>{p.name}</span>
+                      </div>
+                    </CTableDataCell>
+                    <CTableDataCell
+                      style={{
+                        color: 'var(--cui-secondary-color)',
+                        fontSize: 13,
+                        fontFamily: "'JetBrains Mono', monospace",
+                      }}
+                    >
+                      {getUnitAbbreviation(p.unitId)}
+                    </CTableDataCell>
+                    {sortedTables.map((t) => (
+                      <CTableDataCell
+                        key={t.id}
+                        style={{
+                          textAlign: 'right',
+                          fontVariantNumeric: 'tabular-nums',
+                          fontWeight: 600,
+                          color: 'var(--cui-body-color)',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {formatBRL(p.prices[t.id])}
+                      </CTableDataCell>
+                    ))}
+                    <CTableDataCell>
+                      <CBadge color={p.active ? 'success' : 'secondary'}>
+                        {p.active ? 'Ativo' : 'Inativo'}
+                      </CBadge>
+                    </CTableDataCell>
+                    <CTableDataCell style={{ textAlign: 'right' }}>
+                      <CButton
+                        color="secondary"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setEditing(p)}
+                        title="Editar"
+                        aria-label="Editar"
+                      >
+                        <CIcon icon={cilPen} />
+                      </CButton>
+                    </CTableDataCell>
+                  </CTableRow>
+                ))
+              )}
+            </CTableBody>
+          </CTable>
+        </CCardBody>
+      </CCard>
 
-      <ProductFormDialog
-        open={modalOpen}
-        editing={editing}
-        units={units}
-        onClose={() => setModalOpen(false)}
-        onSaved={loadData}
-      />
+      {editing !== null && sortedTables.length > 0 && (
+        <ProductDialog
+          key={editing === 'new' ? 'new' : editing.id}
+          open={true}
+          onClose={() => setEditing(null)}
+          onSave={handleSave}
+          priceTables={sortedTables}
+          units={units}
+          product={editing === 'new' ? null : editing}
+        />
+      )}
+
+      {printOpen && empresa && (
+        <PrintTableDialog
+          open={printOpen}
+          onClose={() => setPrintOpen(false)}
+          priceTables={sortedTables}
+          products={products}
+          units={units}
+          empresa={{ nomeFantasia: empresa.nomeFantasia, cnpj: empresa.cnpj }}
+        />
+      )}
     </div>
   );
 }
