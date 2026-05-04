@@ -23,6 +23,7 @@ import { ReportsModule } from './modules/workshop/reports/reports.module';
 import { BillingModule } from './modules/core/billing/billing.module';
 import { CepModule } from './modules/core/cep/cep.module';
 import { RecyclingModule } from './modules/recycling/recycling.module';
+import { WhatsappModule } from './modules/core/whatsapp/whatsapp.module';
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { RecyclingModule } from './modules/recycling/recycling.module';
     ServiceOrdersModule,
     ReportsModule,
     RecyclingModule,
+    WhatsappModule,
   ],
   controllers: [HealthController],
   providers: [
