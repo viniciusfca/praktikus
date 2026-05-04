@@ -14,6 +14,7 @@ export interface JwtUser {
   exp: number;
   tenant_status: 'TRIAL' | 'ACTIVE' | 'OVERDUE' | 'SUSPENDED';
   tenant_segment: 'WORKSHOP' | 'RECYCLING';
+  whatsapp_enabled?: boolean;
 }
 
 interface AuthState {
