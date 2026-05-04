@@ -13,5 +13,3 @@ export function WhatsappStubPage() {
     </CCard>
   );
 }
-
-export default WhatsappStubPage;
