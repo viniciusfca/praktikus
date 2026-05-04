@@ -137,6 +137,27 @@ describe('AuthService', () => {
       expect(result).toHaveProperty('refresh_token');
     });
 
+    it('should include whatsapp_enabled in token payload', async () => {
+      mockTenancyService.findByCnpj.mockResolvedValue(null);
+      mockUserRepo.findOne.mockResolvedValue(null);
+      mockTenancyService.createTenantWithManager.mockResolvedValue({
+        id: 'tenant-1',
+        schemaName: 'tenant_1',
+        status: TenantStatus.TRIAL,
+        whatsappEnabled: true,
+      });
+      mockRefreshTokenRepo.create.mockReturnValue({});
+      mockRefreshTokenRepo.save.mockResolvedValue({});
+      mockBillingService.setupTrial.mockResolvedValue(undefined);
+
+      await service.register(dto);
+
+      expect(mockJwtService.sign).toHaveBeenCalledWith(
+        expect.objectContaining({ whatsapp_enabled: true }),
+        expect.any(Object),
+      );
+    });
+
     it('should throw ConflictException when CNPJ already registered', async () => {
       mockTenancyService.findByCnpj.mockResolvedValue({
         id: 'existing-tenant',
@@ -218,6 +239,33 @@ describe('AuthService', () => {
 
       expect(mockJwtService.sign).toHaveBeenCalledWith(
         expect.objectContaining({ tenant_status: TenantStatus.ACTIVE }),
+        expect.any(Object),
+      );
+    });
+
+    it('should include whatsapp_enabled in token payload', async () => {
+      const user = {
+        id: 'user-1',
+        tenantId: 'tenant-1',
+        role: UserRole.OWNER,
+        email: 'owner@test.com',
+        passwordHash: '$2b$10$hash',
+        name: 'João',
+      };
+      mockUserRepo.findOne.mockResolvedValue(user);
+      mockTenancyService.findById.mockResolvedValue({
+        id: 'tenant-1',
+        status: TenantStatus.ACTIVE,
+        whatsappEnabled: true,
+      });
+      mockRefreshTokenRepo.create.mockReturnValue({});
+      mockRefreshTokenRepo.save.mockResolvedValue({});
+      jest.spyOn(require('bcrypt'), 'compare').mockResolvedValue(true as never);
+
+      await service.login({ email: 'owner@test.com', password: 'senha1234' });
+
+      expect(mockJwtService.sign).toHaveBeenCalledWith(
+        expect.objectContaining({ whatsapp_enabled: true }),
         expect.any(Object),
       );
     });
