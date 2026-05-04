@@ -37,7 +37,7 @@ export class AddPlatformUsersAndAdminIndexes1749000000000
     `);
 
     await queryRunner.query(`
-      CREATE INDEX "idx_platform_refresh_token_hash"
+      CREATE INDEX IF NOT EXISTS "idx_platform_refresh_token_hash"
         ON "public"."platform_refresh_tokens" ("token_hash")
     `);
 
