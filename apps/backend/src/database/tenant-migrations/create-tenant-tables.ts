@@ -3,6 +3,7 @@ import { buildWhatsappTablesSql } from './whatsapp-tables.sql';
 import {
   buildPriceTablesSql,
   buildPriceTablesSeedSql,
+  buildPurchasesPriceTableSetupSql,
 } from './price-tables.sql';
 
 /**
@@ -249,7 +250,13 @@ export function createTenantTablesSql(
   if (segment === TenantSegment.RECYCLING) {
     const priceTables = buildPriceTablesSql(schemaName);
     const priceTablesSeed = buildPriceTablesSeedSql(schemaName);
-    return [...recyclingTables, ...priceTables, ...priceTablesSeed, ...whatsappTables];
+    return [
+      ...recyclingTables,
+      ...priceTables,
+      ...priceTablesSeed,
+      ...buildPurchasesPriceTableSetupSql(schemaName),
+      ...whatsappTables,
+    ];
   }
   return [...workshopTables, ...whatsappTables];
 }
