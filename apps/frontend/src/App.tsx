@@ -1,5 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { useEffect } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
+import { PlatformOnlyRoute } from './pages/admin/_layout/PlatformOnlyRoute';
+import { usePlatformAuthStore } from './store/platform-auth.store';
 import { AppThemeProvider } from './theme/ThemeProvider';
 import { LandingPage } from './pages/LandingPage';
 import { LoginPage } from './pages/auth/LoginPage';
@@ -46,12 +48,36 @@ import { PrivateRoute } from './components/PrivateRoute';
 import { PublicOnlyRoute } from './components/PublicOnlyRoute';
 import { useAuthStore } from './store/auth.store';
 
+const AdminLayout = lazy(() =>
+  import('./pages/admin/_layout/AdminLayout').then((m) => ({ default: m.AdminLayout })),
+);
+const AdminLoginPage = lazy(() =>
+  import('./pages/admin/pages/LoginPage').then((m) => ({ default: m.LoginPage })),
+);
+const AdminOverviewPage = lazy(() =>
+  import('./pages/admin/pages/OverviewPage').then((m) => ({ default: m.OverviewPage })),
+);
+const AdminTenantsPage = lazy(() =>
+  import('./pages/admin/pages/TenantsPage').then((m) => ({ default: m.TenantsPage })),
+);
+const AdminSegmentsPage = lazy(() =>
+  import('./pages/admin/pages/SegmentsPage').then((m) => ({ default: m.SegmentsPage })),
+);
+const AdminWhatsappPage = lazy(() =>
+  import('./pages/admin/pages/WhatsappPage').then((m) => ({ default: m.WhatsappPage })),
+);
+const AdminFinancialPage = lazy(() =>
+  import('./pages/admin/pages/FinancialPage').then((m) => ({ default: m.FinancialPage })),
+);
+
 function App() {
   const hydrate = useAuthStore((s) => s.hydrate);
+  const platformHydrate = usePlatformAuthStore((s) => s.hydrate);
 
   useEffect(() => {
     hydrate();
-  }, [hydrate]);
+    platformHydrate();
+  }, [hydrate, platformHydrate]);
 
   return (
     <AppThemeProvider>
@@ -168,6 +194,30 @@ function App() {
             }
           >
             <Route index element={<WhatsappStubPage />} />
+          </Route>
+          <Route
+            path="/admin/login"
+            element={
+              <Suspense fallback={null}>
+                <AdminLoginPage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              <PlatformOnlyRoute>
+                <Suspense fallback={null}>
+                  <AdminLayout />
+                </Suspense>
+              </PlatformOnlyRoute>
+            }
+          >
+            <Route index element={<Suspense fallback={null}><AdminOverviewPage /></Suspense>} />
+            <Route path="clientes" element={<Suspense fallback={null}><AdminTenantsPage /></Suspense>} />
+            <Route path="segmentos" element={<Suspense fallback={null}><AdminSegmentsPage /></Suspense>} />
+            <Route path="whatsapp" element={<Suspense fallback={null}><AdminWhatsappPage /></Suspense>} />
+            <Route path="financeiro" element={<Suspense fallback={null}><AdminFinancialPage /></Suspense>} />
           </Route>
         </Routes>
     </AppThemeProvider>
