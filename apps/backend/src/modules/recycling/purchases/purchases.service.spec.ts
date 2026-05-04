@@ -266,11 +266,14 @@ describe('PurchasesService', () => {
       ).rejects.toThrow('Tabela de preço inválida ou inativa');
     });
 
-    it('rejeita priceTableId de tabela inativa', async () => {
+    it('rejeita priceTableId de tabela inativa (query filtra por active=true)', async () => {
       mockPriceTableRepo.findOne.mockResolvedValue(null);
       await expect(
         service.create(TENANT2, OPERATOR2, baseDto),
       ).rejects.toThrow('Tabela de preço inválida ou inativa');
+      expect(mockPriceTableRepo.findOne).toHaveBeenCalledWith({
+        where: { id: TABLE, active: true },
+      });
     });
 
     it('persiste priceTableId quando válido', async () => {
@@ -308,6 +311,11 @@ describe('PurchasesService', () => {
       expect(mockItemRepo.create).toHaveBeenCalledWith(
         expect.objectContaining({ unitPrice: 999 }),
       );
+
+      // Assert NO product-prices lookup happened during create
+      const allCalls = mockQueryRunner.manager.getRepository.mock.calls.map(([entity]) => (entity as { name: string }).name);
+      expect(allCalls).not.toContain('ProductEntity');
+      expect(allCalls).not.toContain('ProductPriceEntity');
     });
   });
 
