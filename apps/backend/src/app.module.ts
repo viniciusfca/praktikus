@@ -24,6 +24,7 @@ import { BillingModule } from './modules/core/billing/billing.module';
 import { CepModule } from './modules/core/cep/cep.module';
 import { RecyclingModule } from './modules/recycling/recycling.module';
 import { WhatsappModule } from './modules/core/whatsapp/whatsapp.module';
+import { AdminModule } from './modules/core/admin/admin.module';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { WhatsappModule } from './modules/core/whatsapp/whatsapp.module';
     ReportsModule,
     RecyclingModule,
     WhatsappModule,
+    AdminModule,
   ],
   controllers: [HealthController],
   providers: [
