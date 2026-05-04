@@ -39,6 +39,7 @@ import { ServiceOrdersPage } from './pages/workshop/service-orders/ServiceOrders
 import { ServiceOrderDetailPage } from './pages/workshop/service-orders/ServiceOrderDetailPage';
 import { ReportsPage } from './pages/workshop/reports/ReportsPage';
 import { SettingsPage } from './pages/workshop/settings/SettingsPage';
+import { WhatsappStubPage } from './pages/whatsapp/WhatsappStubPage';
 import { QuoteApprovalPage } from './pages/public/QuoteApprovalPage';
 import { SuspendedPage } from './pages/public/SuspendedPage';
 import { PrivateRoute } from './components/PrivateRoute';
@@ -87,6 +88,7 @@ function App() {
             <Route path="service-orders/:id" element={<ServiceOrderDetailPage />} />
             <Route path="reports" element={<ReportsPage />} />
             <Route path="settings" element={<SettingsPage />} />
+            <Route path="/whatsapp" element={<WhatsappStubPage />} />
           </Route>
           <Route
             path="/recycling"
@@ -113,6 +115,7 @@ function App() {
             <Route path="coletas" element={<ColetasPage />} />
             <Route path="reports" element={<RecyclingReportsPage />} />
             <Route path="settings" element={<RecyclingSettingsPage />} />
+            <Route path="/whatsapp" element={<WhatsappStubPage />} />
           </Route>
         </Routes>
     </AppThemeProvider>
