@@ -1,6 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { DataSource } from 'typeorm';
-import { BadRequestException } from '@nestjs/common';
+import {
+  BadRequestException,
+  NotFoundException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { ProductsService } from './products.service';
 
 const TENANT = '11111111-1111-1111-1111-111111111111';
@@ -13,7 +17,11 @@ describe('ProductsService.create', () => {
   let service: ProductsService;
   let priceTableRepo: { find: jest.Mock };
   let productRepo: { create: jest.Mock; save: jest.Mock };
-  let productPriceRepo: { upsert: jest.Mock; delete: jest.Mock; find: jest.Mock };
+  let productPriceRepo: {
+    upsert: jest.Mock;
+    delete: jest.Mock;
+    find: jest.Mock;
+  };
   let txManager: { getRepository: jest.Mock };
   let queryRunner: {
     connect: jest.Mock;
@@ -28,9 +36,27 @@ describe('ProductsService.create', () => {
   beforeEach(async () => {
     priceTableRepo = {
       find: jest.fn().mockResolvedValue([
-        { id: T1, isDefault: true, active: true, sortOrder: 1, name: 'Tabela 1 — Padrão' },
-        { id: T2, isDefault: false, active: true, sortOrder: 2, name: 'Tabela 2' },
-        { id: T3, isDefault: false, active: true, sortOrder: 3, name: 'Tabela 3' },
+        {
+          id: T1,
+          isDefault: true,
+          active: true,
+          sortOrder: 1,
+          name: 'Tabela 1 — Padrão',
+        },
+        {
+          id: T2,
+          isDefault: false,
+          active: true,
+          sortOrder: 2,
+          name: 'Tabela 2',
+        },
+        {
+          id: T3,
+          isDefault: false,
+          active: true,
+          sortOrder: 3,
+          name: 'Tabela 3',
+        },
       ]),
     };
     productRepo = {
@@ -64,7 +90,10 @@ describe('ProductsService.create', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ProductsService,
-        { provide: DataSource, useValue: { createQueryRunner: () => queryRunner } },
+        {
+          provide: DataSource,
+          useValue: { createQueryRunner: () => queryRunner },
+        },
       ],
     }).compile();
     service = module.get(ProductsService);
@@ -119,13 +148,31 @@ describe('ProductsService.create', () => {
     expect(upsertedTableIds).toEqual([T1]);
     expect(productPriceRepo.delete).not.toHaveBeenCalled();
   });
+
+  it('lança InternalServerErrorException quando não há tabela padrão ativa', async () => {
+    priceTableRepo.find.mockResolvedValue([
+      { id: T1, isDefault: false, active: true, sortOrder: 1 },
+    ]);
+    await expect(
+      service.create(TENANT, {
+        name: 'X',
+        unitId: 'uid',
+        prices: { [T1]: 5 },
+      } as never),
+    ).rejects.toBeInstanceOf(InternalServerErrorException);
+    expect(queryRunner.rollbackTransaction).toHaveBeenCalled();
+  });
 });
 
 describe('ProductsService.update', () => {
   let service: ProductsService;
   let priceTableRepo: { find: jest.Mock };
   let productRepo: { findOne: jest.Mock; save: jest.Mock };
-  let productPriceRepo: { upsert: jest.Mock; delete: jest.Mock; find: jest.Mock };
+  let productPriceRepo: {
+    upsert: jest.Mock;
+    delete: jest.Mock;
+    find: jest.Mock;
+  };
   let txManager: { getRepository: jest.Mock };
   let queryRunner: {
     connect: jest.Mock;
@@ -182,7 +229,10 @@ describe('ProductsService.update', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ProductsService,
-        { provide: DataSource, useValue: { createQueryRunner: () => queryRunner } },
+        {
+          provide: DataSource,
+          useValue: { createQueryRunner: () => queryRunner },
+        },
       ],
     }).compile();
     service = module.get(ProductsService);
@@ -226,4 +276,124 @@ describe('ProductsService.update', () => {
     ).rejects.toBeInstanceOf(BadRequestException);
     expect(queryRunner.rollbackTransaction).toHaveBeenCalled();
   });
+});
+
+describe('ProductsService.list e getById', () => {
+  let service: ProductsService;
+  let productRepo: { createQueryBuilder: jest.Mock; findOne: jest.Mock };
+  let productPriceRepo: { find: jest.Mock };
+  let priceTableRepo: { find: jest.Mock };
+  let schemaManager: { getRepository: jest.Mock };
+  let queryRunner: {
+    connect: jest.Mock;
+    query: jest.Mock;
+    release: jest.Mock;
+    manager: typeof schemaManager;
+  };
+
+  const PRODUTO = {
+    id: PRODUCT,
+    name: 'Alumínio',
+    unitId: 'u',
+    active: true,
+    pricePerUnit: 8,
+  };
+
+  beforeEach(async () => {
+    priceTableRepo = {
+      find: jest.fn().mockResolvedValue([
+        { id: T1, isDefault: true, active: true, sortOrder: 1 },
+        { id: T2, isDefault: false, active: true, sortOrder: 2 },
+      ]),
+    };
+    productPriceRepo = {
+      find: jest
+        .fn()
+        .mockResolvedValue([
+          { productId: PRODUCT, priceTableId: T1, price: '8.00' },
+        ]),
+    };
+    productRepo = {
+      createQueryBuilder: jest.fn().mockReturnValue({
+        orderBy: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        getMany: jest.fn().mockResolvedValue([PRODUTO]),
+      }),
+      findOne: jest.fn().mockResolvedValue(PRODUTO),
+    };
+    schemaManager = {
+      getRepository: jest.fn((entity) => {
+        const name = (entity as { name: string }).name;
+        if (name === 'PriceTableEntity') return priceTableRepo;
+        if (name === 'ProductEntity') return productRepo;
+        if (name === 'ProductPriceEntity') return productPriceRepo;
+        throw new Error(`unexpected entity ${name}`);
+      }),
+    };
+    queryRunner = {
+      connect: jest.fn().mockResolvedValue(undefined),
+      query: jest.fn().mockResolvedValue(undefined),
+      release: jest.fn().mockResolvedValue(undefined),
+      manager: schemaManager,
+    };
+
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        ProductsService,
+        {
+          provide: DataSource,
+          useValue: { createQueryRunner: () => queryRunner },
+        },
+      ],
+    }).compile();
+    service = module.get(ProductsService);
+  });
+
+  it('list() retorna produtos com mapa de preços', async () => {
+    const result = await service.list(TENANT, true);
+    expect(result).toHaveLength(1);
+    expect(result[0].prices[T1]).toBe(8);
+    expect(result[0].prices[T2]).toBeNull();
+  });
+
+  it('list() seta search_path correto', async () => {
+    await service.list(TENANT, true);
+    expect(queryRunner.query).toHaveBeenCalledWith(
+      expect.stringContaining('SET search_path'),
+    );
+  });
+
+  it('list() rejeita tenantId inválido', async () => {
+    await expect(service.list('not-a-uuid', true)).rejects.toThrow(
+      'Invalid tenantId',
+    );
+  });
+
+  it('getById() retorna produto com preços', async () => {
+    const result = await service.getById(TENANT, PRODUCT);
+    expect(result.id).toBe(PRODUCT);
+    expect(result.prices[T1]).toBe(8);
+  });
+
+  it('getById() lança NotFoundException para produto inexistente', async () => {
+    productRepo.findOne.mockResolvedValue(null);
+    await expect(service.getById(TENANT, PRODUCT)).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
+  });
+
+  it('list() sem includeInactive aplica filtro where active', async () => {
+    const qb = {
+      orderBy: jest.fn().mockReturnThis(),
+      where: jest.fn().mockReturnThis(),
+      getMany: jest.fn().mockResolvedValue([PRODUTO]),
+    };
+    productRepo.createQueryBuilder.mockReturnValue(qb);
+
+    await service.list(TENANT); // includeInactive defaults to false
+    expect(qb.where).toHaveBeenCalledWith('product.active = :active', {
+      active: true,
+    });
+  });
+
 });

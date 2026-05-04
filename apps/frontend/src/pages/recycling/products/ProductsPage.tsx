@@ -28,6 +28,141 @@ import { ProductDialog } from '../../../components/recycling/ProductDialog';
 import { PrintTableDialog } from '../../../components/recycling/PrintTableDialog';
 import { companyService, type CompanyProfile } from '../../../services/company.service';
 import { formatBRL } from '../../../utils/format';
+import type { PriceTable } from '../../../services/recycling/price-tables.service';
+
+// ── Table body helper ────────────────────────────────────────────────────────
+
+interface ProductTableBodyProps {
+  isLoading: boolean;
+  products: Product[];
+  sortedTables: PriceTable[];
+  getUnitAbbreviation: (unitId: string) => string;
+  onEdit: (p: Product) => void;
+}
+
+function ProductTableBody({
+  isLoading,
+  products,
+  sortedTables,
+  getUnitAbbreviation,
+  onEdit,
+}: ProductTableBodyProps) {
+  const colSpan = 4 + sortedTables.length;
+
+  if (isLoading) {
+    return (
+      <CTableBody>
+        <CTableRow>
+          <CTableDataCell colSpan={colSpan} className="text-center py-4">
+            <CSpinner size="sm" color="primary" />
+          </CTableDataCell>
+        </CTableRow>
+      </CTableBody>
+    );
+  }
+
+  if (products.length === 0) {
+    return (
+      <CTableBody>
+        <CTableRow>
+          <CTableDataCell colSpan={colSpan} className="text-center py-5">
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+              <div
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 12,
+                  background: 'rgba(52,142,145,0.1)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <CIcon icon={cilRecycle} size="lg" style={{ color: 'var(--cui-primary)' }} />
+              </div>
+              <div style={{ fontWeight: 600, color: 'var(--cui-body-color)' }}>
+                Nenhum produto cadastrado
+              </div>
+              <div style={{ fontSize: 13, color: 'var(--cui-secondary-color)' }}>
+                Cadastre o primeiro material para começar.
+              </div>
+            </div>
+          </CTableDataCell>
+        </CTableRow>
+      </CTableBody>
+    );
+  }
+
+  return (
+    <CTableBody>
+      {products.map((p) => (
+        <CTableRow key={p.id}>
+          <CTableDataCell>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div
+                aria-hidden
+                style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: 8,
+                  background: 'rgba(52,142,145,0.1)',
+                  color: 'var(--cui-primary)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                }}
+              >
+                <CIcon icon={cilRecycle} size="sm" />
+              </div>
+              <span style={{ fontWeight: 500, color: 'var(--cui-body-color)' }}>{p.name}</span>
+            </div>
+          </CTableDataCell>
+          <CTableDataCell
+            style={{
+              color: 'var(--cui-secondary-color)',
+              fontSize: 13,
+              fontFamily: "'JetBrains Mono', monospace",
+            }}
+          >
+            {getUnitAbbreviation(p.unitId)}
+          </CTableDataCell>
+          {sortedTables.map((t) => (
+            <CTableDataCell
+              key={t.id}
+              style={{
+                textAlign: 'right',
+                fontVariantNumeric: 'tabular-nums',
+                fontWeight: 600,
+                color: 'var(--cui-body-color)',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {formatBRL(p.prices[t.id])}
+            </CTableDataCell>
+          ))}
+          <CTableDataCell>
+            <CBadge color={p.active ? 'success' : 'secondary'}>
+              {p.active ? 'Ativo' : 'Inativo'}
+            </CBadge>
+          </CTableDataCell>
+          <CTableDataCell style={{ textAlign: 'right' }}>
+            <CButton
+              color="secondary"
+              variant="ghost"
+              size="sm"
+              onClick={() => onEdit(p)}
+              title="Editar"
+              aria-label="Editar"
+            >
+              <CIcon icon={cilPen} />
+            </CButton>
+          </CTableDataCell>
+        </CTableRow>
+      ))}
+    </CTableBody>
+  );
+}
 
 // ── Main page ───────────────────────────────────────────────────────────────
 
@@ -64,7 +199,9 @@ export function ProductsPage() {
   }, []);
 
   useEffect(() => {
-    void loadData();
+    loadData().catch(() => {
+      // erro já tratado internamente em loadData()
+    });
   }, [loadData]);
 
   const handleSave = async (data: {
@@ -89,6 +226,15 @@ export function ProductsPage() {
 
   const activeCount = products.filter((p) => p.active).length;
   const isLoading = loading || ptLoading;
+
+  const productWord = products.length === 1 ? 'produto' : 'produtos';
+  const activeWord = activeCount === 1 ? 'ativo' : 'ativos';
+  const tableWord = sortedTables.length === 1 ? 'tabela' : 'tabelas';
+  const activeInfo = activeCount < products.length ? ` · ${activeCount} ${activeWord}` : '';
+  const subtitleText =
+    products.length > 0
+      ? `${products.length} ${productWord}${activeInfo} · ${sortedTables.length} ${tableWord} de preço`
+      : 'Cadastre os materiais recicláveis que você opera';
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -115,9 +261,7 @@ export function ProductsPage() {
             Produtos
           </h1>
           <p style={{ margin: '4px 0 0', fontSize: 13.5, color: 'var(--cui-secondary-color)' }}>
-            {products.length > 0
-              ? `${products.length} ${products.length === 1 ? 'produto' : 'produtos'}${activeCount < products.length ? ` · ${activeCount} ${activeCount === 1 ? 'ativo' : 'ativos'}` : ''} · ${sortedTables.length} ${sortedTables.length === 1 ? 'tabela' : 'tabelas'} de preço`
-              : 'Cadastre os materiais recicláveis que você opera'}
+            {subtitleText}
           </p>
         </div>
         <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
@@ -163,114 +307,13 @@ export function ProductsPage() {
                 <CTableHeaderCell style={{ textAlign: 'right' }}>Ações</CTableHeaderCell>
               </CTableRow>
             </CTableHead>
-            <CTableBody>
-              {isLoading ? (
-                <CTableRow>
-                  <CTableDataCell colSpan={4 + sortedTables.length} className="text-center py-4">
-                    <CSpinner size="sm" color="primary" />
-                  </CTableDataCell>
-                </CTableRow>
-              ) : products.length === 0 ? (
-                <CTableRow>
-                  <CTableDataCell colSpan={4 + sortedTables.length} className="text-center py-5">
-                    <div
-                      style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        gap: 8,
-                      }}
-                    >
-                      <div
-                        style={{
-                          width: 44,
-                          height: 44,
-                          borderRadius: 12,
-                          background: 'rgba(52,142,145,0.1)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                        }}
-                      >
-                        <CIcon icon={cilRecycle} size="lg" style={{ color: 'var(--cui-primary)' }} />
-                      </div>
-                      <div style={{ fontWeight: 600, color: 'var(--cui-body-color)' }}>
-                        Nenhum produto cadastrado
-                      </div>
-                      <div style={{ fontSize: 13, color: 'var(--cui-secondary-color)' }}>
-                        Cadastre o primeiro material para começar.
-                      </div>
-                    </div>
-                  </CTableDataCell>
-                </CTableRow>
-              ) : (
-                products.map((p) => (
-                  <CTableRow key={p.id}>
-                    <CTableDataCell>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <div
-                          aria-hidden
-                          style={{
-                            width: 32,
-                            height: 32,
-                            borderRadius: 8,
-                            background: 'rgba(52,142,145,0.1)',
-                            color: 'var(--cui-primary)',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            flexShrink: 0,
-                          }}
-                        >
-                          <CIcon icon={cilRecycle} size="sm" />
-                        </div>
-                        <span style={{ fontWeight: 500, color: 'var(--cui-body-color)' }}>{p.name}</span>
-                      </div>
-                    </CTableDataCell>
-                    <CTableDataCell
-                      style={{
-                        color: 'var(--cui-secondary-color)',
-                        fontSize: 13,
-                        fontFamily: "'JetBrains Mono', monospace",
-                      }}
-                    >
-                      {getUnitAbbreviation(p.unitId)}
-                    </CTableDataCell>
-                    {sortedTables.map((t) => (
-                      <CTableDataCell
-                        key={t.id}
-                        style={{
-                          textAlign: 'right',
-                          fontVariantNumeric: 'tabular-nums',
-                          fontWeight: 600,
-                          color: 'var(--cui-body-color)',
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        {formatBRL(p.prices[t.id])}
-                      </CTableDataCell>
-                    ))}
-                    <CTableDataCell>
-                      <CBadge color={p.active ? 'success' : 'secondary'}>
-                        {p.active ? 'Ativo' : 'Inativo'}
-                      </CBadge>
-                    </CTableDataCell>
-                    <CTableDataCell style={{ textAlign: 'right' }}>
-                      <CButton
-                        color="secondary"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setEditing(p)}
-                        title="Editar"
-                        aria-label="Editar"
-                      >
-                        <CIcon icon={cilPen} />
-                      </CButton>
-                    </CTableDataCell>
-                  </CTableRow>
-                ))
-              )}
-            </CTableBody>
+            <ProductTableBody
+              isLoading={isLoading}
+              products={products}
+              sortedTables={sortedTables}
+              getUnitAbbreviation={getUnitAbbreviation}
+              onEdit={setEditing}
+            />
           </CTable>
         </CCardBody>
       </CCard>

@@ -26,7 +26,11 @@ export function usePriceTables() {
   }, []);
 
   useEffect(() => {
-    if (cache == null) void load();
+    if (cache == null) {
+      load().catch(() => {
+        // erro já tratado internamente em load()
+      });
+    }
   }, [load]);
 
   return { priceTables, loading, error, reload: load };
