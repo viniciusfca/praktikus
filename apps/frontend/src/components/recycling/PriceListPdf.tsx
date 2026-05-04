@@ -11,6 +11,8 @@ export interface PriceListPdfProps {
   rows: PriceListPdfRow[];
   empresa: { nomeFantasia: string; cnpj: string };
   printedAt: Date;
+  table: { name: string };
+  layout: 'full' | 'compact';
 }
 
 const fmtMoney = (n: number) =>
@@ -75,6 +77,8 @@ const s = StyleSheet.create({
   colUnit: { flex: 1.5, textAlign: 'center' },
   colPrice: { flex: 2, textAlign: 'right' },
 
+  tableName: { fontSize: 11, color: '#6b7280', marginTop: 2 },
+
   footer: {
     marginTop: 28, paddingTop: 14, borderTopWidth: 1, borderTopColor: BORDER,
     fontSize: 9, color: SUBTLE,
@@ -82,8 +86,9 @@ const s = StyleSheet.create({
   footerLine: { textAlign: 'center', marginBottom: 4 },
 });
 
-export function PriceListPdf({ rows, empresa, printedAt }: PriceListPdfProps) {
+export function PriceListPdf({ rows, empresa, printedAt, table, layout }: Readonly<PriceListPdfProps>) {
   const cnpjFormatted = empresa.cnpj ? formatCnpj(empresa.cnpj) : '';
+  const isFull = layout === 'full';
 
   return (
     <Document>
@@ -96,6 +101,7 @@ export function PriceListPdf({ rows, empresa, printedAt }: PriceListPdfProps) {
               <Text style={s.brandName}>{empresa.nomeFantasia}</Text>
             </View>
             {cnpjFormatted ? <Text style={s.brandSub}>CNPJ {cnpjFormatted}</Text> : null}
+            <Text style={s.tableName}>{table.name}</Text>
           </View>
           <View style={s.headerRight}>
             <Text style={s.kicker}>Tabela de Preços</Text>
@@ -111,13 +117,13 @@ export function PriceListPdf({ rows, empresa, printedAt }: PriceListPdfProps) {
         <View>
           <View style={s.tHead}>
             <Text style={[s.tHeadText, s.colName]}>Produto</Text>
-            <Text style={[s.tHeadText, s.colUnit]}>Unidade</Text>
-            <Text style={[s.tHeadText, s.colPrice]}>Preço</Text>
+            {isFull && <Text style={[s.tHeadText, s.colUnit]}>Un.</Text>}
+            <Text style={[s.tHeadText, s.colPrice]}>{isFull ? 'Preço por unidade' : 'Preço'}</Text>
           </View>
           {rows.map((row, i) => (
             <View key={i} style={s.tRow}>
               <Text style={[s.tText, s.colName]}>{row.name}</Text>
-              <Text style={[s.tText, s.colUnit]}>{row.unitSymbol}</Text>
+              {isFull && <Text style={[s.tText, s.colUnit]}>{row.unitSymbol}</Text>}
               <Text style={[s.tTextBold, s.colPrice]}>{fmtMoney(row.pricePerUnit)}</Text>
             </View>
           ))}
