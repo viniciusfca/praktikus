@@ -6,8 +6,15 @@ export class AddPriceTableIdToPurchases1748300000000 implements MigrationInterfa
   name = 'AddPriceTableIdToPurchases1748300000000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
+    // Filtra tenants que têm schema realmente provisionado (defesa contra
+    // dados sujos: linha em public.tenants sem schema correspondente).
     const tenants: Array<{ id: string }> = await queryRunner.query(
-      `SELECT id FROM "public"."tenants" WHERE segment = $1`,
+      `SELECT t.id FROM "public"."tenants" t
+       WHERE t.segment = $1
+         AND EXISTS (
+           SELECT 1 FROM information_schema.schemata s
+           WHERE s.schema_name = 'tenant_' || replace(t.id::text, '-', '')
+         )`,
       [TenantSegment.RECYCLING],
     );
 
@@ -21,7 +28,12 @@ export class AddPriceTableIdToPurchases1748300000000 implements MigrationInterfa
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     const tenants: Array<{ id: string }> = await queryRunner.query(
-      `SELECT id FROM "public"."tenants" WHERE segment = $1`,
+      `SELECT t.id FROM "public"."tenants" t
+       WHERE t.segment = $1
+         AND EXISTS (
+           SELECT 1 FROM information_schema.schemata s
+           WHERE s.schema_name = 'tenant_' || replace(t.id::text, '-', '')
+         )`,
       [TenantSegment.RECYCLING],
     );
 
