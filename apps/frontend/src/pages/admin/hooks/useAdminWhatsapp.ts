@@ -1,6 +1,16 @@
 import { useEffect, useState } from 'react';
 import { adminApi } from '../../../services/admin.api';
 
+export interface WhatsappAdoptionTenant {
+  id: string;
+  nomeFantasia: string;
+  segment: 'WORKSHOP' | 'RECYCLING';
+  status: 'ACTIVE' | 'TRIAL' | 'OVERDUE' | 'SUSPENDED';
+  whatsappPlan: string | null;
+  enabledAt: string | null;
+  monthlyVolume: null;
+}
+
 export interface WhatsappData {
   kpis: {
     adoptionRate: number;
@@ -9,8 +19,8 @@ export interface WhatsappData {
     enterpriseCount: number;
     addOnMrr: null;
   };
-  using: Array<unknown>;
-  notUsing: Array<unknown>;
+  using: WhatsappAdoptionTenant[];
+  notUsing: WhatsappAdoptionTenant[];
   adoptionBySegment: Array<{
     segment: 'WORKSHOP' | 'RECYCLING';
     rate: number;
