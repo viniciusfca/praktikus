@@ -33,6 +33,7 @@ import {
   cilSun,
   cilMoon,
   cilAccountLogout,
+  cilSpeech,
 } from '@coreui/icons';
 import { useAuthStore } from '../store/auth.store';
 import { useThemeMode } from '../theme/ThemeProvider';
@@ -42,13 +43,14 @@ import { Logo } from '../components/Logo';
 const STORAGE_KEY = 'sidebar_open';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: use IconType from @coreui/icons when properly exported
-const navItems: Array<{ label: string; icon: any; path: string; ownerOnly: boolean }> = [
+const navItems: Array<{ label: string; icon: any; path: string; ownerOnly: boolean; requiredFeature?: 'whatsapp' }> = [
   { label: 'Dashboard', icon: cilSpeedometer, path: '/workshop/dashboard', ownerOnly: false },
   { label: 'Agendamentos', icon: cilCalendar, path: '/workshop/appointments', ownerOnly: false },
   { label: 'Ordens de Serviço', icon: cilNotes, path: '/workshop/service-orders', ownerOnly: false },
   { label: 'Clientes', icon: cilPeople, path: '/workshop/customers', ownerOnly: false },
   { label: 'Veículos', icon: cilCarAlt, path: '/workshop/vehicles', ownerOnly: false },
   { label: 'Catálogo', icon: cilList, path: '/workshop/catalog', ownerOnly: false },
+  { label: 'WhatsApp', icon: cilSpeech, path: '/whatsapp', ownerOnly: false, requiredFeature: 'whatsapp' },
   { label: 'Relatórios', icon: cilChartLine, path: '/workshop/reports', ownerOnly: true },
   { label: 'Configurações', icon: cilSettings, path: '/workshop/settings', ownerOnly: true },
 ];
@@ -110,7 +112,11 @@ export function AppLayout() {
   const sidebarNav = useMemo(
     () =>
       navItems
-        .filter((item) => !item.ownerOnly || user?.role === 'OWNER')
+        .filter((item) => {
+          if (item.ownerOnly && user?.role !== 'OWNER') return false;
+          if (item.requiredFeature === 'whatsapp' && !user?.whatsapp_enabled) return false;
+          return true;
+        })
         .map((item) => {
           const active =
             location.pathname === item.path ||
@@ -142,7 +148,7 @@ export function AppLayout() {
 
           return navItem;
         }),
-    [location.pathname, sidebarOpen, isMobile, user?.role]
+    [location.pathname, sidebarOpen, isMobile, user?.role, user?.whatsapp_enabled]
   );
 
   return (
