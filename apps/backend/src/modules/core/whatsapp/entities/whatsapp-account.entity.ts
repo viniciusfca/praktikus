@@ -27,11 +27,7 @@ export class WhatsappAccountEntity {
   @Column({ name: 'webhook_verify_token', type: 'varchar' })
   webhookVerifyToken: string;
 
-  @Column({
-    type: 'enum',
-    enum: WhatsappAccountStatus,
-    default: WhatsappAccountStatus.PENDING,
-  })
+  @Column({ type: 'varchar', default: WhatsappAccountStatus.PENDING })
   status: WhatsappAccountStatus;
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })

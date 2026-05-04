@@ -27,11 +27,7 @@ export class WhatsappConversationEntity {
   @Column({ name: 'assigned_user_id', type: 'uuid', nullable: true })
   assignedUserId: string | null;
 
-  @Column({
-    type: 'enum',
-    enum: WhatsappConversationStatus,
-    default: WhatsappConversationStatus.OPEN,
-  })
+  @Column({ type: 'varchar', default: WhatsappConversationStatus.OPEN })
   status: WhatsappConversationStatus;
 
   @Column({ name: 'last_message_at', type: 'timestamptz', nullable: true })

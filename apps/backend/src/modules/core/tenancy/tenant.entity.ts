@@ -81,12 +81,7 @@ export class TenantEntity {
   @Column({ name: 'whatsapp_enabled', type: 'boolean', default: false })
   whatsappEnabled: boolean;
 
-  @Column({
-    name: 'whatsapp_plan',
-    type: 'enum',
-    enum: WhatsappPlan,
-    nullable: true,
-  })
+  @Column({ name: 'whatsapp_plan', type: 'varchar', nullable: true })
   whatsappPlan: WhatsappPlan | null;
 
   @Column({

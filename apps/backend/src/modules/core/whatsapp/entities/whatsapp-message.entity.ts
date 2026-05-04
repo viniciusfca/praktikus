@@ -25,16 +25,10 @@ export class WhatsappMessageEntity {
   @Column({ type: 'varchar' })
   wamid: string;
 
-  @Column({
-    type: 'enum',
-    enum: WhatsappMessageDirection,
-  })
+  @Column({ type: 'varchar' })
   direction: WhatsappMessageDirection;
 
-  @Column({
-    type: 'enum',
-    enum: WhatsappMessageType,
-  })
+  @Column({ type: 'varchar' })
   type: WhatsappMessageType;
 
   @Column({ type: 'text', nullable: true })
@@ -43,19 +37,10 @@ export class WhatsappMessageEntity {
   @Column({ name: 'template_name', type: 'varchar', nullable: true })
   templateName: string | null;
 
-  @Column({
-    type: 'enum',
-    enum: WhatsappMessageStatus,
-    default: WhatsappMessageStatus.SENT,
-  })
+  @Column({ type: 'varchar', default: WhatsappMessageStatus.SENT })
   status: WhatsappMessageStatus;
 
-  @Column({
-    name: 'billable_category',
-    type: 'enum',
-    enum: WhatsappBillableCategory,
-    nullable: true,
-  })
+  @Column({ name: 'billable_category', type: 'varchar', nullable: true })
   billableCategory: WhatsappBillableCategory | null;
 
   @Column({ name: 'sent_at', type: 'timestamptz', nullable: true })
