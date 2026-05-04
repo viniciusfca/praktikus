@@ -1,7 +1,7 @@
 import {
   BadRequestException,
   Injectable,
-  Logger,
+  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { DataSource, EntityManager, QueryRunner, In } from 'typeorm';
@@ -17,8 +17,6 @@ type ProductWithPrices = ProductEntity & {
 
 @Injectable()
 export class ProductsService {
-  private readonly logger = new Logger(ProductsService.name);
-
   constructor(private readonly dataSource: DataSource) {}
 
   private getSchemaName(tenantId: string): string {
@@ -54,8 +52,8 @@ export class ProductsService {
     const schemaName = this.getSchemaName(tenantId);
     const qr = this.dataSource.createQueryRunner();
     await qr.connect();
-    await qr.query(`SET search_path TO "${schemaName}", public`);
     await qr.startTransaction();
+    await qr.query(`SET LOCAL search_path TO "${schemaName}", public`);
     try {
       const result = await fn(qr);
       await qr.commitTransaction();
@@ -82,7 +80,7 @@ export class ProductsService {
     const tablesById = new Map(tables.map((t) => [t.id, t]));
     const defaultTable = tables.find((t) => t.isDefault);
     if (!defaultTable) {
-      throw new Error('Tabela padrão não configurada');
+      throw new InternalServerErrorException('Configuração de tabelas de preço inválida.');
     }
 
     // Toda chave deve corresponder a uma tabela ativa.
