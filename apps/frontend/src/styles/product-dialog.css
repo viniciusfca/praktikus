@@ -1,0 +1,10 @@
+.pk-product-dialog .pk-product-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr;
+  gap: 24px;
+}
+@media (max-width: 720px) {
+  .pk-product-dialog .pk-product-grid {
+    grid-template-columns: 1fr;
+  }
+}

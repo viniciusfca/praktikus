@@ -31,7 +31,7 @@ export function buildProductSchema(priceTables: PriceTable[]) {
   );
   return z.object({
     name: z.string().min(1, 'Nome obrigatório').max(120),
-    unitId: z.string().uuid('Selecione uma unidade'),
+    unitId: z.string().min(1, 'Selecione uma unidade'),
     active: z.boolean(),
     prices: z.object(pricesShape),
   });
