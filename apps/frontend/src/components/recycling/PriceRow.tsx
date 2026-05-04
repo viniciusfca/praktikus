@@ -1,4 +1,6 @@
+import { useEffect, useState } from 'react';
 import { CFormInput } from '@coreui/react';
+import { formatDecimal, parseDecimal } from '../../utils/masks';
 
 export interface PriceRowProps {
   index: number;
@@ -11,6 +13,14 @@ export interface PriceRowProps {
   error?: string;
 }
 
+function formatInitial(v: number | string | null | undefined): string {
+  if (v == null || v === '') return '';
+  // value is always stored in dot-decimal notation (e.g. "8.5"), not pt-BR.
+  // parseDecimal would strip dots as thousand-separators, so use parseFloat directly.
+  const n = typeof v === 'number' ? v : Number.parseFloat(String(v));
+  return Number.isFinite(n) ? formatDecimal(n, 2) : '';
+}
+
 export function PriceRow({
   index,
   name,
@@ -21,7 +31,40 @@ export function PriceRow({
   onChange,
   error,
 }: PriceRowProps) {
-  const filled = value !== '' && value !== null && value !== undefined;
+  const [text, setText] = useState<string>(() => formatInitial(value));
+
+  // Sincroniza com valor externo (form reset, replicar tabela 1, etc)
+  useEffect(() => {
+    const incoming = formatInitial(value);
+    const parsedCurrent = parseDecimal(text, 2);
+    const parsedIncoming = parseDecimal(incoming, 2);
+    if (parsedCurrent !== parsedIncoming) {
+      setText(incoming);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- text é estado interno; só re-sincroniza quando value externo muda
+  }, [value]);
+
+  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const raw = e.target.value;
+    if (!/^[\d.,]*$/.test(raw)) return; // só dígitos, vírgula e ponto
+    setText(raw);
+    const normalized = raw.replace(',', '.');
+    onChange(normalized);
+  }
+
+  function handleBlur() {
+    const parsed = parseDecimal(text, 2);
+    if (parsed === null) {
+      setText('');
+      onChange('');
+      return;
+    }
+    setText(formatDecimal(parsed, 2));
+    onChange(String(parsed));
+  }
+
+  const filled = text !== '';
+
   return (
     <div
       data-filled={filled}
@@ -90,13 +133,12 @@ export function PriceRow({
           R$
         </span>
         <CFormInput
-          type="number"
-          step="0.01"
-          min="0"
+          type="text"
           inputMode="decimal"
           placeholder="0,00"
-          value={value ?? ''}
-          onChange={(e) => onChange(e.target.value)}
+          value={text}
+          onChange={handleChange}
+          onBlur={handleBlur}
           invalid={!!error}
           style={{
             paddingLeft: 36,

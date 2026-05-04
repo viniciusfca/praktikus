@@ -31,7 +31,7 @@ describe('<ProductDialog />', () => {
   it('Replicar Tabela 1 copia o valor para t2 e t3', async () => {
     const user = userEvent.setup();
     render(<ProductDialog {...baseProps} />);
-    const inputs = screen.getAllByRole('spinbutton');
+    const inputs = screen.getAllByPlaceholderText('0,00');
     await user.clear(inputs[0]);
     await user.type(inputs[0], '8.5');
 
@@ -40,8 +40,8 @@ describe('<ProductDialog />', () => {
     await user.click(replicar);
 
     await waitFor(() => {
-      expect((inputs[1] as HTMLInputElement).value).toBe('8.5');
-      expect((inputs[2] as HTMLInputElement).value).toBe('8.5');
+      expect((inputs[1] as HTMLInputElement).value).toBe('8,50');
+      expect((inputs[2] as HTMLInputElement).value).toBe('8,50');
     });
   });
 
@@ -59,7 +59,7 @@ describe('<ProductDialog />', () => {
     await user.type(screen.getByLabelText(/Nome/i), 'Alumínio');
     const unitSelect = screen.getByLabelText(/Unidade/i);
     await user.selectOptions(unitSelect, '11111111-1111-1111-1111-111111111111');
-    const inputs = screen.getAllByRole('spinbutton');
+    const inputs = screen.getAllByPlaceholderText('0,00');
     await user.type(inputs[0], '8'); // só padrão
 
     await user.click(screen.getByRole('button', { name: /Salvar/i }));
@@ -86,7 +86,7 @@ describe('<ProductDialog />', () => {
     await user.type(screen.getByLabelText(/Nome/i), 'Cobre');
     const unitSelect = screen.getByLabelText(/Unidade/i);
     await user.selectOptions(unitSelect, '11111111-1111-1111-1111-111111111111');
-    const inputs = screen.getAllByRole('spinbutton');
+    const inputs = screen.getAllByPlaceholderText('0,00');
     await user.type(inputs[0], '6');     // padrão
     await user.type(inputs[1], '7');     // t2 explícito
     // t3 fica vazio → auto-fill
