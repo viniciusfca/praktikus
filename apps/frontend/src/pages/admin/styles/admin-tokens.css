@@ -1,0 +1,116 @@
+/* Admin Panel Design Tokens — Praktikus
+ * Escopado em .adm-root pra isolar do app cliente.
+ */
+
+.adm-root {
+  /* Brand teal/petróleo */
+  --brand-50:  #F2F5F5;
+  --brand-100: #DCE6E6;
+  --brand-200: #B6CDCE;
+  --brand-300: #86AEB0;
+  --brand-400: #558D8F;
+  --brand-500: #348E91;
+  --brand-600: #2B7375;
+  --brand-700: #1C5052;
+  --brand-800: #213635;
+  --brand-900: #142322;
+  --brand-950: #0A0C0D;
+
+  /* Neutrals */
+  --neutral-0:   #FFFFFF;
+  --neutral-50:  #F7F8F8;
+  --neutral-100: #EEF0F0;
+  --neutral-200: #DDE1E1;
+  --neutral-300: #BEC5C5;
+  --neutral-400: #8E9898;
+  --neutral-500: #6B7575;
+  --neutral-600: #4E5757;
+  --neutral-700: #353D3D;
+  --neutral-800: #1F2626;
+  --neutral-900: #121717;
+  --neutral-950: #0A0C0D;
+
+  /* Semantic */
+  --adm-success: #3BA776;
+  --adm-success-bg: #E6F4EC;
+  --adm-warning: #D98A2B;
+  --adm-warning-bg: #FBEEDB;
+  --adm-danger:  #D95B5B;
+  --adm-danger-bg: #FBE6E6;
+  --adm-info:    #348E91;
+  --adm-info-bg: #E2EEEE;
+
+  /* Radius / spacing */
+  --adm-radius-xs: 4px;
+  --adm-radius-sm: 6px;
+  --adm-radius-md: 10px;
+  --adm-radius-lg: 14px;
+  --adm-radius-xl: 20px;
+  --adm-radius-2xl: 28px;
+  --adm-radius: var(--adm-radius-md);
+
+  --adm-density: 1;
+  --adm-space-row: calc(12px * var(--adm-density));
+  --adm-space-card: calc(24px * var(--adm-density));
+  --adm-space-input-y: calc(10px * var(--adm-density));
+
+  /* Shadows (light) */
+  --adm-shadow-xs: 0 1px 2px rgba(10, 12, 13, 0.04);
+  --adm-shadow-sm: 0 1px 3px rgba(10, 12, 13, 0.06), 0 1px 2px rgba(10, 12, 13, 0.04);
+  --adm-shadow-md: 0 4px 12px rgba(10, 12, 13, 0.08), 0 2px 4px rgba(10, 12, 13, 0.04);
+  --adm-shadow-lg: 0 12px 28px rgba(10, 12, 13, 0.10), 0 4px 8px rgba(10, 12, 13, 0.05);
+
+  /* Typography */
+  --adm-font-sans: 'Inter', 'InterVariable', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --adm-font-display: 'Instrument Serif', 'Iowan Old Style', 'Georgia', serif;
+  --adm-font-mono: 'JetBrains Mono', 'SF Mono', Menlo, monospace;
+
+  /* Light theme (default) */
+  color-scheme: light;
+  --adm-bg:           #FBFBFA;
+  --adm-bg-subtle:    #F4F5F5;
+  --adm-bg-muted:     #EEF0F0;
+  --adm-surface:      #FFFFFF;
+  --adm-surface-2:    #F7F8F8;
+  --adm-border:       #E4E7E7;
+  --adm-border-strong:#CDD3D3;
+  --adm-fg:           #0F1414;
+  --adm-fg-muted:     #5A6464;
+  --adm-fg-subtle:    #8A9393;
+  --adm-accent:       var(--brand-500);
+  --adm-accent-fg:    #FFFFFF;
+  --adm-accent-soft:  #E2EEEE;
+  --adm-accent-hover: var(--brand-600);
+  --adm-ring:         color-mix(in oklch, var(--adm-accent) 40%, transparent);
+
+  /* Segment colors (Fase 1: 2 segmentos) */
+  --adm-seg-workshop:  #348E91;
+  --adm-seg-recycling: #D98A2B;
+
+  font-family: var(--adm-font-sans);
+  background: var(--adm-bg);
+  color: var(--adm-fg);
+}
+
+.adm-root[data-theme="dark"] {
+  color-scheme: dark;
+  --adm-bg:           #0A0C0D;
+  --adm-bg-subtle:    #121717;
+  --adm-bg-muted:     #18201F;
+  --adm-surface:      #141A1A;
+  --adm-surface-2:    #1A2221;
+  --adm-border:       #24302F;
+  --adm-border-strong:#334241;
+  --adm-fg:           #EEF2F2;
+  --adm-fg-muted:     #9AA5A5;
+  --adm-fg-subtle:    #6A7575;
+  --adm-accent:       #3FA3A6;
+  --adm-accent-fg:    #05100F;
+  --adm-accent-soft:  #14302F;
+  --adm-accent-hover: #52B5B8;
+
+  --adm-shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --adm-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --adm-shadow-md: 0 6px 16px rgba(0, 0, 0, 0.45);
+  --adm-shadow-lg: 0 16px 32px rgba(0, 0, 0, 0.55);
+}
