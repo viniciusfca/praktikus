@@ -88,7 +88,6 @@ function App() {
             <Route path="service-orders/:id" element={<ServiceOrderDetailPage />} />
             <Route path="reports" element={<ReportsPage />} />
             <Route path="settings" element={<SettingsPage />} />
-            <Route path="/whatsapp" element={<WhatsappStubPage />} />
           </Route>
           <Route
             path="/recycling"
@@ -115,7 +114,17 @@ function App() {
             <Route path="coletas" element={<ColetasPage />} />
             <Route path="reports" element={<RecyclingReportsPage />} />
             <Route path="settings" element={<RecyclingSettingsPage />} />
-            <Route path="/whatsapp" element={<WhatsappStubPage />} />
+          </Route>
+          {/* /whatsapp is cross-segment. Layout uses AppLayout in Fase 1; will switch to a dedicated WhatsApp shell in Fase 2 (see spec §7.2). */}
+          <Route
+            path="/whatsapp"
+            element={
+              <PrivateRoute>
+                <AppLayout />
+              </PrivateRoute>
+            }
+          >
+            <Route index element={<WhatsappStubPage />} />
           </Route>
         </Routes>
     </AppThemeProvider>
