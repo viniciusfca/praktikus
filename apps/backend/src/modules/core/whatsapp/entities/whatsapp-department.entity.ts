@@ -8,7 +8,7 @@ import {
 
 export interface BusinessHoursDay {
   start: string; // 'HH:MM'
-  end: string;   // 'HH:MM'
+  end: string; // 'HH:MM'
 }
 
 export type BusinessHours = Partial<{
@@ -38,7 +38,12 @@ export class WhatsappDepartmentEntity {
   @Column({ name: 'default_routing', type: 'boolean', default: false })
   defaultRouting: boolean;
 
-  @Column({ name: 'routing_keywords', type: 'text', array: true, nullable: true })
+  @Column({
+    name: 'routing_keywords',
+    type: 'text',
+    array: true,
+    nullable: true,
+  })
   routingKeywords: string[] | null;
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
