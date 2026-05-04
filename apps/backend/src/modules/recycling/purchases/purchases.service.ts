@@ -11,6 +11,7 @@ import { StockMovementEntity, MovementType } from './stock-movement.entity';
 import { CashSessionEntity } from '../cash-register/cash-session.entity';
 import { CashTransactionEntity } from '../cash-register/cash-transaction.entity';
 import { CreatePurchaseDto } from './dto/create-purchase.dto';
+import { PriceTableEntity } from '../price-tables/price-table.entity';
 
 @Injectable()
 export class PurchasesService {
@@ -137,6 +138,13 @@ export class PurchasesService {
     dto: CreatePurchaseDto,
   ): Promise<PurchaseEntity> {
     return this.withSchema(tenantId, async (manager) => {
+      const priceTable = await manager
+        .getRepository(PriceTableEntity)
+        .findOne({ where: { id: dto.priceTableId, active: true } });
+      if (!priceTable) {
+        throw new BadRequestException('Tabela de preço inválida ou inativa');
+      }
+
       const sessionRepo = manager.getRepository(CashSessionEntity);
       const purchaseRepo = manager.getRepository(PurchaseEntity);
       const itemRepo = manager.getRepository(PurchaseItemEntity);
@@ -164,6 +172,7 @@ export class PurchasesService {
       // 3. Create purchase
       const purchase = purchaseRepo.create({
         supplierId: dto.supplierId,
+        priceTableId: dto.priceTableId,
         operatorId,
         cashSessionId: session.id,
         paymentMethod: dto.paymentMethod,

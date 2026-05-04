@@ -12,12 +12,14 @@ import { PurchaseItemEntity } from './purchase-item.entity';
 import { StockMovementEntity, MovementType } from './stock-movement.entity';
 import { CashSessionEntity } from '../cash-register/cash-session.entity';
 import { CashTransactionEntity } from '../cash-register/cash-transaction.entity';
+import { PriceTableEntity } from '../price-tables/price-table.entity';
 
 const mockPurchaseRepo = { create: jest.fn(), save: jest.fn() };
 const mockItemRepo = { create: jest.fn(), save: jest.fn() };
 const mockMovementRepo = { create: jest.fn(), save: jest.fn() };
 const mockSessionRepo = { findOne: jest.fn() };
 const mockTxRepo = { create: jest.fn(), save: jest.fn() };
+const mockPriceTableRepo = { findOne: jest.fn() };
 
 const mockQueryRunner = {
   connect: jest.fn().mockResolvedValue(undefined),
@@ -31,6 +33,7 @@ const mockQueryRunner = {
       if (entity === PurchaseItemEntity) return mockItemRepo;
       if (entity === StockMovementEntity) return mockMovementRepo;
       if (entity === CashSessionEntity) return mockSessionRepo;
+      if (entity === PriceTableEntity) return mockPriceTableRepo;
       return mockTxRepo;
     }),
   },
@@ -60,7 +63,14 @@ describe('PurchasesService', () => {
       if (entity === PurchaseItemEntity) return mockItemRepo;
       if (entity === StockMovementEntity) return mockMovementRepo;
       if (entity === CashSessionEntity) return mockSessionRepo;
+      if (entity === PriceTableEntity) return mockPriceTableRepo;
       return mockTxRepo;
+    });
+    mockPriceTableRepo.findOne.mockResolvedValue({
+      id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+      isDefault: true,
+      active: true,
+      sortOrder: 1,
     });
   });
 
@@ -117,6 +127,7 @@ describe('PurchasesService', () => {
   describe('create', () => {
     const dto = {
       supplierId: '00000000-0000-0000-0000-000000000010',
+      priceTableId: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
       paymentMethod: PaymentMethod.CASH,
       items: [
         {
@@ -227,6 +238,75 @@ describe('PurchasesService', () => {
 
       expect(mockTxRepo.create).toHaveBeenCalledWith(
         expect.objectContaining({ paymentMethod: PaymentMethod.PIX }),
+      );
+    });
+  });
+
+  describe('create — priceTableId', () => {
+    const TENANT2 = '11111111-1111-1111-1111-111111111111';
+    const OPERATOR2 = '22222222-2222-2222-2222-222222222222';
+    const TABLE = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
+    const baseDto = {
+      supplierId: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+      priceTableId: TABLE,
+      paymentMethod: PaymentMethod.CASH,
+      items: [
+        {
+          productId: 'cccccccc-cccc-cccc-cccc-cccccccccccc',
+          quantity: 1,
+          unitPrice: 5,
+        },
+      ],
+    };
+
+    it('rejeita priceTableId que não existe', async () => {
+      mockPriceTableRepo.findOne.mockResolvedValue(null);
+      await expect(
+        service.create(TENANT2, OPERATOR2, baseDto),
+      ).rejects.toThrow('Tabela de preço inválida ou inativa');
+    });
+
+    it('rejeita priceTableId de tabela inativa', async () => {
+      mockPriceTableRepo.findOne.mockResolvedValue(null);
+      await expect(
+        service.create(TENANT2, OPERATOR2, baseDto),
+      ).rejects.toThrow('Tabela de preço inválida ou inativa');
+    });
+
+    it('persiste priceTableId quando válido', async () => {
+      mockPriceTableRepo.findOne.mockResolvedValue({
+        id: TABLE,
+        isDefault: true,
+        active: true,
+      });
+      mockSessionRepo.findOne.mockResolvedValue({ id: 'session-1', status: 'OPEN' });
+      mockPurchaseRepo.create.mockImplementation((p) => ({ ...p, id: 'purchase-1' }));
+      mockPurchaseRepo.save.mockImplementation((p) => Promise.resolve(p));
+
+      await service.create(TENANT2, OPERATOR2, baseDto);
+
+      expect(mockPurchaseRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({ priceTableId: TABLE }),
+      );
+    });
+
+    it('continua trustando unitPrice do client (não revalida contra product.prices)', async () => {
+      mockPriceTableRepo.findOne.mockResolvedValue({
+        id: TABLE,
+        isDefault: true,
+        active: true,
+      });
+      mockSessionRepo.findOne.mockResolvedValue({ id: 'session-1', status: 'OPEN' });
+      mockPurchaseRepo.create.mockImplementation((p) => ({ ...p, id: 'purchase-1' }));
+      mockPurchaseRepo.save.mockImplementation((p) => Promise.resolve(p));
+      mockItemRepo.create.mockImplementation((p) => p);
+      mockItemRepo.save.mockImplementation((p) => Promise.resolve(p));
+
+      const dto = { ...baseDto, items: [{ ...baseDto.items[0], unitPrice: 999 }] };
+      await service.create(TENANT2, OPERATOR2, dto);
+
+      expect(mockItemRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({ unitPrice: 999 }),
       );
     });
   });

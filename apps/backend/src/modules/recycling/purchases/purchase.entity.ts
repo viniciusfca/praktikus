@@ -3,9 +3,12 @@ import {
   PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
 import { PaymentMethod } from '@praktikus/shared';
 import { numericTransformer } from '../common/numeric-transformer';
+import { PriceTableEntity } from '../price-tables/price-table.entity';
 
 @Entity({ name: 'purchases' })
 export class PurchaseEntity {
@@ -14,6 +17,14 @@ export class PurchaseEntity {
   @Column({ name: 'operator_id', type: 'uuid' }) operatorId: string;
   @Column({ name: 'cash_session_id', type: 'uuid', nullable: true })
   cashSessionId: string | null;
+
+  @Column({ name: 'price_table_id', type: 'uuid' })
+  priceTableId: string;
+
+  @ManyToOne(() => PriceTableEntity, { onDelete: 'RESTRICT' })
+  @JoinColumn({ name: 'price_table_id' })
+  priceTable: PriceTableEntity;
+
   @Column({ name: 'payment_method', type: 'varchar' })
   paymentMethod: PaymentMethod;
   @Column({
