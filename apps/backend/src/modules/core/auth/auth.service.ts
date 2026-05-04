@@ -115,13 +115,7 @@ export class AuthService {
       throw new UnauthorizedException('Credenciais inválidas.');
     }
 
-    const tenant = await this.tenancyService.findById(user.tenantId);
-    return this.generateTokens(
-      user,
-      tenant?.status ?? TenantStatus.ACTIVE,
-      tenant?.segment,
-      tenant?.whatsappEnabled,
-    );
+    return this.buildTokensForUser(user);
   }
 
   async refresh(refreshToken: string): Promise<AuthTokens> {
@@ -146,13 +140,7 @@ export class AuthService {
       throw new UnauthorizedException();
     }
 
-    const tenant = await this.tenancyService.findById(user.tenantId);
-    return this.generateTokens(
-      user,
-      tenant?.status ?? TenantStatus.ACTIVE,
-      tenant?.segment,
-      tenant?.whatsappEnabled,
-    );
+    return this.buildTokensForUser(user);
   }
 
   async logout(refreshToken: string): Promise<void> {
@@ -240,6 +228,16 @@ export class AuthService {
 
     // Fire-and-forget confirmation email (errors are logged inside MailService).
     void this.mail.sendPasswordChangedConfirmation(user.email, user.name);
+  }
+
+  private async buildTokensForUser(user: UserEntity): Promise<AuthTokens> {
+    const tenant = await this.tenancyService.findById(user.tenantId);
+    return this.generateTokens(
+      user,
+      tenant?.status ?? TenantStatus.ACTIVE,
+      tenant?.segment,
+      tenant?.whatsappEnabled,
+    );
   }
 
   private async generateTokens(
