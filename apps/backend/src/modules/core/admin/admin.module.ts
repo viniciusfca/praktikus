@@ -10,6 +10,8 @@ import { PlatformRefreshTokenEntity } from './admin-auth/platform-refresh-token.
 import { PlatformAuthService } from './admin-auth/platform-auth.service';
 import { PlatformAuthController } from './admin-auth/platform-auth.controller';
 import { PlatformJwtStrategy } from './admin-auth/platform-jwt.strategy';
+import { AdminOverviewController } from './admin-overview/admin-overview.controller';
+import { AdminOverviewService } from './admin-overview/admin-overview.service';
 import { TenantEntity } from '../tenancy/tenant.entity';
 import { BillingEntity } from '../billing/billing.entity';
 
@@ -36,10 +38,11 @@ import { BillingEntity } from '../billing/billing.entity';
       { name: 'default', ttl: 15 * 60 * 1000, limit: 1000 },
     ]),
   ],
-  controllers: [PlatformAuthController],
+  controllers: [PlatformAuthController, AdminOverviewController],
   providers: [
     PlatformAuthService,
     PlatformJwtStrategy,
+    AdminOverviewService,
     { provide: APP_GUARD, useClass: ThrottlerGuard },
   ],
   exports: [PlatformAuthService],
