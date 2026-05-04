@@ -43,6 +43,7 @@ import { WhatsappStubPage } from './pages/whatsapp/WhatsappStubPage';
 import { QuoteApprovalPage } from './pages/public/QuoteApprovalPage';
 import { SuspendedPage } from './pages/public/SuspendedPage';
 import { PrivateRoute } from './components/PrivateRoute';
+import { PublicOnlyRoute } from './components/PublicOnlyRoute';
 import { useAuthStore } from './store/auth.store';
 
 function App() {
@@ -55,12 +56,54 @@ function App() {
   return (
     <AppThemeProvider>
         <Routes>
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterSegmentPage />} />
-          <Route path="/register/workshop" element={<RegisterPage />} />
-          <Route path="/register/recycling" element={<RegisterRecyclingPage />} />
-          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route
+            path="/"
+            element={
+              <PublicOnlyRoute>
+                <LandingPage />
+              </PublicOnlyRoute>
+            }
+          />
+          <Route
+            path="/login"
+            element={
+              <PublicOnlyRoute>
+                <LoginPage />
+              </PublicOnlyRoute>
+            }
+          />
+          <Route
+            path="/register"
+            element={
+              <PublicOnlyRoute>
+                <RegisterSegmentPage />
+              </PublicOnlyRoute>
+            }
+          />
+          <Route
+            path="/register/workshop"
+            element={
+              <PublicOnlyRoute>
+                <RegisterPage />
+              </PublicOnlyRoute>
+            }
+          />
+          <Route
+            path="/register/recycling"
+            element={
+              <PublicOnlyRoute>
+                <RegisterRecyclingPage />
+              </PublicOnlyRoute>
+            }
+          />
+          <Route
+            path="/forgot-password"
+            element={
+              <PublicOnlyRoute>
+                <ForgotPasswordPage />
+              </PublicOnlyRoute>
+            }
+          />
           <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
           <Route path="/quotes/:token" element={<QuoteApprovalPage />} />
           <Route path="/suspended" element={<SuspendedPage />} />
