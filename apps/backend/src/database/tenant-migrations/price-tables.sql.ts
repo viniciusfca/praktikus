@@ -72,3 +72,47 @@ export function buildProductPricesBackfillSql(schemaName: string): string {
     ON CONFLICT (product_id, price_table_id) DO NOTHING
   `;
 }
+
+/**
+ * Adiciona coluna `price_table_id` em `purchases`, faz backfill com a tabela
+ * padrão e cria FK. Idempotente: pode rodar múltiplas vezes sem efeito.
+ *
+ * Compartilhado entre:
+ * - `create-tenant-tables.ts` — provisioning de NOVOS tenants (após price_tables seedada).
+ * - `1748300000000-AddPriceTableIdToPurchases.ts` — backfill em tenants existentes.
+ *
+ * Pré-condição: `price_tables` deve existir e ter pelo menos uma linha com `is_default=true AND active=true`.
+ */
+export function buildPurchasesPriceTableSetupSql(schemaName: string): string[] {
+  return [
+    // 1) Adiciona a coluna se não existir
+    `ALTER TABLE "${schemaName}".purchases
+       ADD COLUMN IF NOT EXISTS price_table_id UUID`,
+
+    // 2) Backfill: linhas sem priceTableId recebem a tabela padrão
+    `UPDATE "${schemaName}".purchases p
+        SET price_table_id = pt.id
+       FROM "${schemaName}".price_tables pt
+      WHERE pt.is_default = true AND pt.active = true AND p.price_table_id IS NULL`,
+
+    // 3) NOT NULL (idempotente — Postgres aceita SET NOT NULL em coluna já NOT NULL)
+    `ALTER TABLE "${schemaName}".purchases
+       ALTER COLUMN price_table_id SET NOT NULL`,
+
+    // 4) FK condicional (Postgres não tem ADD CONSTRAINT IF NOT EXISTS)
+    `DO $do$ BEGIN
+       IF NOT EXISTS (
+         SELECT 1 FROM information_schema.table_constraints
+          WHERE table_schema = '${schemaName}'
+            AND table_name = 'purchases'
+            AND constraint_name = 'fk_purchases_price_table'
+       ) THEN
+         ALTER TABLE "${schemaName}".purchases
+           ADD CONSTRAINT fk_purchases_price_table
+           FOREIGN KEY (price_table_id)
+           REFERENCES "${schemaName}".price_tables(id)
+           ON DELETE RESTRICT;
+       END IF;
+     END $do$`,
+  ];
+}
