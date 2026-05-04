@@ -89,5 +89,23 @@ describe('JwtStrategy', () => {
 
       expect(result.role).toBe('EMPLOYEE');
     });
+
+    it('rejeita payload com is_platform_user (não é JWT de tenant)', async () => {
+      await expect(
+        strategy.validate({
+          sub: 'pu1',
+          is_platform_user: true,
+          tenant_id: undefined as any,
+          role: 'PLATFORM_OWNER',
+        } as any),
+      ).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('rejeita payload sem tenant_id', async () => {
+      mockUserRepo.findOne.mockResolvedValue(null); // safe default
+      await expect(
+        strategy.validate({ sub: 'u1', role: 'OWNER' } as any),
+      ).rejects.toThrow(UnauthorizedException);
+    });
   });
 });
