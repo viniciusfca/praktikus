@@ -57,7 +57,7 @@ export class PlatformAuthService {
       where: { id: stored.platformUserId },
     });
     if (!user) {
-      throw new UnauthorizedException();
+      throw new UnauthorizedException('Usuário não encontrado.');
     }
     return this.issueTokens(user);
   }

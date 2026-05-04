@@ -140,6 +140,18 @@ describe('PlatformAuthService', () => {
         expect.objectContaining({ revoked: true }),
       );
     });
+
+    it('rejeita quando o user foi deletado entre as checagens', async () => {
+      refreshRepo.findOne.mockResolvedValue({
+        revoked: false,
+        expiresAt: new Date(Date.now() + 60_000),
+        platformUserId: 'deleted-id',
+      });
+      userRepo.findOne.mockResolvedValue(null);
+      await expect(service.refresh('any')).rejects.toThrow(
+        UnauthorizedException,
+      );
+    });
   });
 
   describe('logout', () => {
@@ -149,6 +161,16 @@ describe('PlatformAuthService', () => {
         expect.objectContaining({ tokenHash: expect.any(String) }),
         { revoked: true },
       );
+    });
+  });
+
+  describe('hashPassword', () => {
+    it('hashes password with bcrypt cost 12 and is verifiable', async () => {
+      const plain = 'platform_test_pw';
+      const hash = await service.hashPassword(plain);
+      // bcrypt format: $2b$<cost>$... — cost 12 is hardcoded in BCRYPT_COST const
+      expect(hash).toMatch(/^\$2[aby]\$12\$/);
+      expect(await bcrypt.compare(plain, hash)).toBe(true);
     });
   });
 });
