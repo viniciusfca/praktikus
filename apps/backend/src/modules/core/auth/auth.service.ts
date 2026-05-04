@@ -96,7 +96,12 @@ export class AuthService {
       dto.nomeFantasia,
     );
 
-    return this.generateTokens(user, tenant.status, tenant.segment);
+    return this.generateTokens(
+      user,
+      tenant.status,
+      tenant.segment,
+      tenant.whatsappEnabled,
+    );
   }
 
   async login(dto: LoginDto): Promise<AuthTokens> {
@@ -115,6 +120,7 @@ export class AuthService {
       user,
       tenant?.status ?? TenantStatus.ACTIVE,
       tenant?.segment,
+      tenant?.whatsappEnabled,
     );
   }
 
@@ -145,6 +151,7 @@ export class AuthService {
       user,
       tenant?.status ?? TenantStatus.ACTIVE,
       tenant?.segment,
+      tenant?.whatsappEnabled,
     );
   }
 
@@ -239,6 +246,7 @@ export class AuthService {
     user: UserEntity,
     tenantStatus: string,
     tenantSegment?: TenantSegment,
+    whatsappEnabled?: boolean,
   ): Promise<AuthTokens> {
     // name and email are included for UI display only.
     // Backend guards must never rely on these JWT claims as authoritative —
@@ -251,6 +259,7 @@ export class AuthService {
       email: user.email,
       tenant_status: tenantStatus,
       tenant_segment: tenantSegment ?? TenantSegment.WORKSHOP,
+      whatsapp_enabled: whatsappEnabled ?? false,
     };
 
     const accessToken = this.jwtService.sign(payload, { expiresIn: '15m' });

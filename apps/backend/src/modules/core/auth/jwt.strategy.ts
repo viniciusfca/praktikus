@@ -16,6 +16,7 @@ export interface JwtPayload {
   email?: string;
   tenant_status?: string;
   tenant_segment?: TenantSegment;
+  whatsapp_enabled?: boolean;
   iat?: number;
   exp?: number;
 }
@@ -57,6 +58,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       tenantStatus:
         (payload.tenant_status as TenantStatus) ?? TenantStatus.ACTIVE,
       tenantSegment: payload.tenant_segment ?? TenantSegment.WORKSHOP,
+      whatsappEnabled: payload.whatsapp_enabled ?? false,
     };
   }
 }
