@@ -12,7 +12,8 @@ export class AddPriceTablesSchema1748200000000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     const tenants: Array<{ id: string; segment: TenantSegment }> =
       await queryRunner.query(
-        `SELECT id, segment FROM "public"."tenants" WHERE segment = 'RECYCLING'`,
+        `SELECT id, segment FROM "public"."tenants" WHERE segment = $1`,
+        [TenantSegment.RECYCLING],
       );
 
     for (const tenant of tenants) {
@@ -32,7 +33,8 @@ export class AddPriceTablesSchema1748200000000 implements MigrationInterface {
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     const tenants: Array<{ id: string }> = await queryRunner.query(
-      `SELECT id FROM "public"."tenants" WHERE segment = 'RECYCLING'`,
+      `SELECT id FROM "public"."tenants" WHERE segment = $1`,
+      [TenantSegment.RECYCLING],
     );
 
     for (const tenant of tenants) {
