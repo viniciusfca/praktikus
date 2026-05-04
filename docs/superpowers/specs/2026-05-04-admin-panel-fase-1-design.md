@@ -385,8 +385,8 @@ Tema dark: toggle no avatar do topbar, persiste em `localStorage['pk_admin_theme
 |-------|-------------|
 | KPI % adesão | `count(wpp=true) / count(active+trial)` |
 | KPI MRR add-on | `—` |
-| KPI Plano BASIC | `count(whatsappPlan='BASIC')` |
-| KPI Plano PRO | `count(whatsappPlan='PRO')` |
+| KPI Plano STARTER | `count(whatsappPlan='STARTER')` |
+| KPI Plano PRO + ENTERPRISE | `count(whatsappPlan IN ('PRO', 'ENTERPRISE'))` |
 | Tabela "Quem usa" | `WHERE whatsappEnabled=true` — colunas: cliente, segmento, plano, ativado em (usa `updated_at` por enquanto; `whatsapp_enabled_at` entra em Fase 1.5). Volume mensal: `—`. |
 | Tabela "Não usam" | `WHERE whatsappEnabled=false AND status IN (ACTIVE, TRIAL)` — colunas: cliente, segmento, status, CTA "Oferecer" `disabled` (Fase 2). |
 | Adesão por segmento | Barras horizontais — % WhatsApp dentro de cada segmento |
