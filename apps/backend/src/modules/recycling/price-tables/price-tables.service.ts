@@ -1,11 +1,9 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { DataSource, EntityManager } from 'typeorm';
 import { PriceTableEntity } from './price-table.entity';
 
 @Injectable()
 export class PriceTablesService {
-  private readonly logger = new Logger(PriceTablesService.name);
-
   constructor(private readonly dataSource: DataSource) {}
 
   private getSchemaName(tenantId: string): string {
@@ -14,7 +12,7 @@ export class PriceTablesService {
         tenantId,
       )
     ) {
-      throw new Error('Invalid tenantId');
+      throw new BadRequestException('Invalid tenantId');
     }
     return `tenant_${tenantId.replace(/-/g, '')}`;
   }
@@ -51,7 +49,7 @@ export class PriceTablesService {
         where: { isDefault: true, active: true },
       });
       if (!def) {
-        throw new Error('Tabela padrão não encontrada para o tenant');
+        throw new NotFoundException('Tabela padrão não encontrada para o tenant');
       }
       return def;
     });
