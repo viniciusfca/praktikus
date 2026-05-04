@@ -29,6 +29,8 @@ import { SupplierEntity } from '../modules/recycling/suppliers/supplier.entity';
 import { UnitEntity } from '../modules/recycling/units/unit.entity';
 import { ColetaEntity } from '../modules/recycling/coletas/coleta.entity';
 import { ColetaCommentEntity } from '../modules/recycling/coletas/coleta-comment.entity';
+import { PlatformUserEntity } from '../modules/core/admin/admin-auth/platform-user.entity';
+import { PlatformRefreshTokenEntity } from '../modules/core/admin/admin-auth/platform-refresh-token.entity';
 
 @Module({
   imports: [
@@ -71,6 +73,8 @@ import { ColetaCommentEntity } from '../modules/recycling/coletas/coleta-comment
           UnitEntity,
           ColetaEntity,
           ColetaCommentEntity,
+          PlatformUserEntity,
+          PlatformRefreshTokenEntity,
         ],
         synchronize: false,
         logging: config.get('NODE_ENV') === 'development',
