@@ -6,6 +6,7 @@ export { PaymentMethod };
 export interface Purchase {
   id: string;
   supplierId: string;
+  priceTableId: string;
   operatorId: string;
   cashSessionId: string | null;
   paymentMethod: PaymentMethod;
@@ -55,6 +56,7 @@ export interface PurchaseDetail {
 
 export interface CreatePurchasePayload {
   supplierId: string;
+  priceTableId: string;
   paymentMethod: PaymentMethod;
   items: Array<{ productId: string; quantity: number; unitPrice: number }>;
   notes?: string;
