@@ -2,9 +2,10 @@
 
 **Data:** 2026-05-04
 **Branch base:** `redesign/praktikus-v2`
-**Escopo:** evolução pequena sobre o feature de [múltiplas tabelas de preço](2026-05-03-multi-price-tables-design.md) (já em produção). Duas mudanças cirúrgicas:
+**Escopo:** evolução pequena sobre o feature de [múltiplas tabelas de preço](2026-05-03-multi-price-tables-design.md) (já em produção). Três mudanças cirúrgicas:
 1. **Compras**: novo campo "Tabela de preço" no header da Nova Compra. Sugestão de preço por item passa a vir da tabela escolhida. Trocar tabela com itens já adicionados pede confirmação e recalcula.
 2. **Cadastro de produto**: deixar Tabela 2 e Tabela 3 em branco no modal passa a significar "use o valor da Tabela 1 ao salvar" (auto-fill no client antes de enviar).
+3. **Inputs de preço do `PriceRow`**: aceitar vírgula como separador decimal e exibir no formato BR (ex.: `6,50`). Hoje o `<CFormInput type="number">` só aceita ponto.
 
 Vendas e Caixa **ficam fora desta entrega**.
 
@@ -29,6 +30,7 @@ Esta evolução resolve as duas com mudanças mínimas.
 | 2 | Persistir `priceTableId` na `Purchase`? | **Sim** — registro do contexto ("essa compra usou tabela X"). FK ON DELETE RESTRICT. |
 | 3 | Servidor valida `unitPrice` contra `product.prices[priceTableId]`? | **Não** — continua confiando no client (preserva override manual). |
 | 4 | Trocar tabela mid-purchase com itens já adicionados | **C — Confirm dialog**: avisa que vai sobrescrever overrides manuais, recalcula só se confirmar. |
+| 5 | `PriceRow` aceita vírgula | Sim — refator interno usando `parseDecimal`/`formatDecimal` de `utils/masks.ts`. Visual atual (R$ overlay + /kg sufixo) preservado. |
 
 ## Fora de escopo (explícito)
 
@@ -160,7 +162,7 @@ export class AddPriceTableIdToPurchases1748300000000 implements MigrationInterfa
 
 Migration usa o mesmo helper que `create-tenant-tables.ts`, então a SQL fica em UM lugar só.
 
-### 1.4 Registrar entity
+### 1.5 Registrar entity
 
 `PriceTableEntity` já é um relation em `Purchase` agora. Como `database.module.ts` já registra `PriceTableEntity` (corrigido pós-Task 19 do plano anterior), nada novo aqui.
 
@@ -343,6 +345,85 @@ Por:
 
 **Mantém.** Continua sendo affordance visual útil (usuário vê o valor preenchido nos inputs antes de salvar). Com o auto-fill no save, o botão tornou-se redundante para o resultado final, mas ainda diferencia "preencher e ver" de "deixar em branco e confiar no auto-fill". Não vamos renomear nem remover.
 
+### 4.3 Input de preço aceitar vírgula e exibir formato BR
+
+**Bug atual:** o `<CFormInput type="number">` no `PriceRow` aceita apenas `.` como separador decimal. Em pt-BR isso é fricção — o usuário tenta digitar `6,50` e nada acontece.
+
+**Solução:** refatorar o `PriceRow` para gerenciar o texto do input internamente, parseando vírgula OU ponto, e exibindo no formato BR. Reutilizar os helpers já existentes em [`apps/frontend/src/utils/masks.ts`](../../../apps/frontend/src/utils/masks.ts):
+- `parseDecimal(text, decimals)` — converte `"6,50"` ou `"6.50"` em `6.5` (number) ou `null`.
+- `formatDecimal(num, decimals)` — formata `6.5` em `"6,50"`.
+
+O componente `NumericInput` em `apps/frontend/src/components/inputs/NumericInput.tsx` já implementa exatamente esse padrão. **Não vamos** trocar o `<CFormInput>` cru pelo `<NumericInput>` direto porque o `NumericInput` usa `<CInputGroup>` para o prefixo `R$`, o que mudaria o visual atual (R$ vira uma célula separada com borda). O `PriceRow` mantém o R$ como overlay absoluto + `/{unitSymbol}` como sufixo absoluto.
+
+**Mudança no `PriceRow`** (mantendo a API pública `value: string | null | undefined; onChange: (string) => void`):
+
+```tsx
+import { useEffect, useState } from 'react';
+import { formatDecimal, parseDecimal } from '../../utils/masks';
+
+// Dentro de PriceRow, substituir o <CFormInput type="number" ...> por:
+const [text, setText] = useState<string>(() => formatInitial(value));
+
+useEffect(() => {
+  const incoming = formatInitial(value);
+  const parsedCurrent = parseDecimal(text, 2);
+  const parsedIncoming = parseDecimal(incoming, 2);
+  // só re-renderiza se o valor externo realmente diferir do que está no input
+  if (parsedCurrent !== parsedIncoming) {
+    setText(incoming);
+  }
+}, [value]);
+
+function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+  const raw = e.target.value;
+  if (!/^[\d.,]*$/.test(raw)) return; // só dígitos, vírgula e ponto
+  setText(raw);
+  // propaga string normalizada (ponto) pro form/zod consumirem como hoje
+  const normalized = raw.replace(',', '.');
+  onChange(normalized);
+}
+
+function handleBlur() {
+  const parsed = parseDecimal(text, 2);
+  if (parsed === null) {
+    setText('');
+    onChange('');
+    return;
+  }
+  setText(formatDecimal(parsed, 2)); // exibe "6,50"
+  onChange(String(parsed));            // propaga "6.5"
+}
+
+function formatInitial(v: number | string | null | undefined): string {
+  if (v == null || v === '') return '';
+  const n = typeof v === 'number' ? v : parseDecimal(String(v), 2);
+  return n == null ? '' : formatDecimal(n, 2);
+}
+
+// ...
+
+<CFormInput
+  type="text"
+  inputMode="decimal"
+  placeholder="0,00"
+  value={text}
+  onChange={handleChange}
+  onBlur={handleBlur}
+  invalid={!!error}
+  style={...} // preserva estilo atual (paddings + textAlign right + tnum)
+/>
+```
+
+A schema zod (`buildProductSchema`) e o `onSubmit` do `ProductDialog` continuam recebendo string e fazendo `Number(v)` — sem mudança lá.
+
+**Tests novos no `PriceRow.test.tsx`**:
+- Digitar `'6,5'` no input → `onChange` é chamado com `'6.5'` (vírgula normalizada).
+- Digitar `'8.5'` → `onChange` chamado com `'8.5'`.
+- Digitar `'abc'` → `onChange` não é chamado (input bloqueia caracteres inválidos).
+- Após blur com valor `8.5`, o input exibe `'8,50'` (formato BR).
+
+(Os 4 testes existentes precisam ser ajustados: o input agora é `type="text"`, então `getByRole('spinbutton')` não funciona mais — usar `getByPlaceholderText('0,00')` ou similar.)
+
 ---
 
 ## 5. Testes
@@ -365,6 +446,11 @@ Adicionar (e adaptar mocks para incluir `PriceTableEntity` no `manager.getReposi
 
 (Ajustar o teste existente "submit transforma string vazia em null nos preços" — esse teste vai falhar com a nova lógica. Substituir asserção: agora as strings vazias viram o valor da padrão, não `null`.)
 
+**`PriceRow.test.tsx`** ganha 3 testes (e os 4 existentes precisam ajuste de seletor — `getByRole('spinbutton')` não funciona mais com `type="text"`; usar `getByPlaceholderText` ou ref direta):
+- Digitar `'6,5'` → `onChange('6.5')`.
+- Digitar `'abc'` → `onChange` não é chamado.
+- Blur com `8.5` no estado interno → input exibe `'8,50'`.
+
 ---
 
 ## 6. Critérios de aceite (QA manual)
@@ -380,6 +466,9 @@ Adicionar (e adaptar mocks para incluir `PriceTableEntity` no `manager.getReposi
 - [ ] Cadastrar produto preenchendo Tabela 1 e Tabela 2 (deixando Tabela 3 vazia) → Tabela 3 fica com o valor da Tabela 1.
 - [ ] Editar produto existente que tem `null` em Tabela 2/3 → ao reabrir o modal, inputs aparecem vazios (mantido pra dar opção de continuar mantendo o legado). Mas ao salvar, inputs vazios passam a virar valor da Tabela 1.
 - [ ] Migration `AddPriceTableIdToPurchases` roda contra tenant com compras existentes → todas ganham `price_table_id` apontando pra Padrão; coluna fica `NOT NULL`.
+- [ ] No modal de produto, digitar `6,50` no preço da Tabela 1 → o input aceita; após blur, exibe `6,50`.
+- [ ] Salvar produto com preço digitado como `6,50` → backend recebe `prices: { t1: 6.5, ... }` (number).
+- [ ] Tentar digitar letra no preço → input ignora (não muda).
 
 ---
 
