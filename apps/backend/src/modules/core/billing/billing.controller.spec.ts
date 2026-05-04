@@ -53,47 +53,79 @@ describe('BillingController', () => {
   });
 
   it('should update status to ACTIVE on PAYMENT_RECEIVED', async () => {
-    const payload = { event: 'PAYMENT_RECEIVED', payment: { subscription: 'sub-1' } };
+    const payload = {
+      event: 'PAYMENT_RECEIVED',
+      payment: { subscription: 'sub-1' },
+    };
     const rawBody = JSON.stringify(payload);
     const sig = makeSignature(rawBody, 'test-secret');
-    mockBillingService.findTenantIdBySubscriptionId.mockResolvedValue('tenant-1');
+    mockBillingService.findTenantIdBySubscriptionId.mockResolvedValue(
+      'tenant-1',
+    );
 
     await controller.handleWebhook(sig, makeRawReq(rawBody), payload);
 
-    expect(mockTenancyService.updateStatus).toHaveBeenCalledWith('tenant-1', TenantStatus.ACTIVE);
+    expect(mockTenancyService.updateStatus).toHaveBeenCalledWith(
+      'tenant-1',
+      TenantStatus.ACTIVE,
+    );
   });
 
   it('should update status to ACTIVE on PAYMENT_CONFIRMED', async () => {
-    const payload = { event: 'PAYMENT_CONFIRMED', payment: { subscription: 'sub-1' } };
+    const payload = {
+      event: 'PAYMENT_CONFIRMED',
+      payment: { subscription: 'sub-1' },
+    };
     const rawBody = JSON.stringify(payload);
     const sig = makeSignature(rawBody, 'test-secret');
-    mockBillingService.findTenantIdBySubscriptionId.mockResolvedValue('tenant-1');
+    mockBillingService.findTenantIdBySubscriptionId.mockResolvedValue(
+      'tenant-1',
+    );
 
     await controller.handleWebhook(sig, makeRawReq(rawBody), payload);
 
-    expect(mockTenancyService.updateStatus).toHaveBeenCalledWith('tenant-1', TenantStatus.ACTIVE);
+    expect(mockTenancyService.updateStatus).toHaveBeenCalledWith(
+      'tenant-1',
+      TenantStatus.ACTIVE,
+    );
   });
 
   it('should update status to OVERDUE on PAYMENT_OVERDUE', async () => {
-    const payload = { event: 'PAYMENT_OVERDUE', payment: { subscription: 'sub-1' } };
+    const payload = {
+      event: 'PAYMENT_OVERDUE',
+      payment: { subscription: 'sub-1' },
+    };
     const rawBody = JSON.stringify(payload);
     const sig = makeSignature(rawBody, 'test-secret');
-    mockBillingService.findTenantIdBySubscriptionId.mockResolvedValue('tenant-1');
+    mockBillingService.findTenantIdBySubscriptionId.mockResolvedValue(
+      'tenant-1',
+    );
 
     await controller.handleWebhook(sig, makeRawReq(rawBody), payload);
 
-    expect(mockTenancyService.updateStatus).toHaveBeenCalledWith('tenant-1', TenantStatus.OVERDUE);
+    expect(mockTenancyService.updateStatus).toHaveBeenCalledWith(
+      'tenant-1',
+      TenantStatus.OVERDUE,
+    );
   });
 
   it('should update status to SUSPENDED on SUBSCRIPTION_INACTIVATED', async () => {
-    const payload = { event: 'SUBSCRIPTION_INACTIVATED', subscription: { id: 'sub-1' } };
+    const payload = {
+      event: 'SUBSCRIPTION_INACTIVATED',
+      subscription: { id: 'sub-1' },
+    };
     const rawBody = JSON.stringify(payload);
     const sig = makeSignature(rawBody, 'test-secret');
-    mockBillingService.findTenantIdBySubscriptionId.mockResolvedValue('tenant-1');
+    mockBillingService.findTenantIdBySubscriptionId.mockResolvedValue(
+      'tenant-1',
+    );
 
     await controller.handleWebhook(sig, makeRawReq(rawBody), payload);
 
-    expect(mockTenancyService.updateStatus).toHaveBeenCalledWith('tenant-1', TenantStatus.SUSPENDED);
+    expect(mockTenancyService.updateStatus).toHaveBeenCalledWith(
+      'tenant-1',
+      TenantStatus.SUSPENDED,
+    );
   });
 
   it('should ignore unknown events without updating status', async () => {
@@ -101,18 +133,27 @@ describe('BillingController', () => {
     const rawBody = JSON.stringify(payload);
     const sig = makeSignature(rawBody, 'test-secret');
 
-    await expect(controller.handleWebhook(sig, makeRawReq(rawBody), payload)).resolves.toBeUndefined();
+    await expect(
+      controller.handleWebhook(sig, makeRawReq(rawBody), payload),
+    ).resolves.toBeUndefined();
     expect(mockTenancyService.updateStatus).not.toHaveBeenCalled();
   });
 
   it('should return 200 and NOT call updateStatus when subscriptionId is not found in DB', async () => {
-    const payload = { event: 'PAYMENT_RECEIVED', payment: { subscription: 'sub-unknown' } };
+    const payload = {
+      event: 'PAYMENT_RECEIVED',
+      payment: { subscription: 'sub-unknown' },
+    };
     const rawBody = JSON.stringify(payload);
     const sig = makeSignature(rawBody, 'test-secret');
     mockBillingService.findTenantIdBySubscriptionId.mockResolvedValue(null);
 
-    await expect(controller.handleWebhook(sig, makeRawReq(rawBody), payload)).resolves.toBeUndefined();
-    expect(mockBillingService.findTenantIdBySubscriptionId).toHaveBeenCalledWith('sub-unknown');
+    await expect(
+      controller.handleWebhook(sig, makeRawReq(rawBody), payload),
+    ).resolves.toBeUndefined();
+    expect(
+      mockBillingService.findTenantIdBySubscriptionId,
+    ).toHaveBeenCalledWith('sub-unknown');
     expect(mockTenancyService.updateStatus).not.toHaveBeenCalled();
   });
 
@@ -121,8 +162,12 @@ describe('BillingController', () => {
     const rawBody = JSON.stringify(payload);
     const sig = makeSignature(rawBody, 'test-secret');
 
-    await expect(controller.handleWebhook(sig, makeRawReq(rawBody), payload)).resolves.toBeUndefined();
-    expect(mockBillingService.findTenantIdBySubscriptionId).not.toHaveBeenCalled();
+    await expect(
+      controller.handleWebhook(sig, makeRawReq(rawBody), payload),
+    ).resolves.toBeUndefined();
+    expect(
+      mockBillingService.findTenantIdBySubscriptionId,
+    ).not.toHaveBeenCalled();
     expect(mockTenancyService.updateStatus).not.toHaveBeenCalled();
   });
 

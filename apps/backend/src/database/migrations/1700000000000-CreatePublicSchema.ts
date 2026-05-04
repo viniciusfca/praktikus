@@ -104,18 +104,28 @@ export class CreatePublicSchema1700000000000 implements MigrationInterface {
     `);
 
     // Create indexes
-    await queryRunner.query(`CREATE INDEX "IDX_refresh_tokens_user_id" ON "public"."refresh_tokens" ("user_id")`);
+    await queryRunner.query(
+      `CREATE INDEX "IDX_refresh_tokens_user_id" ON "public"."refresh_tokens" ("user_id")`,
+    );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`ALTER TABLE "public"."billing" DROP CONSTRAINT IF EXISTS "FK_billing_tenant_id"`);
-    await queryRunner.query(`ALTER TABLE "public"."refresh_tokens" DROP CONSTRAINT IF EXISTS "FK_refresh_tokens_user_id"`);
-    await queryRunner.query(`ALTER TABLE "public"."users" DROP CONSTRAINT IF EXISTS "FK_users_tenant_id"`);
+    await queryRunner.query(
+      `ALTER TABLE "public"."billing" DROP CONSTRAINT IF EXISTS "FK_billing_tenant_id"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "public"."refresh_tokens" DROP CONSTRAINT IF EXISTS "FK_refresh_tokens_user_id"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "public"."users" DROP CONSTRAINT IF EXISTS "FK_users_tenant_id"`,
+    );
     await queryRunner.query(`DROP TABLE IF EXISTS "public"."billing"`);
     await queryRunner.query(`DROP TABLE IF EXISTS "public"."refresh_tokens"`);
     await queryRunner.query(`DROP TABLE IF EXISTS "public"."users"`);
     await queryRunner.query(`DROP TABLE IF EXISTS "public"."tenants"`);
     await queryRunner.query(`DROP TYPE IF EXISTS "public"."users_role_enum"`);
-    await queryRunner.query(`DROP TYPE IF EXISTS "public"."tenants_status_enum"`);
+    await queryRunner.query(
+      `DROP TYPE IF EXISTS "public"."tenants_status_enum"`,
+    );
   }
 }

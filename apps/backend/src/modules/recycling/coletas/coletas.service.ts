@@ -17,7 +17,11 @@ export class ColetasService {
   constructor(private readonly dataSource: DataSource) {}
 
   private getSchemaName(tenantId: string): string {
-    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(tenantId)) {
+    if (
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+        tenantId,
+      )
+    ) {
       throw new Error('Invalid tenantId');
     }
     return `tenant_${tenantId.replace(/-/g, '')}`;
@@ -38,7 +42,10 @@ export class ColetasService {
     }
   }
 
-  private async assertSupplier(qr: QueryRunner, supplierId: string): Promise<void> {
+  private async assertSupplier(
+    qr: QueryRunner,
+    supplierId: string,
+  ): Promise<void> {
     const repo = qr.manager.getRepository(SupplierEntity);
     const s = await repo.findOne({ where: { id: supplierId } });
     if (!s) throw new NotFoundException('Fornecedor não encontrado.');
@@ -57,13 +64,18 @@ export class ColetasService {
     }
   }
 
-  async list(tenantId: string, query: ListColetasQueryDto): Promise<ColetaEntity[]> {
+  async list(
+    tenantId: string,
+    query: ListColetasQueryDto,
+  ): Promise<ColetaEntity[]> {
     return this.withSchema(tenantId, async (qr) => {
       const repo = qr.manager.getRepository(ColetaEntity);
       const qb = repo.createQueryBuilder('c').orderBy('c.scheduledAt', 'ASC');
-      if (query.start) qb.andWhere('c.scheduledAt >= :start', { start: query.start });
+      if (query.start)
+        qb.andWhere('c.scheduledAt >= :start', { start: query.start });
       if (query.end) qb.andWhere('c.scheduledAt <= :end', { end: query.end });
-      if (query.status) qb.andWhere('c.status = :status', { status: query.status });
+      if (query.status)
+        qb.andWhere('c.status = :status', { status: query.status });
       return qb.getMany();
     });
   }
@@ -71,7 +83,8 @@ export class ColetasService {
   async upcoming(tenantId: string, limit: number = 4): Promise<ColetaEntity[]> {
     return this.withSchema(tenantId, async (qr) => {
       const repo = qr.manager.getRepository(ColetaEntity);
-      return repo.createQueryBuilder('c')
+      return repo
+        .createQueryBuilder('c')
         .where('c.status = :status', { status: ColetaStatus.AGENDADA })
         .orderBy('c.scheduledAt', 'ASC')
         .limit(Math.max(1, Math.min(50, Math.floor(limit))))
@@ -91,7 +104,8 @@ export class ColetasService {
   async create(tenantId: string, dto: CreateColetaDto): Promise<ColetaEntity> {
     return this.withSchema(tenantId, async (qr) => {
       await this.assertSupplier(qr, dto.supplierId);
-      if (dto.employeeId) await this.assertEmployee(qr, tenantId, dto.employeeId);
+      if (dto.employeeId)
+        await this.assertEmployee(qr, tenantId, dto.employeeId);
 
       const repo = qr.manager.getRepository(ColetaEntity);
       return repo.save(
@@ -106,22 +120,31 @@ export class ColetasService {
     });
   }
 
-  async update(tenantId: string, id: string, dto: UpdateColetaDto): Promise<ColetaEntity> {
+  async update(
+    tenantId: string,
+    id: string,
+    dto: UpdateColetaDto,
+  ): Promise<ColetaEntity> {
     return this.withSchema(tenantId, async (qr) => {
       const repo = qr.manager.getRepository(ColetaEntity);
       const item = await repo.findOne({ where: { id } });
       if (!item) throw new NotFoundException('Coleta não encontrada.');
 
       if (item.status !== ColetaStatus.AGENDADA) {
-        throw new BadRequestException('Só é possível editar coletas AGENDADAS.');
+        throw new BadRequestException(
+          'Só é possível editar coletas AGENDADAS.',
+        );
       }
 
       if (dto.supplierId) await this.assertSupplier(qr, dto.supplierId);
-      if (dto.employeeId) await this.assertEmployee(qr, tenantId, dto.employeeId);
+      if (dto.employeeId)
+        await this.assertEmployee(qr, tenantId, dto.employeeId);
 
       if (dto.supplierId !== undefined) item.supplierId = dto.supplierId;
-      if (dto.employeeId !== undefined) item.employeeId = dto.employeeId ?? null;
-      if (dto.scheduledAt !== undefined) item.scheduledAt = new Date(dto.scheduledAt);
+      if (dto.employeeId !== undefined)
+        item.employeeId = dto.employeeId ?? null;
+      if (dto.scheduledAt !== undefined)
+        item.scheduledAt = new Date(dto.scheduledAt);
       if (dto.notes !== undefined) item.notes = dto.notes ?? null;
 
       return repo.save(item);
@@ -138,7 +161,9 @@ export class ColetasService {
       const item = await repo.findOne({ where: { id } });
       if (!item) throw new NotFoundException('Coleta não encontrada.');
       if (item.status !== ColetaStatus.AGENDADA) {
-        throw new BadRequestException('Só é possível alterar status de coletas AGENDADAS.');
+        throw new BadRequestException(
+          'Só é possível alterar status de coletas AGENDADAS.',
+        );
       }
       item.status = nextStatus;
       return repo.save(item);
@@ -151,7 +176,9 @@ export class ColetasService {
       const item = await repo.findOne({ where: { id } });
       if (!item) throw new NotFoundException('Coleta não encontrada.');
       if (item.status !== ColetaStatus.AGENDADA) {
-        throw new BadRequestException('Só é possível deletar coletas AGENDADAS. Use cancelar para estados finais.');
+        throw new BadRequestException(
+          'Só é possível deletar coletas AGENDADAS. Use cancelar para estados finais.',
+        );
       }
       await repo.remove(item);
     });

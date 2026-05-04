@@ -21,7 +21,9 @@ describe('IsValidCnpj decorator', () => {
   it('fails for a wrong-DV CNPJ', async () => {
     const errors = await validateCnpj('12345678000199');
     expect(errors).toHaveLength(1);
-    expect(errors[0].constraints).toMatchObject({ isValidCnpj: 'CNPJ inválido' });
+    expect(errors[0].constraints).toMatchObject({
+      isValidCnpj: 'CNPJ inválido',
+    });
   });
 
   it('fails for non-string input', async () => {
@@ -37,6 +39,8 @@ describe('IsValidCnpj decorator', () => {
     const dto = new WithMessage();
     (dto as unknown as Record<string, unknown>).cnpj = '12345678000199';
     const errors = await validate(dto);
-    expect(errors[0].constraints).toMatchObject({ isValidCnpj: 'doc required' });
+    expect(errors[0].constraints).toMatchObject({
+      isValidCnpj: 'doc required',
+    });
   });
 });

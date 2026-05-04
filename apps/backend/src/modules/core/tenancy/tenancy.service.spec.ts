@@ -43,7 +43,9 @@ describe('TenancyService', () => {
     });
 
     it('should remove all dashes from the uuid', () => {
-      const name = service.generateSchemaName('00000000-0000-0000-0000-000000000000');
+      const name = service.generateSchemaName(
+        '00000000-0000-0000-0000-000000000000',
+      );
       expect(name).toBe('tenant_00000000000000000000000000000000');
     });
   });
@@ -81,7 +83,11 @@ describe('TenancyService', () => {
         ...input,
         status: TenantStatus.TRIAL,
         schemaName: 'pending',
-        trialEndsAt: (() => { const d = new Date(); d.setDate(d.getDate() + 30); return d; })(),
+        trialEndsAt: (() => {
+          const d = new Date();
+          d.setDate(d.getDate() + 30);
+          return d;
+        })(),
       };
       const savedTenant = { ...pendingTenant, schemaName: 'tenant_uuid1' };
 
@@ -97,7 +103,9 @@ describe('TenancyService', () => {
       // trialEndsAt should be ~30 days from now (allow 1 minute tolerance)
       const thirtyDaysFromNow = new Date();
       thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
-      const diff = Math.abs(result.trialEndsAt!.getTime() - thirtyDaysFromNow.getTime());
+      const diff = Math.abs(
+        result.trialEndsAt!.getTime() - thirtyDaysFromNow.getTime(),
+      );
       expect(diff).toBeLessThan(60_000); // within 1 minute
       expect(mockQueryRunner.query).toHaveBeenCalledWith(
         expect.stringContaining('CREATE SCHEMA IF NOT EXISTS'),
@@ -140,23 +148,47 @@ describe('TenancyService', () => {
   describe('provisionSchema security', () => {
     it('createTenant throws if generateSchemaName produces an invalid name', async () => {
       // Force generateSchemaName to return something invalid by mocking it
-      jest.spyOn(service, 'generateSchemaName').mockReturnValue('tenant_bad"name');
-      mockTenantRepo.create.mockReturnValue({ id: 'uuid-1', status: TenantStatus.TRIAL, schemaName: 'pending', trialEndsAt: new Date() });
-      mockTenantRepo.save.mockResolvedValue({ id: 'uuid-1', status: TenantStatus.TRIAL, schemaName: 'pending', trialEndsAt: new Date() });
+      jest
+        .spyOn(service, 'generateSchemaName')
+        .mockReturnValue('tenant_bad"name');
+      mockTenantRepo.create.mockReturnValue({
+        id: 'uuid-1',
+        status: TenantStatus.TRIAL,
+        schemaName: 'pending',
+        trialEndsAt: new Date(),
+      });
+      mockTenantRepo.save.mockResolvedValue({
+        id: 'uuid-1',
+        status: TenantStatus.TRIAL,
+        schemaName: 'pending',
+        trialEndsAt: new Date(),
+      });
 
-      const input = { cnpj: '11222333000181', razaoSocial: 'Test', nomeFantasia: 'Test' };
-      await expect(service.createTenant(input)).rejects.toThrow('Invalid schema name');
+      const input = {
+        cnpj: '11222333000181',
+        razaoSocial: 'Test',
+        nomeFantasia: 'Test',
+      };
+      await expect(service.createTenant(input)).rejects.toThrow(
+        'Invalid schema name',
+      );
     });
   });
 
   describe('findById', () => {
     it('should return tenant when found', async () => {
-      const tenant = { id: 'uuid-1', nomeFantasia: 'Auto Center', status: TenantStatus.ACTIVE };
+      const tenant = {
+        id: 'uuid-1',
+        nomeFantasia: 'Auto Center',
+        status: TenantStatus.ACTIVE,
+      };
       mockTenantRepo.findOne.mockResolvedValue(tenant);
 
       const result = await service.findById('uuid-1');
       expect(result).toEqual(tenant);
-      expect(mockTenantRepo.findOne).toHaveBeenCalledWith({ where: { id: 'uuid-1' } });
+      expect(mockTenantRepo.findOne).toHaveBeenCalledWith({
+        where: { id: 'uuid-1' },
+      });
     });
 
     it('should return null when tenant not found', async () => {

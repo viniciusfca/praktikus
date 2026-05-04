@@ -35,7 +35,10 @@ export class AuthController {
 
   @Post('register/recycling')
   registerRecycling(@Body() dto: RegisterDto): Promise<AuthTokens> {
-    return this.authService.register({ ...dto, segment: TenantSegment.RECYCLING });
+    return this.authService.register({
+      ...dto,
+      segment: TenantSegment.RECYCLING,
+    });
   }
 
   @Post('login')
@@ -76,6 +79,10 @@ export class AuthController {
     @Request() req: RequestWithUser,
     @Body() dto: ChangePasswordDto,
   ): Promise<void> {
-    await this.authService.changePassword(req.user.userId, dto.currentPassword, dto.newPassword);
+    await this.authService.changePassword(
+      req.user.userId,
+      dto.currentPassword,
+      dto.newPassword,
+    );
   }
 }

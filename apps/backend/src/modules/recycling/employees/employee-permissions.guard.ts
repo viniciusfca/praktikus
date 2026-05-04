@@ -37,7 +37,10 @@ export class EmployeePermissionsGuard implements CanActivate {
     if (user.role === UserRole.OWNER) return true;
 
     try {
-      const perms = await this.employeesService.getPermissions(user.tenantId, user.userId);
+      const perms = await this.employeesService.getPermissions(
+        user.tenantId,
+        user.userId,
+      );
       return !!(perms as unknown as Record<string, unknown>)[permKey];
     } catch {
       throw new ForbiddenException('Sem permissão para esta ação.');

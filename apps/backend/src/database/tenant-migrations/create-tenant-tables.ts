@@ -1,10 +1,14 @@
 import { TenantSegment } from '@praktikus/shared';
+import { buildWhatsappTablesSql } from './whatsapp-tables.sql';
 
 /**
  * Gera as instruções SQL para criar as tabelas de um novo tenant.
  * Usa CREATE TABLE IF NOT EXISTS para idempotência (pode ser re-executado).
  */
-export function createTenantTablesSql(schemaName: string, segment: TenantSegment = TenantSegment.WORKSHOP): string[] {
+export function createTenantTablesSql(
+  schemaName: string,
+  segment: TenantSegment = TenantSegment.WORKSHOP,
+): string[] {
   const workshopTables = [
     `CREATE TABLE IF NOT EXISTS "${schemaName}".customers (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -189,6 +193,7 @@ export function createTenantTablesSql(schemaName: string, segment: TenantSegment
       buyer_id UUID NOT NULL REFERENCES "${schemaName}".buyers(id) ON DELETE RESTRICT,
       operator_id UUID NOT NULL,
       sold_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      payment_method VARCHAR NOT NULL,
       notes VARCHAR,
       created_at TIMESTAMPTZ DEFAULT NOW()
     )`,
@@ -235,8 +240,10 @@ export function createTenantTablesSql(schemaName: string, segment: TenantSegment
     )`,
   ];
 
+  const whatsappTables = buildWhatsappTablesSql(schemaName);
+
   if (segment === TenantSegment.RECYCLING) {
-    return recyclingTables;
+    return [...recyclingTables, ...whatsappTables];
   }
-  return workshopTables;
+  return [...workshopTables, ...whatsappTables];
 }

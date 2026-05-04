@@ -1,4 +1,11 @@
-import { IsInt, IsNumber, IsString, IsUUID, Min, MinLength } from 'class-validator';
+import {
+  IsInt,
+  IsNumber,
+  IsString,
+  IsUUID,
+  Min,
+  MinLength,
+} from 'class-validator';
 export class CreateSoItemPartDto {
   @IsUUID() catalogPartId: string;
   @IsString() @MinLength(1) nomePeca: string;

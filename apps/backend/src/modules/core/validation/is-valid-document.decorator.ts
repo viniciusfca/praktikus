@@ -17,7 +17,9 @@ export class IsValidDocumentConstraint implements ValidatorConstraintInterface {
   }
 }
 
-export function IsValidDocument(options?: ValidationOptions): PropertyDecorator {
+export function IsValidDocument(
+  options?: ValidationOptions,
+): PropertyDecorator {
   return (object: object, propertyName: string | symbol) => {
     registerDecorator({
       target: object.constructor,

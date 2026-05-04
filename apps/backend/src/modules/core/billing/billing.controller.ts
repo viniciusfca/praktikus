@@ -48,12 +48,16 @@ export class BillingController {
     }
 
     const rawBody = req.rawBody.toString();
-    const expected = crypto.createHmac('sha256', secret).update(rawBody).digest('hex');
+    const expected = crypto
+      .createHmac('sha256', secret)
+      .update(rawBody)
+      .digest('hex');
 
     const sigBuffer = Buffer.from(signature ?? '', 'hex');
     const expBuffer = Buffer.from(expected, 'hex');
     const isValid =
-      sigBuffer.length === expBuffer.length && crypto.timingSafeEqual(sigBuffer, expBuffer);
+      sigBuffer.length === expBuffer.length &&
+      crypto.timingSafeEqual(sigBuffer, expBuffer);
 
     if (!isValid) {
       throw new UnauthorizedException('Assinatura de webhook inválida');
@@ -74,13 +78,16 @@ export class BillingController {
       return;
     }
 
-    const tenantId = await this.billingService.findTenantIdBySubscriptionId(subscriptionId);
+    const tenantId =
+      await this.billingService.findTenantIdBySubscriptionId(subscriptionId);
     if (!tenantId) {
       this.logger.warn(`No tenant found for subscriptionId: ${subscriptionId}`);
       return;
     }
 
     await this.tenancyService.updateStatus(tenantId, targetStatus);
-    this.logger.log(`Tenant ${tenantId} status updated to ${targetStatus} via ${payload.event}`);
+    this.logger.log(
+      `Tenant ${tenantId} status updated to ${targetStatus} via ${payload.event}`,
+    );
   }
 }

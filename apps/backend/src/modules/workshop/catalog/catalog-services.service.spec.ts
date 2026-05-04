@@ -91,7 +91,9 @@ describe('CatalogServicesService', () => {
     it('should throw NotFoundException when not found', async () => {
       mockRepo.findOne.mockResolvedValue(null);
 
-      await expect(service.getById(TENANT_ID, 'nonexistent')).rejects.toThrow(NotFoundException);
+      await expect(service.getById(TENANT_ID, 'nonexistent')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -115,7 +117,9 @@ describe('CatalogServicesService', () => {
       mockRepo.findOne.mockResolvedValue(item);
       mockRepo.save.mockResolvedValue({ ...item, nome: 'Troca de filtro' });
 
-      const result = await service.update(TENANT_ID, 's1', { nome: 'Troca de filtro' } as any);
+      const result = await service.update(TENANT_ID, 's1', {
+        nome: 'Troca de filtro',
+      } as any);
 
       expect(mockRepo.save).toHaveBeenCalled();
       expect(result.nome).toBe('Troca de filtro');
@@ -124,7 +128,9 @@ describe('CatalogServicesService', () => {
     it('should throw NotFoundException when not found', async () => {
       mockRepo.findOne.mockResolvedValue(null);
 
-      await expect(service.update(TENANT_ID, 'nonexistent', {} as any)).rejects.toThrow(NotFoundException);
+      await expect(
+        service.update(TENANT_ID, 'nonexistent', {} as any),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -142,7 +148,9 @@ describe('CatalogServicesService', () => {
     it('should throw NotFoundException when not found', async () => {
       mockRepo.findOne.mockResolvedValue(null);
 
-      await expect(service.delete(TENANT_ID, 'nonexistent')).rejects.toThrow(NotFoundException);
+      await expect(service.delete(TENANT_ID, 'nonexistent')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 });

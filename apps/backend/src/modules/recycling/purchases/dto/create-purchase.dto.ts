@@ -1,4 +1,15 @@
-import { IsEnum, IsUUID, IsOptional, IsString, IsArray, ArrayMinSize, ValidateNested, IsNumber, IsPositive, Max } from 'class-validator';
+import {
+  IsEnum,
+  IsUUID,
+  IsOptional,
+  IsString,
+  IsArray,
+  ArrayMinSize,
+  ValidateNested,
+  IsNumber,
+  IsPositive,
+  Max,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { PaymentMethod } from '@praktikus/shared';
 

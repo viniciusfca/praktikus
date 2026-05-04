@@ -1,4 +1,9 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+} from 'typeorm';
 import { TransactionType, PaymentMethod } from '@praktikus/shared';
 import { numericTransformer } from '../common/numeric-transformer';
 
@@ -16,7 +21,12 @@ export class CashTransactionEntity {
   @Column({ name: 'payment_method', type: 'varchar' })
   paymentMethod: PaymentMethod;
 
-  @Column({ type: 'numeric', precision: 12, scale: 2, transformer: numericTransformer })
+  @Column({
+    type: 'numeric',
+    precision: 12,
+    scale: 2,
+    transformer: numericTransformer,
+  })
   amount: number;
 
   @Column({ type: 'varchar', nullable: true })

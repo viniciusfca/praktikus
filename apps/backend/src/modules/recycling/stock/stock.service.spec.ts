@@ -7,7 +7,9 @@ const mockQueryRunner = {
   query: jest.fn(),
   release: jest.fn().mockResolvedValue(undefined),
 };
-const mockDataSource = { createQueryRunner: jest.fn().mockReturnValue(mockQueryRunner) };
+const mockDataSource = {
+  createQueryRunner: jest.fn().mockReturnValue(mockQueryRunner),
+};
 
 describe('StockService', () => {
   let service: StockService;
@@ -15,7 +17,10 @@ describe('StockService', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [StockService, { provide: DataSource, useValue: mockDataSource }],
+      providers: [
+        StockService,
+        { provide: DataSource, useValue: mockDataSource },
+      ],
     }).compile();
     service = module.get<StockService>(StockService);
     jest.clearAllMocks();
@@ -23,7 +28,9 @@ describe('StockService', () => {
 
   describe('getSchemaName security', () => {
     it('should throw on invalid tenantId', async () => {
-      await expect(service.getBalances('../../evil')).rejects.toThrow('Invalid tenantId');
+      await expect(service.getBalances('../../evil')).rejects.toThrow(
+        'Invalid tenantId',
+      );
     });
   });
 
@@ -32,8 +39,18 @@ describe('StockService', () => {
       mockQueryRunner.query
         .mockResolvedValueOnce(undefined) // SET LOCAL search_path
         .mockResolvedValueOnce([
-          { product_id: 'p1', product_name: 'Papelão', unit_abbreviation: 'kg', balance: '150.0000' },
-          { product_id: 'p2', product_name: 'Latinha', unit_abbreviation: 'kg', balance: '30.0000' },
+          {
+            product_id: 'p1',
+            product_name: 'Papelão',
+            unit_abbreviation: 'kg',
+            balance: '150.0000',
+          },
+          {
+            product_id: 'p2',
+            product_name: 'Latinha',
+            unit_abbreviation: 'kg',
+            balance: '30.0000',
+          },
         ]);
 
       const result = await service.getBalances(TENANT);
@@ -57,7 +74,13 @@ describe('StockService', () => {
       mockQueryRunner.query
         .mockResolvedValueOnce(undefined) // SET LOCAL search_path
         .mockResolvedValueOnce([
-          { id: 'm1', type: 'IN', quantity: '100.0000', reference_type: 'PURCHASE', moved_at: '2026-04-07T10:00:00Z' },
+          {
+            id: 'm1',
+            type: 'IN',
+            quantity: '100.0000',
+            reference_type: 'PURCHASE',
+            moved_at: '2026-04-07T10:00:00Z',
+          },
         ]);
 
       const result = await service.getMovements(TENANT, 'p1');
@@ -72,7 +95,12 @@ describe('StockService', () => {
       mockQueryRunner.query
         .mockResolvedValueOnce(undefined) // SET LOCAL search_path
         .mockResolvedValueOnce([
-          { product_id: 'p1', product_name: 'Papelão', unit_abbreviation: 'kg', total_quantity: '50.0000' },
+          {
+            product_id: 'p1',
+            product_name: 'Papelão',
+            unit_abbreviation: 'kg',
+            total_quantity: '50.0000',
+          },
         ]);
 
       const result = await service.getDailyPurchaseTotals(TENANT, '2026-04-07');

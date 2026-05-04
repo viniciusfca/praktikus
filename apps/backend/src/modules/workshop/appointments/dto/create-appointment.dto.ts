@@ -1,5 +1,11 @@
 import {
-  IsDateString, IsIn, IsInt, IsOptional, IsString, IsUUID, Min,
+  IsDateString,
+  IsIn,
+  IsInt,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Min,
 } from 'class-validator';
 
 export class CreateAppointmentDto {

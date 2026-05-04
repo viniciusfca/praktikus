@@ -29,19 +29,29 @@ const mockRefreshTokenRepo = {
 
 const mockTenancyService = {
   createTenant: jest.fn(),
-  createTenantWithManager: jest.fn().mockResolvedValue({ id: 'tenant-1', schemaName: 'tenant_1', status: TenantStatus.TRIAL }),
+  createTenantWithManager: jest.fn().mockResolvedValue({
+    id: 'tenant-1',
+    schemaName: 'tenant_1',
+    status: TenantStatus.TRIAL,
+  }),
   findByCnpj: jest.fn(),
   findById: jest.fn(),
 };
 
 const mockDataSource = {
-  transaction: jest.fn().mockImplementation(async (cb: (manager: any) => any) => {
-    const mockManager = {
-      create: jest.fn((_entity: any, data: any) => data),
-      save: jest.fn().mockResolvedValue({ id: 'user-1', tenantId: 'tenant-1', role: UserRole.OWNER }),
-    };
-    return cb(mockManager);
-  }),
+  transaction: jest
+    .fn()
+    .mockImplementation(async (cb: (manager: any) => any) => {
+      const mockManager = {
+        create: jest.fn((_entity: any, data: any) => data),
+        save: jest.fn().mockResolvedValue({
+          id: 'user-1',
+          tenantId: 'tenant-1',
+          role: UserRole.OWNER,
+        }),
+      };
+      return cb(mockManager);
+    }),
 };
 
 const mockBillingService = {
@@ -78,8 +88,14 @@ describe('AuthService', () => {
       providers: [
         AuthService,
         { provide: getRepositoryToken(UserEntity), useValue: mockUserRepo },
-        { provide: getRepositoryToken(RefreshTokenEntity), useValue: mockRefreshTokenRepo },
-        { provide: getRepositoryToken(PasswordResetTokenEntity), useValue: mockResetTokenRepo },
+        {
+          provide: getRepositoryToken(RefreshTokenEntity),
+          useValue: mockRefreshTokenRepo,
+        },
+        {
+          provide: getRepositoryToken(PasswordResetTokenEntity),
+          useValue: mockResetTokenRepo,
+        },
         { provide: TenancyService, useValue: mockTenancyService },
         { provide: BillingService, useValue: mockBillingService },
         { provide: JwtService, useValue: mockJwtService },
@@ -121,8 +137,31 @@ describe('AuthService', () => {
       expect(result).toHaveProperty('refresh_token');
     });
 
+    it('should include whatsapp_enabled in token payload', async () => {
+      mockTenancyService.findByCnpj.mockResolvedValue(null);
+      mockUserRepo.findOne.mockResolvedValue(null);
+      mockTenancyService.createTenantWithManager.mockResolvedValue({
+        id: 'tenant-1',
+        schemaName: 'tenant_1',
+        status: TenantStatus.TRIAL,
+        whatsappEnabled: true,
+      });
+      mockRefreshTokenRepo.create.mockReturnValue({});
+      mockRefreshTokenRepo.save.mockResolvedValue({});
+      mockBillingService.setupTrial.mockResolvedValue(undefined);
+
+      await service.register(dto);
+
+      expect(mockJwtService.sign).toHaveBeenCalledWith(
+        expect.objectContaining({ whatsapp_enabled: true }),
+        expect.any(Object),
+      );
+    });
+
     it('should throw ConflictException when CNPJ already registered', async () => {
-      mockTenancyService.findByCnpj.mockResolvedValue({ id: 'existing-tenant' });
+      mockTenancyService.findByCnpj.mockResolvedValue({
+        id: 'existing-tenant',
+      });
       await expect(service.register(dto)).rejects.toThrow(ConflictException);
     });
 
@@ -150,7 +189,10 @@ describe('AuthService', () => {
       // Mock bcrypt.compare to return true
       jest.spyOn(require('bcrypt'), 'compare').mockResolvedValue(true as never);
 
-      const result = await service.login({ email: 'owner@test.com', password: 'senha1234' });
+      const result = await service.login({
+        email: 'owner@test.com',
+        password: 'senha1234',
+      });
       expect(result).toHaveProperty('access_token');
       expect(result).toHaveProperty('refresh_token');
     });
@@ -163,8 +205,13 @@ describe('AuthService', () => {
     });
 
     it('should throw UnauthorizedException when password is wrong', async () => {
-      mockUserRepo.findOne.mockResolvedValue({ id: 'u1', passwordHash: 'hash' });
-      jest.spyOn(require('bcrypt'), 'compare').mockResolvedValue(false as never);
+      mockUserRepo.findOne.mockResolvedValue({
+        id: 'u1',
+        passwordHash: 'hash',
+      });
+      jest
+        .spyOn(require('bcrypt'), 'compare')
+        .mockResolvedValue(false as never);
       await expect(
         service.login({ email: 'owner@test.com', password: 'wrongpass' }),
       ).rejects.toThrow(UnauthorizedException);
@@ -195,12 +242,41 @@ describe('AuthService', () => {
         expect.any(Object),
       );
     });
+
+    it('should include whatsapp_enabled in token payload', async () => {
+      const user = {
+        id: 'user-1',
+        tenantId: 'tenant-1',
+        role: UserRole.OWNER,
+        email: 'owner@test.com',
+        passwordHash: '$2b$10$hash',
+        name: 'João',
+      };
+      mockUserRepo.findOne.mockResolvedValue(user);
+      mockTenancyService.findById.mockResolvedValue({
+        id: 'tenant-1',
+        status: TenantStatus.ACTIVE,
+        whatsappEnabled: true,
+      });
+      mockRefreshTokenRepo.create.mockReturnValue({});
+      mockRefreshTokenRepo.save.mockResolvedValue({});
+      jest.spyOn(require('bcrypt'), 'compare').mockResolvedValue(true as never);
+
+      await service.login({ email: 'owner@test.com', password: 'senha1234' });
+
+      expect(mockJwtService.sign).toHaveBeenCalledWith(
+        expect.objectContaining({ whatsapp_enabled: true }),
+        expect.any(Object),
+      );
+    });
   });
 
   describe('refresh', () => {
     it('should throw UnauthorizedException for invalid/expired refresh token', async () => {
       mockRefreshTokenRepo.findOne.mockResolvedValue(null);
-      await expect(service.refresh('invalid_token')).rejects.toThrow(UnauthorizedException);
+      await expect(service.refresh('invalid_token')).rejects.toThrow(
+        UnauthorizedException,
+      );
     });
 
     it('should throw UnauthorizedException for expired token', async () => {
@@ -211,7 +287,9 @@ describe('AuthService', () => {
         revoked: false,
         expiresAt: expiredDate,
       });
-      await expect(service.refresh('some_token')).rejects.toThrow(UnauthorizedException);
+      await expect(service.refresh('some_token')).rejects.toThrow(
+        UnauthorizedException,
+      );
     });
   });
 
@@ -231,8 +309,13 @@ describe('AuthService', () => {
       const user = { id: 'u1', passwordHash: 'old_hash' };
       mockUserRepo.findOne.mockResolvedValue(user);
       jest.spyOn(require('bcrypt'), 'compare').mockResolvedValue(true as never);
-      jest.spyOn(require('bcrypt'), 'hash').mockResolvedValue('new_hash' as never);
-      mockUserRepo.save.mockResolvedValue({ ...user, passwordHash: 'new_hash' });
+      jest
+        .spyOn(require('bcrypt'), 'hash')
+        .mockResolvedValue('new_hash' as never);
+      mockUserRepo.save.mockResolvedValue({
+        ...user,
+        passwordHash: 'new_hash',
+      });
 
       await service.changePassword('u1', 'oldPass', 'newPass12');
 
@@ -242,20 +325,25 @@ describe('AuthService', () => {
     });
 
     it('should throw UnauthorizedException when currentPassword is wrong', async () => {
-      mockUserRepo.findOne.mockResolvedValue({ id: 'u1', passwordHash: 'hash' });
-      jest.spyOn(require('bcrypt'), 'compare').mockResolvedValue(false as never);
+      mockUserRepo.findOne.mockResolvedValue({
+        id: 'u1',
+        passwordHash: 'hash',
+      });
+      jest
+        .spyOn(require('bcrypt'), 'compare')
+        .mockResolvedValue(false as never);
 
-      await expect(service.changePassword('u1', 'wrong', 'newPass12')).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(
+        service.changePassword('u1', 'wrong', 'newPass12'),
+      ).rejects.toThrow(UnauthorizedException);
     });
 
     it('should throw UnauthorizedException when user not found', async () => {
       mockUserRepo.findOne.mockResolvedValue(null);
 
-      await expect(service.changePassword('u1', 'any', 'newPass12')).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(
+        service.changePassword('u1', 'any', 'newPass12'),
+      ).rejects.toThrow(UnauthorizedException);
     });
   });
 
@@ -270,7 +358,11 @@ describe('AuthService', () => {
     });
 
     it('creates a token (storing only its hash) and sends email when user exists', async () => {
-      mockUserRepo.findOne.mockResolvedValue({ id: 'u1', email: 'a@b.com', name: 'Ana' });
+      mockUserRepo.findOne.mockResolvedValue({
+        id: 'u1',
+        email: 'a@b.com',
+        name: 'Ana',
+      });
       mockResetTokenRepo.save.mockResolvedValue({});
       mockResetTokenRepo.update.mockResolvedValue({});
 
@@ -288,7 +380,8 @@ describe('AuthService', () => {
       expect(saved.expiresAt).toBeInstanceOf(Date);
 
       expect(mockMailService.sendPasswordReset).toHaveBeenCalledTimes(1);
-      const [toEmail, toName, resetUrl] = mockMailService.sendPasswordReset.mock.calls[0];
+      const [toEmail, toName, resetUrl] =
+        mockMailService.sendPasswordReset.mock.calls[0];
       expect(toEmail).toBe('a@b.com');
       expect(toName).toBe('Ana');
       expect(resetUrl).toMatch(
@@ -302,7 +395,14 @@ describe('AuthService', () => {
   });
 
   describe('resetPassword', () => {
-    function makeValidRecord(overrides: Partial<{ id: string; userId: string; expiresAt: Date; usedAt: Date | null }> = {}) {
+    function makeValidRecord(
+      overrides: Partial<{
+        id: string;
+        userId: string;
+        expiresAt: Date;
+        usedAt: Date | null;
+      }> = {},
+    ) {
       return {
         id: 'rt1',
         userId: 'u1',
@@ -315,7 +415,12 @@ describe('AuthService', () => {
 
     it('updates password, marks token used, and deletes refresh tokens (in a transaction)', async () => {
       mockResetTokenRepo.findOne.mockResolvedValue(makeValidRecord());
-      mockUserRepo.findOne.mockResolvedValue({ id: 'u1', email: 'a@b.com', name: 'Ana', passwordHash: 'old' });
+      mockUserRepo.findOne.mockResolvedValue({
+        id: 'u1',
+        email: 'a@b.com',
+        name: 'Ana',
+        passwordHash: 'old',
+      });
 
       // Capture transaction callback
       const managerMock = {
@@ -323,7 +428,9 @@ describe('AuthService', () => {
         update: jest.fn().mockResolvedValue({}),
         delete: jest.fn().mockResolvedValue({}),
       };
-      (mockDataSource.transaction as jest.Mock).mockImplementation(async (cb) => cb(managerMock));
+      mockDataSource.transaction.mockImplementation(async (cb) =>
+        cb(managerMock),
+      );
 
       await service.resetPassword('plaintext-token-here', 'newStrongPass123');
 
@@ -333,28 +440,31 @@ describe('AuthService', () => {
         'rt1',
         expect.objectContaining({ usedAt: expect.any(Date) }),
       );
-      expect(managerMock.delete).toHaveBeenCalledWith(
-        RefreshTokenEntity,
-        { userId: 'u1' },
-      );
+      expect(managerMock.delete).toHaveBeenCalledWith(RefreshTokenEntity, {
+        userId: 'u1',
+      });
 
-      expect(mockMailService.sendPasswordChangedConfirmation).toHaveBeenCalledWith('a@b.com', 'Ana');
+      expect(
+        mockMailService.sendPasswordChangedConfirmation,
+      ).toHaveBeenCalledWith('a@b.com', 'Ana');
     });
 
     it('rejects when the token is unknown', async () => {
       mockResetTokenRepo.findOne.mockResolvedValue(null);
 
-      await expect(service.resetPassword('bad', 'newStrongPass123')).rejects.toThrow(
-        /inválido ou expirado/i,
-      );
+      await expect(
+        service.resetPassword('bad', 'newStrongPass123'),
+      ).rejects.toThrow(/inválido ou expirado/i);
     });
 
     it('rejects when the token is already used', async () => {
-      mockResetTokenRepo.findOne.mockResolvedValue(makeValidRecord({ usedAt: new Date() }));
-
-      await expect(service.resetPassword('used', 'newStrongPass123')).rejects.toThrow(
-        /inválido ou expirado/i,
+      mockResetTokenRepo.findOne.mockResolvedValue(
+        makeValidRecord({ usedAt: new Date() }),
       );
+
+      await expect(
+        service.resetPassword('used', 'newStrongPass123'),
+      ).rejects.toThrow(/inválido ou expirado/i);
     });
 
     it('rejects when the token is expired', async () => {
@@ -362,9 +472,9 @@ describe('AuthService', () => {
         makeValidRecord({ expiresAt: new Date(Date.now() - 1000) }),
       );
 
-      await expect(service.resetPassword('expired', 'newStrongPass123')).rejects.toThrow(
-        /inválido ou expirado/i,
-      );
+      await expect(
+        service.resetPassword('expired', 'newStrongPass123'),
+      ).rejects.toThrow(/inválido ou expirado/i);
     });
   });
 });

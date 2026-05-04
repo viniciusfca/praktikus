@@ -1,6 +1,17 @@
 import {
-  Body, Controller, Delete, Get, HttpCode, Param,
-  ParseUUIDPipe, Patch, Post, Put, Query, Request, UseGuards,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Put,
+  Query,
+  Request,
+  UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../../core/auth/jwt-auth.guard';
 import { AuthUser } from '../../core/auth/jwt.strategy';
@@ -25,24 +36,24 @@ export class ColetasController {
   constructor(private readonly coletasService: ColetasService) {}
 
   @Get()
-  list(
-    @Request() req: RequestWithUser,
-    @Query() query: ListColetasQueryDto,
-  ) {
+  list(@Request() req: RequestWithUser, @Query() query: ListColetasQueryDto) {
     return this.coletasService.list(req.user.tenantId, query);
   }
 
   @Get('upcoming')
-  upcoming(
-    @Request() req: RequestWithUser,
-    @Query('limit') limit?: string,
-  ) {
+  upcoming(@Request() req: RequestWithUser, @Query('limit') limit?: string) {
     const parsed = limit ? parseInt(limit, 10) : 4;
-    return this.coletasService.upcoming(req.user.tenantId, Number.isFinite(parsed) ? parsed : 4);
+    return this.coletasService.upcoming(
+      req.user.tenantId,
+      Number.isFinite(parsed) ? parsed : 4,
+    );
   }
 
   @Get(':id')
-  getById(@Request() req: RequestWithUser, @Param('id', ParseUUIDPipe) id: string) {
+  getById(
+    @Request() req: RequestWithUser,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
     return this.coletasService.getById(req.user.tenantId, id);
   }
 
@@ -71,7 +82,10 @@ export class ColetasController {
 
   @Delete(':id')
   @HttpCode(204)
-  delete(@Request() req: RequestWithUser, @Param('id', ParseUUIDPipe) id: string) {
+  delete(
+    @Request() req: RequestWithUser,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
     return this.coletasService.delete(req.user.tenantId, id);
   }
 }

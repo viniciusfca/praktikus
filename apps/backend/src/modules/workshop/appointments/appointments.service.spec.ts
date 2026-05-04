@@ -88,7 +88,9 @@ describe('AppointmentsService', () => {
     it('should throw NotFoundException when not found', async () => {
       mockRepo.findOne.mockResolvedValue(null);
 
-      await expect(service.getById(TENANT_ID, 'nonexistent')).rejects.toThrow(NotFoundException);
+      await expect(service.getById(TENANT_ID, 'nonexistent')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -103,7 +105,8 @@ describe('AppointmentsService', () => {
       const created = { id: 'a1', ...dto };
       mockRepo.create.mockReturnValue(created);
       mockRepo.save.mockResolvedValue(created);
-      mockQueryRunner.query.mockResolvedValueOnce(undefined) // SET search_path
+      mockQueryRunner.query
+        .mockResolvedValueOnce(undefined) // SET search_path
         .mockResolvedValueOnce([]); // conflicts query
 
       const result = await service.create(TENANT_ID, dto as any);
@@ -120,12 +123,16 @@ describe('AppointmentsService', () => {
         dataHora: '2026-03-17T09:00:00Z',
         duracaoMin: 60,
       };
-      const conflict = { id: 'a2', data_hora: '2026-03-17T09:30:00Z', tipo_servico: 'Troca de óleo' };
+      const conflict = {
+        id: 'a2',
+        data_hora: '2026-03-17T09:30:00Z',
+        tipo_servico: 'Troca de óleo',
+      };
       const created = { id: 'a1' };
       mockRepo.create.mockReturnValue(created);
       mockRepo.save.mockResolvedValue(created);
       mockQueryRunner.query
-        .mockResolvedValueOnce(undefined)   // SET search_path
+        .mockResolvedValueOnce(undefined) // SET search_path
         .mockResolvedValueOnce([conflict]); // conflicts query
 
       const result = await service.create(TENANT_ID, dto as any);
@@ -137,11 +144,18 @@ describe('AppointmentsService', () => {
 
   describe('update', () => {
     it('should update appointment and return data with conflicts', async () => {
-      const item = { id: 'a1', status: 'PENDENTE', dataHora: new Date('2026-03-17T09:00:00Z'), duracaoMin: 60 };
+      const item = {
+        id: 'a1',
+        status: 'PENDENTE',
+        dataHora: new Date('2026-03-17T09:00:00Z'),
+        duracaoMin: 60,
+      };
       mockRepo.findOne.mockResolvedValue(item);
       mockRepo.save.mockResolvedValue({ ...item, status: 'CONFIRMADO' });
 
-      const result = await service.update(TENANT_ID, 'a1', { status: 'CONFIRMADO' } as any);
+      const result = await service.update(TENANT_ID, 'a1', {
+        status: 'CONFIRMADO',
+      } as any);
 
       expect(result.data.status).toBe('CONFIRMADO');
       expect(result).toHaveProperty('conflicts');
@@ -150,7 +164,9 @@ describe('AppointmentsService', () => {
     it('should throw NotFoundException when not found', async () => {
       mockRepo.findOne.mockResolvedValue(null);
 
-      await expect(service.update(TENANT_ID, 'nonexistent', {} as any)).rejects.toThrow(NotFoundException);
+      await expect(
+        service.update(TENANT_ID, 'nonexistent', {} as any),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -168,7 +184,9 @@ describe('AppointmentsService', () => {
     it('should throw NotFoundException when not found', async () => {
       mockRepo.findOne.mockResolvedValue(null);
 
-      await expect(service.delete(TENANT_ID, 'nonexistent')).rejects.toThrow(NotFoundException);
+      await expect(service.delete(TENANT_ID, 'nonexistent')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 });

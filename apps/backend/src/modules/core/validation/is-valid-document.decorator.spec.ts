@@ -24,8 +24,12 @@ describe('IsValidDocument decorator', () => {
   it('rejects invalid CPF and CNPJ with the same message', async () => {
     const cpfErrors = await check('12345678900');
     const cnpjErrors = await check('12345678000199');
-    expect(cpfErrors[0].constraints).toMatchObject({ isValidDocument: 'CPF ou CNPJ inválido' });
-    expect(cnpjErrors[0].constraints).toMatchObject({ isValidDocument: 'CPF ou CNPJ inválido' });
+    expect(cpfErrors[0].constraints).toMatchObject({
+      isValidDocument: 'CPF ou CNPJ inválido',
+    });
+    expect(cnpjErrors[0].constraints).toMatchObject({
+      isValidDocument: 'CPF ou CNPJ inválido',
+    });
   });
 
   it('rejects 10/12/13 digit input', async () => {

@@ -1,8 +1,15 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { DataSource, EntityManager } from 'typeorm';
 import { SaleEntity } from './sale.entity';
 import { SaleItemEntity } from './sale-item.entity';
-import { StockMovementEntity, MovementType } from '../purchases/stock-movement.entity';
+import {
+  StockMovementEntity,
+  MovementType,
+} from '../purchases/stock-movement.entity';
 import { CreateSaleDto } from './dto/create-sale.dto';
 
 @Injectable()
@@ -10,14 +17,20 @@ export class SalesService {
   constructor(private readonly dataSource: DataSource) {}
 
   private getSchemaName(tenantId: string): string {
-    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(tenantId)) {
+    if (
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+        tenantId,
+      )
+    ) {
       throw new Error('Invalid tenantId');
     }
     return `tenant_${tenantId.replace(/-/g, '')}`;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private async withSchema<T>(tenantId: string, fn: (manager: EntityManager, qr: any) => Promise<T>): Promise<T> {
+  private async withSchema<T>(
+    tenantId: string,
+    fn: (manager: EntityManager, qr: any) => Promise<T>,
+  ): Promise<T> {
     const schemaName = this.getSchemaName(tenantId);
     const qr = this.dataSource.createQueryRunner();
     await qr.connect();
@@ -98,7 +111,6 @@ export class SalesService {
       );
 
       return {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         data: rows.map((r: any) => ({
           id: r.id,
           soldAt: new Date(r.sold_at).toISOString(),
@@ -117,7 +129,11 @@ export class SalesService {
     });
   }
 
-  async create(tenantId: string, operatorId: string, dto: CreateSaleDto): Promise<SaleEntity> {
+  async create(
+    tenantId: string,
+    operatorId: string,
+    dto: CreateSaleDto,
+  ): Promise<SaleEntity> {
     const schemaName = this.getSchemaName(tenantId);
     return this.withSchema(tenantId, async (manager, qr) => {
       const saleRepo = manager.getRepository(SaleEntity);
@@ -147,6 +163,7 @@ export class SalesService {
         buyerId: dto.buyerId,
         operatorId,
         soldAt: new Date(),
+        paymentMethod: dto.paymentMethod,
         notes: dto.notes ?? null,
       });
       const savedSale = await saleRepo.save(sale);
@@ -185,7 +202,12 @@ export class SalesService {
   ): Promise<{
     id: string;
     soldAt: string;
-    buyer: { id: string; name: string; document: string | null; documentType: 'CPF' | 'CNPJ' | null };
+    buyer: {
+      id: string;
+      name: string;
+      document: string | null;
+      documentType: 'CPF' | 'CNPJ' | null;
+    };
     operator: { id: string; name: string };
     notes: string | null;
     total: number;
@@ -214,7 +236,8 @@ export class SalesService {
         `,
         [id],
       );
-      if (rows.length === 0) throw new NotFoundException('Venda não encontrada.');
+      if (rows.length === 0)
+        throw new NotFoundException('Venda não encontrada.');
       const row = rows[0];
 
       const items = await qr.query(
@@ -231,7 +254,7 @@ export class SalesService {
       );
 
       let total = 0;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       const mappedItems = items.map((it: any) => {
         const subtotal = Number(it.subtotal);
         total += subtotal;

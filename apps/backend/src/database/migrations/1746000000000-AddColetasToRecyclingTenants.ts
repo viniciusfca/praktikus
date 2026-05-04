@@ -23,8 +23,12 @@ export class AddColetasToRecyclingTenants1746000000000 implements MigrationInter
           updated_at TIMESTAMPTZ DEFAULT NOW()
         )
       `);
-      await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_coletas_scheduled_at ON "${schemaName}".coletas(scheduled_at)`);
-      await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_coletas_status ON "${schemaName}".coletas(status)`);
+      await queryRunner.query(
+        `CREATE INDEX IF NOT EXISTS idx_coletas_scheduled_at ON "${schemaName}".coletas(scheduled_at)`,
+      );
+      await queryRunner.query(
+        `CREATE INDEX IF NOT EXISTS idx_coletas_status ON "${schemaName}".coletas(status)`,
+      );
       await queryRunner.query(`
         CREATE TABLE IF NOT EXISTS "${schemaName}".coleta_comments (
           id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -48,8 +52,12 @@ export class AddColetasToRecyclingTenants1746000000000 implements MigrationInter
 
     for (const tenant of tenants) {
       const schemaName = `tenant_${tenant.id.replace(/-/g, '')}`;
-      await queryRunner.query(`ALTER TABLE "${schemaName}".employee_permissions DROP COLUMN IF EXISTS can_manage_coletas`);
-      await queryRunner.query(`DROP TABLE IF EXISTS "${schemaName}".coleta_comments`);
+      await queryRunner.query(
+        `ALTER TABLE "${schemaName}".employee_permissions DROP COLUMN IF EXISTS can_manage_coletas`,
+      );
+      await queryRunner.query(
+        `DROP TABLE IF EXISTS "${schemaName}".coleta_comments`,
+      );
       await queryRunner.query(`DROP TABLE IF EXISTS "${schemaName}".coletas`);
     }
   }

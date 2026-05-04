@@ -15,9 +15,10 @@ export class RenameBuyerCnpjToDocument1746200000000 implements MigrationInterfac
         `SELECT to_regclass('"${schemaName}".buyers') IS NOT NULL AS exists`,
       );
       if (!exists[0]?.exists) continue; // skip tenants without a buyers table
-      const invalid: Array<{ id: string; cnpj: string }> = await queryRunner.query(
-        `SELECT id, cnpj FROM "${schemaName}".buyers WHERE cnpj IS NOT NULL AND LENGTH(cnpj) <> 14`,
-      );
+      const invalid: Array<{ id: string; cnpj: string }> =
+        await queryRunner.query(
+          `SELECT id, cnpj FROM "${schemaName}".buyers WHERE cnpj IS NOT NULL AND LENGTH(cnpj) <> 14`,
+        );
       if (invalid.length > 0) {
         const list = invalid.map((r) => `${r.id} (cnpj=${r.cnpj})`).join(', ');
         throw new Error(
@@ -62,7 +63,9 @@ export class RenameBuyerCnpjToDocument1746200000000 implements MigrationInterfac
           `Cannot rollback: tenant ${tenant.id} has ${cpfs.length} buyer(s) with CPF — field cnpj cannot hold them.`,
         );
       }
-      await queryRunner.query(`ALTER TABLE "${schemaName}".buyers DROP COLUMN document_type`);
+      await queryRunner.query(
+        `ALTER TABLE "${schemaName}".buyers DROP COLUMN document_type`,
+      );
       await queryRunner.query(
         `ALTER TABLE "${schemaName}".buyers RENAME COLUMN document TO cnpj`,
       );

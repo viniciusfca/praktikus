@@ -1,4 +1,8 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { DataSource, EntityManager } from 'typeorm';
 import { CashSessionStatus, TransactionType } from '@praktikus/shared';
 import { PurchaseEntity } from './purchase.entity';
@@ -13,14 +17,20 @@ export class PurchasesService {
   constructor(private readonly dataSource: DataSource) {}
 
   private getSchemaName(tenantId: string): string {
-    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(tenantId)) {
+    if (
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+        tenantId,
+      )
+    ) {
       throw new Error('Invalid tenantId');
     }
     return `tenant_${tenantId.replace(/-/g, '')}`;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private async withSchema<T>(tenantId: string, fn: (manager: EntityManager, qr: any) => Promise<T>): Promise<T> {
+  private async withSchema<T>(
+    tenantId: string,
+    fn: (manager: EntityManager, qr: any) => Promise<T>,
+  ): Promise<T> {
     const schemaName = this.getSchemaName(tenantId);
     const qr = this.dataSource.createQueryRunner();
     await qr.connect();
@@ -102,7 +112,6 @@ export class PurchasesService {
       );
 
       return {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         data: rows.map((r: any) => ({
           id: r.id,
           purchasedAt: new Date(r.purchased_at).toISOString(),
@@ -122,7 +131,11 @@ export class PurchasesService {
     });
   }
 
-  async create(tenantId: string, operatorId: string, dto: CreatePurchaseDto): Promise<PurchaseEntity> {
+  async create(
+    tenantId: string,
+    operatorId: string,
+    dto: CreatePurchaseDto,
+  ): Promise<PurchaseEntity> {
     return this.withSchema(tenantId, async (manager) => {
       const sessionRepo = manager.getRepository(CashSessionEntity);
       const purchaseRepo = manager.getRepository(PurchaseEntity);
@@ -131,13 +144,22 @@ export class PurchasesService {
       const txRepo = manager.getRepository(CashTransactionEntity);
 
       // 1. Validate open cash session
-      const session = await sessionRepo.findOne({ where: { status: CashSessionStatus.OPEN } });
-      if (!session) throw new BadRequestException('Abra o caixa antes de registrar uma compra.');
+      const session = await sessionRepo.findOne({
+        where: { status: CashSessionStatus.OPEN },
+      });
+      if (!session)
+        throw new BadRequestException(
+          'Abra o caixa antes de registrar uma compra.',
+        );
 
       // 2. Calculate total
-      const totalAmount = Math.round(
-        dto.items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0) * 100
-      ) / 100;
+      const totalAmount =
+        Math.round(
+          dto.items.reduce(
+            (sum, item) => sum + item.quantity * item.unitPrice,
+            0,
+          ) * 100,
+        ) / 100;
 
       // 3. Create purchase
       const purchase = purchaseRepo.create({
@@ -198,7 +220,12 @@ export class PurchasesService {
   ): Promise<{
     id: string;
     purchasedAt: string;
-    supplier: { id: string; name: string; document: string | null; documentType: 'CPF' | 'CNPJ' | null };
+    supplier: {
+      id: string;
+      name: string;
+      document: string | null;
+      documentType: 'CPF' | 'CNPJ' | null;
+    };
     operator: { id: string; name: string };
     paymentMethod: string;
     notes: string | null;
@@ -228,7 +255,8 @@ export class PurchasesService {
       `,
         [id],
       );
-      if (rows.length === 0) throw new NotFoundException('Compra não encontrada.');
+      if (rows.length === 0)
+        throw new NotFoundException('Compra não encontrada.');
       const row = rows[0];
 
       const items = await qr.query(
@@ -245,7 +273,7 @@ export class PurchasesService {
       );
 
       let total = 0;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       const mappedItems = items.map((it: any) => {
         const subtotal = Number(it.subtotal);
         total += subtotal;

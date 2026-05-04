@@ -24,7 +24,9 @@ const mockQueryRunner = {
     }),
   },
 };
-const mockDataSource = { createQueryRunner: jest.fn().mockReturnValue(mockQueryRunner) };
+const mockDataSource = {
+  createQueryRunner: jest.fn().mockReturnValue(mockQueryRunner),
+};
 
 describe('ColetaCommentsService', () => {
   let service: ColetaCommentsService;
@@ -32,7 +34,10 @@ describe('ColetaCommentsService', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [ColetaCommentsService, { provide: DataSource, useValue: mockDataSource }],
+      providers: [
+        ColetaCommentsService,
+        { provide: DataSource, useValue: mockDataSource },
+      ],
     }).compile();
     service = module.get<ColetaCommentsService>(ColetaCommentsService);
     jest.clearAllMocks();
@@ -41,35 +46,62 @@ describe('ColetaCommentsService', () => {
   describe('addComment', () => {
     it('creates comment when coleta exists', async () => {
       coletaRepo.findOne.mockResolvedValue({ id: 'c1' });
-      const result = await service.addComment(TENANT, 'c1', { texto: 'hi' }, 'user1');
+      const result = await service.addComment(
+        TENANT,
+        'c1',
+        { texto: 'hi' },
+        'user1',
+      );
       expect(result.id).toBe('cm1');
       expect(commentRepo.save).toHaveBeenCalled();
     });
 
     it('throws 404 when coleta missing', async () => {
       coletaRepo.findOne.mockResolvedValue(null);
-      await expect(service.addComment(TENANT, 'x', { texto: 'hi' }, 'user1'))
-        .rejects.toThrow(NotFoundException);
+      await expect(
+        service.addComment(TENANT, 'x', { texto: 'hi' }, 'user1'),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 
   describe('deleteComment', () => {
     it('allows author to delete', async () => {
-      commentRepo.findOne.mockResolvedValue({ id: 'cm1', coletaId: 'c1', createdById: 'user1' });
-      await service.deleteComment(TENANT, 'c1', 'cm1', { userId: 'user1', role: 'EMPLOYEE' });
+      commentRepo.findOne.mockResolvedValue({
+        id: 'cm1',
+        coletaId: 'c1',
+        createdById: 'user1',
+      });
+      await service.deleteComment(TENANT, 'c1', 'cm1', {
+        userId: 'user1',
+        role: 'EMPLOYEE',
+      });
       expect(commentRepo.remove).toHaveBeenCalled();
     });
 
     it('allows OWNER to delete others comments', async () => {
-      commentRepo.findOne.mockResolvedValue({ id: 'cm1', coletaId: 'c1', createdById: 'other' });
-      await service.deleteComment(TENANT, 'c1', 'cm1', { userId: 'owner1', role: 'OWNER' });
+      commentRepo.findOne.mockResolvedValue({
+        id: 'cm1',
+        coletaId: 'c1',
+        createdById: 'other',
+      });
+      await service.deleteComment(TENANT, 'c1', 'cm1', {
+        userId: 'owner1',
+        role: 'OWNER',
+      });
       expect(commentRepo.remove).toHaveBeenCalled();
     });
 
     it('forbids non-author employees from deleting', async () => {
-      commentRepo.findOne.mockResolvedValue({ id: 'cm1', coletaId: 'c1', createdById: 'other' });
+      commentRepo.findOne.mockResolvedValue({
+        id: 'cm1',
+        coletaId: 'c1',
+        createdById: 'other',
+      });
       await expect(
-        service.deleteComment(TENANT, 'c1', 'cm1', { userId: 'user1', role: 'EMPLOYEE' }),
+        service.deleteComment(TENANT, 'c1', 'cm1', {
+          userId: 'user1',
+          role: 'EMPLOYEE',
+        }),
       ).rejects.toThrow(ForbiddenException);
     });
   });

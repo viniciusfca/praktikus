@@ -39,9 +39,11 @@ import { ServiceOrdersPage } from './pages/workshop/service-orders/ServiceOrders
 import { ServiceOrderDetailPage } from './pages/workshop/service-orders/ServiceOrderDetailPage';
 import { ReportsPage } from './pages/workshop/reports/ReportsPage';
 import { SettingsPage } from './pages/workshop/settings/SettingsPage';
+import { WhatsappStubPage } from './pages/whatsapp/WhatsappStubPage';
 import { QuoteApprovalPage } from './pages/public/QuoteApprovalPage';
 import { SuspendedPage } from './pages/public/SuspendedPage';
 import { PrivateRoute } from './components/PrivateRoute';
+import { PublicOnlyRoute } from './components/PublicOnlyRoute';
 import { useAuthStore } from './store/auth.store';
 
 function App() {
@@ -54,12 +56,54 @@ function App() {
   return (
     <AppThemeProvider>
         <Routes>
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterSegmentPage />} />
-          <Route path="/register/workshop" element={<RegisterPage />} />
-          <Route path="/register/recycling" element={<RegisterRecyclingPage />} />
-          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route
+            path="/"
+            element={
+              <PublicOnlyRoute>
+                <LandingPage />
+              </PublicOnlyRoute>
+            }
+          />
+          <Route
+            path="/login"
+            element={
+              <PublicOnlyRoute>
+                <LoginPage />
+              </PublicOnlyRoute>
+            }
+          />
+          <Route
+            path="/register"
+            element={
+              <PublicOnlyRoute>
+                <RegisterSegmentPage />
+              </PublicOnlyRoute>
+            }
+          />
+          <Route
+            path="/register/workshop"
+            element={
+              <PublicOnlyRoute>
+                <RegisterPage />
+              </PublicOnlyRoute>
+            }
+          />
+          <Route
+            path="/register/recycling"
+            element={
+              <PublicOnlyRoute>
+                <RegisterRecyclingPage />
+              </PublicOnlyRoute>
+            }
+          />
+          <Route
+            path="/forgot-password"
+            element={
+              <PublicOnlyRoute>
+                <ForgotPasswordPage />
+              </PublicOnlyRoute>
+            }
+          />
           <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
           <Route path="/quotes/:token" element={<QuoteApprovalPage />} />
           <Route path="/suspended" element={<SuspendedPage />} />
@@ -113,6 +157,17 @@ function App() {
             <Route path="coletas" element={<ColetasPage />} />
             <Route path="reports" element={<RecyclingReportsPage />} />
             <Route path="settings" element={<RecyclingSettingsPage />} />
+          </Route>
+          {/* /whatsapp is cross-segment. Layout uses AppLayout in Fase 1; will switch to a dedicated WhatsApp shell in Fase 2 (see spec §7.2). */}
+          <Route
+            path="/whatsapp"
+            element={
+              <PrivateRoute>
+                <AppLayout />
+              </PrivateRoute>
+            }
+          >
+            <Route index element={<WhatsappStubPage />} />
           </Route>
         </Routes>
     </AppThemeProvider>

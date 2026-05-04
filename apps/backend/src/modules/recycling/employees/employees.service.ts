@@ -1,4 +1,8 @@
-import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
 import { DataSource, EntityManager } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { UserEntity, UserRole } from '../../core/auth/user.entity';
@@ -11,7 +15,11 @@ export class EmployeesService {
   constructor(private readonly dataSource: DataSource) {}
 
   private getSchemaName(tenantId: string): string {
-    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(tenantId)) {
+    if (
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+        tenantId,
+      )
+    ) {
       throw new Error('Invalid tenantId');
     }
     return `tenant_${tenantId.replace(/-/g, '')}`;
@@ -44,8 +52,11 @@ export class EmployeesService {
       const userRepo = manager.getRepository(UserEntity);
       const permRepo = manager.getRepository(EmployeePermissionsEntity);
 
-      const existing = await userRepo.findOne({ where: { tenantId, email: dto.email } });
-      if (existing) throw new ConflictException('E-mail já cadastrado neste tenant.');
+      const existing = await userRepo.findOne({
+        where: { tenantId, email: dto.email },
+      });
+      if (existing)
+        throw new ConflictException('E-mail já cadastrado neste tenant.');
 
       const passwordHash = await bcrypt.hash(dto.password, 10);
       const user = userRepo.create({
@@ -75,7 +86,10 @@ export class EmployeesService {
     });
   }
 
-  async getPermissions(tenantId: string, userId: string): Promise<EmployeePermissionsEntity> {
+  async getPermissions(
+    tenantId: string,
+    userId: string,
+  ): Promise<EmployeePermissionsEntity> {
     return this.withSchema(tenantId, async (manager) => {
       const permRepo = manager.getRepository(EmployeePermissionsEntity);
       const perms = await permRepo.findOne({ where: { userId } });

@@ -1,17 +1,31 @@
 import {
-  Body, Controller, Delete, Get, HttpCode,
-  Param, ParseUUIDPipe, Patch, Post, Request, UseGuards,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Request,
+  UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../../core/auth/jwt-auth.guard';
 import { RolesGuard } from '../../core/auth/roles.guard';
 import { Roles } from '../../core/auth/roles.decorator';
 import { UserRole } from '../../core/auth/user.entity';
-import { EmployeePermissionsGuard, RequirePermission } from '../employees/employee-permissions.guard';
+import {
+  EmployeePermissionsGuard,
+  RequirePermission,
+} from '../employees/employee-permissions.guard';
 import { AuthUser } from '../../core/auth/jwt.strategy';
 import { UnitsService } from './units.service';
 import { CreateUnitDto } from './dto/create-unit.dto';
 
-interface RequestWithUser extends Request { user: AuthUser; }
+interface RequestWithUser extends Request {
+  user: AuthUser;
+}
 
 @Controller('recycling/units')
 @UseGuards(JwtAuthGuard, EmployeePermissionsGuard)

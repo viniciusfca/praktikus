@@ -1,4 +1,10 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 import { numericTransformer } from '../common/numeric-transformer';
 
 @Entity({ name: 'products' })
@@ -12,7 +18,13 @@ export class ProductEntity {
   @Column({ name: 'unit_id', type: 'uuid' })
   unitId: string;
 
-  @Column({ name: 'price_per_unit', type: 'numeric', precision: 10, scale: 4, transformer: numericTransformer })
+  @Column({
+    name: 'price_per_unit',
+    type: 'numeric',
+    precision: 10,
+    scale: 4,
+    transformer: numericTransformer,
+  })
   pricePerUnit: number;
 
   @Column({ default: true })

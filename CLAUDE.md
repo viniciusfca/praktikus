@@ -129,6 +129,44 @@ import { Role, TenantStatus } from '@praktikus/shared'
 
 ---
 
+## Qualidade de Código (Sonar)
+
+Antes de qualquer `git push`:
+
+1. SonarQube precisa estar de pé: `docker compose --profile sonar up -d`
+2. Rodar `pnpm sonar:check` e aguardar quality gate verde
+3. Issues new-code: corrigir todas, ou suprimir falsos positivos com `// NOSONAR(rule:S####) — justificativa em pt-BR`
+4. Push só após gate verde
+
+**Sem exceção em código novo.** O pre-push hook bloqueia automaticamente. `git push --no-verify` é reservado a hotfix urgente e deve ser justificado no commit message.
+
+### Setup inicial (uma vez)
+
+1. `docker compose --profile sonar up -d` — sobe SonarQube + Postgres dedicado
+2. Aguardar ~60s até `curl http://localhost:9000/api/system/status` retornar `"status":"UP"`
+3. `pnpm sonar:bootstrap` — cria projeto, quality gate "Praktikus" e token via API
+4. Copiar a linha `SONAR_TOKEN=...` da saída para `apps/backend/.env` (não commitar)
+
+### Quality gate (referência)
+
+**Em new code (bloqueia push):**
+- 0 bugs (qualquer severidade)
+- 0 vulnerabilities (qualquer severidade)
+- 100% security hotspots reviewed
+- < 3% linhas duplicadas
+- ≥ 80% coverage (frontend e shared excluídos do cálculo via `sonar.coverage.exclusions`)
+
+**Em overall code (não bloqueia, só dashboard):**
+- Dívida histórica visível, atacada gradualmente
+
+Code smells em new code: warning, não bloqueia.
+
+### Em planos de implementação
+
+Todo plano gerado via `/superpowers:writing-plans` deve terminar com a task **"Quality Gate (Sonar)"**. Use o template em [`docs/superpowers/specs/_quality-gate-task-template.md`](docs/superpowers/specs/_quality-gate-task-template.md) — copie como última task do plano. **Sem exceção.**
+
+---
+
 ## Comandos úteis
 
 ```bash

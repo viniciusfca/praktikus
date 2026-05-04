@@ -5,7 +5,12 @@ import { BillingService } from './billing.service';
 import { BillingEntity } from './billing.entity';
 import { TenancyService } from '../tenancy/tenancy.service';
 
-const mockBillingRepo = { findOne: jest.fn(), save: jest.fn(), create: jest.fn(), find: jest.fn() };
+const mockBillingRepo = {
+  findOne: jest.fn(),
+  save: jest.fn(),
+  create: jest.fn(),
+  find: jest.fn(),
+};
 const mockTenancyService = { findById: jest.fn(), updateStatus: jest.fn() };
 const mockConfig = {
   get: jest.fn((key: string) => {
@@ -25,7 +30,10 @@ describe('BillingService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         BillingService,
-        { provide: getRepositoryToken(BillingEntity), useValue: mockBillingRepo },
+        {
+          provide: getRepositoryToken(BillingEntity),
+          useValue: mockBillingRepo,
+        },
         { provide: TenancyService, useValue: mockTenancyService },
         { provide: ConfigService, useValue: mockConfig },
       ],
@@ -47,7 +55,9 @@ describe('BillingService', () => {
         billingAnchorDate: yesterday,
         status: 'ACTIVE',
       });
-      const fetchSpy = jest.spyOn(global, 'fetch' as any).mockResolvedValue({} as any);
+      const fetchSpy = jest
+        .spyOn(global, 'fetch' as any)
+        .mockResolvedValue({} as any);
 
       await service.applyAnnualAdjustment();
 
@@ -72,7 +82,9 @@ describe('BillingService', () => {
         return def;
       });
 
-      const ibgeResponse = [{ resultados: [{ series: [{ serie: { '202303': '5.19' } }] }] }];
+      const ibgeResponse = [
+        { resultados: [{ series: [{ serie: { '202303': '5.19' } }] }] },
+      ];
       const fetchSpy = jest.spyOn(global, 'fetch' as any).mockResolvedValue({
         ok: true,
         json: async () => ibgeResponse,

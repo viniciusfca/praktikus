@@ -12,6 +12,18 @@ import { ReportsModule } from './reports/reports.module';
 import { ColetasModule } from './coletas/coletas.module';
 
 @Module({
-  imports: [EmployeesModule, UnitsModule, ProductsModule, SuppliersModule, CashRegisterModule, PurchasesModule, StockModule, BuyersModule, SalesModule, ReportsModule, ColetasModule],
+  imports: [
+    EmployeesModule,
+    UnitsModule,
+    ProductsModule,
+    SuppliersModule,
+    CashRegisterModule,
+    PurchasesModule,
+    StockModule,
+    BuyersModule,
+    SalesModule,
+    ReportsModule,
+    ColetasModule,
+  ],
 })
 export class RecyclingModule {}

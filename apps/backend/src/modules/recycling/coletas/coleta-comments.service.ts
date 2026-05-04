@@ -1,4 +1,8 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { DataSource, QueryRunner } from 'typeorm';
 import { ColetaEntity } from './coleta.entity';
 import { ColetaCommentEntity } from './coleta-comment.entity';
@@ -10,7 +14,11 @@ export class ColetaCommentsService {
   constructor(private readonly dataSource: DataSource) {}
 
   private getSchemaName(tenantId: string): string {
-    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(tenantId)) {
+    if (
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+        tenantId,
+      )
+    ) {
       throw new Error('Invalid tenantId');
     }
     return `tenant_${tenantId.replace(/-/g, '')}`;
@@ -31,7 +39,10 @@ export class ColetaCommentsService {
     }
   }
 
-  async listComments(tenantId: string, coletaId: string): Promise<ColetaCommentEntity[]> {
+  async listComments(
+    tenantId: string,
+    coletaId: string,
+  ): Promise<ColetaCommentEntity[]> {
     return this.withSchema(tenantId, async (qr) => {
       const repo = qr.manager.getRepository(ColetaCommentEntity);
       return repo.find({ where: { coletaId }, order: { createdAt: 'ASC' } });
@@ -67,7 +78,9 @@ export class ColetaCommentsService {
       const item = await repo.findOne({ where: { id: commentId, coletaId } });
       if (!item) throw new NotFoundException('Comentário não encontrado.');
       if (item.createdById !== actor.userId && actor.role !== UserRole.OWNER) {
-        throw new ForbiddenException('Sem permissão para remover este comentário.');
+        throw new ForbiddenException(
+          'Sem permissão para remover este comentário.',
+        );
       }
       await repo.remove(item);
     });

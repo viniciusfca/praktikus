@@ -61,6 +61,51 @@ services:
     depends_on:
       - backend
 
+  sonar-postgres:
+    image: postgres:15-alpine
+    container_name: praktikus_sonar_postgres
+    profiles: [sonar]
+    environment:
+      POSTGRES_USER: sonar
+      POSTGRES_PASSWORD: sonar_dev
+      POSTGRES_DB: sonar
+    volumes:
+      - sonar_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U sonar -d sonar']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  sonarqube:
+    image: sonarqube:10-community
+    container_name: praktikus_sonarqube
+    profiles: [sonar]
+    depends_on:
+      sonar-postgres:
+        condition: service_healthy
+    environment:
+      SONAR_JDBC_URL: jdbc:postgresql://sonar-postgres:5432/sonar
+      SONAR_JDBC_USERNAME: sonar
+      SONAR_JDBC_PASSWORD: sonar_dev
+      # Desabilita o flood-stage watermark do Elasticsearch (95%) — ambiente
+      # de dev local pode ter o disco apertado. NÃO usar em produção.
+      SONAR_SEARCH_JAVAADDITIONALOPTS: '-Dcluster.routing.allocation.disk.threshold_enabled=false'
+    ports:
+      - '9000:9000'
+    volumes:
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_logs:/opt/sonarqube/logs
+      - sonarqube_extensions:/opt/sonarqube/extensions
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+
 volumes:
   postgres_data:
   redis_data:
+  sonar_postgres_data:
+  sonarqube_data:
+  sonarqube_logs:
+  sonarqube_extensions:

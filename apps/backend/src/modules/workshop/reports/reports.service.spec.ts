@@ -47,7 +47,12 @@ describe('ReportsService', () => {
         { status: 'FINALIZADA', count: '2' },
       ];
       const mesRows = [
-        { mes: '2026-03', servicos: '1500.00', pecas: '500.00', total: '2000.00' },
+        {
+          mes: '2026-03',
+          servicos: '1500.00',
+          pecas: '500.00',
+          total: '2000.00',
+        },
       ];
       const topRows = [
         { nomeServico: 'Troca de óleo', quantidade: '3', receita: '450.00' },
@@ -61,7 +66,11 @@ describe('ReportsService', () => {
         .mockResolvedValueOnce(mesRows)
         .mockResolvedValueOnce(topRows);
 
-      const result = await service.getReport(TENANT, '2026-03-01', '2026-03-31');
+      const result = await service.getReport(
+        TENANT,
+        '2026-03-01',
+        '2026-03-31',
+      );
 
       expect(result.totalOs).toBe(5);
       expect(result.osPagas).toBe(3);
@@ -95,7 +104,11 @@ describe('ReportsService', () => {
         .mockResolvedValueOnce([])
         .mockResolvedValueOnce([]);
 
-      const result = await service.getReport(TENANT, '2026-01-01', '2026-01-31');
+      const result = await service.getReport(
+        TENANT,
+        '2026-01-01',
+        '2026-01-31',
+      );
 
       expect(result.totalOs).toBe(0);
       expect(result.faturamentoTotal).toBe(0);

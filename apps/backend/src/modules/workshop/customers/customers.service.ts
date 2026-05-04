@@ -13,7 +13,11 @@ export class CustomersService {
   constructor(private readonly dataSource: DataSource) {}
 
   private getSchemaName(tenantId: string): string {
-    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(tenantId)) {
+    if (
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+        tenantId,
+      )
+    ) {
       throw new Error('Invalid tenantId');
     }
     return `tenant_${tenantId.replace(/-/g, '')}`;
@@ -34,7 +38,17 @@ export class CustomersService {
     }
   }
 
-  async list(tenantId: string, page: number, limit: number, search?: string): Promise<{ data: CustomerEntity[]; total: number; page: number; limit: number }> {
+  async list(
+    tenantId: string,
+    page: number,
+    limit: number,
+    search?: string,
+  ): Promise<{
+    data: CustomerEntity[];
+    total: number;
+    page: number;
+    limit: number;
+  }> {
     return this.withSchema(tenantId, async (manager) => {
       const repo = manager.getRepository(CustomerEntity);
       const qb = repo.createQueryBuilder('c');
@@ -55,13 +69,19 @@ export class CustomersService {
   async getById(tenantId: string, id: string): Promise<CustomerEntity> {
     return this.withSchema(tenantId, async (manager) => {
       const repo = manager.getRepository(CustomerEntity);
-      const customer = await repo.findOne({ where: { id }, relations: ['vehicles'] });
+      const customer = await repo.findOne({
+        where: { id },
+        relations: ['vehicles'],
+      });
       if (!customer) throw new NotFoundException('Cliente não encontrado.');
       return customer;
     });
   }
 
-  async create(tenantId: string, dto: CreateCustomerDto): Promise<CustomerEntity> {
+  async create(
+    tenantId: string,
+    dto: CreateCustomerDto,
+  ): Promise<CustomerEntity> {
     return this.withSchema(tenantId, async (manager) => {
       const repo = manager.getRepository(CustomerEntity);
       const customer = repo.create({
@@ -74,7 +94,11 @@ export class CustomersService {
     });
   }
 
-  async update(tenantId: string, id: string, dto: Partial<CreateCustomerDto>): Promise<CustomerEntity> {
+  async update(
+    tenantId: string,
+    id: string,
+    dto: Partial<CreateCustomerDto>,
+  ): Promise<CustomerEntity> {
     return this.withSchema(tenantId, async (manager) => {
       const repo = manager.getRepository(CustomerEntity);
       const customer = await repo.findOne({ where: { id } });

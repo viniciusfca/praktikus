@@ -31,7 +31,11 @@ describe('CompaniesService', () => {
 
   describe('getProfile', () => {
     it('should return tenant as company profile', async () => {
-      const tenant = { id: 'tenant-1', nomeFantasia: 'Auto Center', status: TenantStatus.ACTIVE };
+      const tenant = {
+        id: 'tenant-1',
+        nomeFantasia: 'Auto Center',
+        status: TenantStatus.ACTIVE,
+      };
       mockTenancyService.findById.mockResolvedValue(tenant);
 
       const result = await service.getProfile('tenant-1');
@@ -41,7 +45,9 @@ describe('CompaniesService', () => {
 
     it('should throw NotFoundException when tenant not found', async () => {
       mockTenancyService.findById.mockResolvedValue(null);
-      await expect(service.getProfile('nonexistent')).rejects.toThrow(NotFoundException);
+      await expect(service.getProfile('nonexistent')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -54,9 +60,14 @@ describe('CompaniesService', () => {
         status: TenantStatus.ACTIVE,
       };
       mockTenancyService.findById.mockResolvedValue(tenant);
-      mockTenantRepo.save.mockResolvedValue({ ...tenant, nomeFantasia: 'Auto Center Novo' });
+      mockTenantRepo.save.mockResolvedValue({
+        ...tenant,
+        nomeFantasia: 'Auto Center Novo',
+      });
 
-      const result = await service.updateProfile('tenant-1', { nomeFantasia: 'Auto Center Novo' });
+      const result = await service.updateProfile('tenant-1', {
+        nomeFantasia: 'Auto Center Novo',
+      });
       expect(result.nomeFantasia).toBe('Auto Center Novo');
       expect(mockTenantRepo.save).toHaveBeenCalled();
     });
@@ -64,11 +75,21 @@ describe('CompaniesService', () => {
 
   describe('updateLogo', () => {
     it('should update logo URL and return updated tenant', async () => {
-      const tenant = { id: 'tenant-1', nomeFantasia: 'Auto Center', logoUrl: null as string | null };
+      const tenant = {
+        id: 'tenant-1',
+        nomeFantasia: 'Auto Center',
+        logoUrl: null as string | null,
+      };
       mockTenancyService.findById.mockResolvedValue(tenant);
-      mockTenantRepo.save.mockResolvedValue({ ...tenant, logoUrl: '/uploads/logos/test.png' });
+      mockTenantRepo.save.mockResolvedValue({
+        ...tenant,
+        logoUrl: '/uploads/logos/test.png',
+      });
 
-      const result = await service.updateLogo('tenant-1', '/uploads/logos/test.png');
+      const result = await service.updateLogo(
+        'tenant-1',
+        '/uploads/logos/test.png',
+      );
       expect(result.logoUrl).toBe('/uploads/logos/test.png');
     });
   });

@@ -3,9 +3,15 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 
 const mockAuthService = {
-  register: jest.fn().mockResolvedValue({ access_token: 'tok', refresh_token: 'ref' }),
-  login: jest.fn().mockResolvedValue({ access_token: 'tok', refresh_token: 'ref' }),
-  refresh: jest.fn().mockResolvedValue({ access_token: 'tok', refresh_token: 'ref' }),
+  register: jest
+    .fn()
+    .mockResolvedValue({ access_token: 'tok', refresh_token: 'ref' }),
+  login: jest
+    .fn()
+    .mockResolvedValue({ access_token: 'tok', refresh_token: 'ref' }),
+  refresh: jest
+    .fn()
+    .mockResolvedValue({ access_token: 'tok', refresh_token: 'ref' }),
   logout: jest.fn().mockResolvedValue(undefined),
   changePassword: jest.fn().mockResolvedValue(undefined),
 };
@@ -38,7 +44,10 @@ describe('AuthController', () => {
   });
 
   it('should call login and return tokens', async () => {
-    const result = await controller.login({ email: 'a@b.com', password: 'pass1234' });
+    const result = await controller.login({
+      email: 'a@b.com',
+      password: 'pass1234',
+    });
     expect(mockAuthService.login).toHaveBeenCalled();
     expect(result).toHaveProperty('access_token');
   });

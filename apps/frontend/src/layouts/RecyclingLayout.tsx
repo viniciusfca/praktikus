@@ -36,6 +36,7 @@ import {
   cilMoon,
   cilAccountLogout,
   cilTruck,
+  cilSpeech,
 } from '@coreui/icons';
 import { useAuthStore } from '../store/auth.store';
 import { useThemeMode } from '../theme/ThemeProvider';
@@ -45,7 +46,7 @@ import { Logo } from '../components/Logo';
 const STORAGE_KEY = 'recycling_sidebar_open';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: use IconType from @coreui/icons when properly exported
-const navItems: Array<{ label: string; icon: any; path: string; ownerOnly: boolean }> = [
+const navItems: Array<{ label: string; icon: any; path: string; ownerOnly: boolean; requiredFeature?: 'whatsapp' }> = [
   { label: 'Dashboard', icon: cilSpeedometer, path: '/recycling/dashboard', ownerOnly: false },
   { label: 'Caixa', icon: cilCash, path: '/recycling/cash-register', ownerOnly: false },
   { label: 'Compras', icon: cilBasket, path: '/recycling/purchases', ownerOnly: false },
@@ -55,6 +56,7 @@ const navItems: Array<{ label: string; icon: any; path: string; ownerOnly: boole
   { label: 'Fornecedores', icon: cilPeople, path: '/recycling/suppliers', ownerOnly: false },
   { label: 'Compradores', icon: cilFactory, path: '/recycling/buyers', ownerOnly: false },
   { label: 'Produtos', icon: cilList, path: '/recycling/products', ownerOnly: false },
+  { label: 'WhatsApp', icon: cilSpeech, path: '/whatsapp', ownerOnly: false, requiredFeature: 'whatsapp' },
   { label: 'Funcionários', icon: cilGroup, path: '/recycling/employees', ownerOnly: true },
   { label: 'Configurações', icon: cilSettings, path: '/recycling/settings', ownerOnly: true },
 ];
@@ -116,7 +118,11 @@ export function RecyclingLayout() {
   const sidebarNav = useMemo(
     () =>
       navItems
-        .filter((item) => !item.ownerOnly || user?.role === 'OWNER')
+        .filter((item) => {
+          if (item.ownerOnly && user?.role !== 'OWNER') return false;
+          if (item.requiredFeature === 'whatsapp' && !user?.whatsapp_enabled) return false;
+          return true;
+        })
         .map((item) => {
           const active =
             location.pathname === item.path ||
@@ -148,7 +154,7 @@ export function RecyclingLayout() {
 
           return navItem;
         }),
-    [location.pathname, sidebarOpen, isMobile, user?.role]
+    [location.pathname, sidebarOpen, isMobile, user?.role, user?.whatsapp_enabled]
   );
 
   return (

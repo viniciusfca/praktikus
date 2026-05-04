@@ -8,7 +8,11 @@ export class CatalogPartsService {
   constructor(private readonly dataSource: DataSource) {}
 
   private getSchemaName(tenantId: string): string {
-    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(tenantId)) {
+    if (
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+        tenantId,
+      )
+    ) {
       throw new Error('Invalid tenantId');
     }
     return `tenant_${tenantId.replace(/-/g, '')}`;
@@ -34,11 +38,17 @@ export class CatalogPartsService {
     page: number,
     limit: number,
     search?: string,
-  ): Promise<{ data: CatalogPartEntity[]; total: number; page: number; limit: number }> {
+  ): Promise<{
+    data: CatalogPartEntity[];
+    total: number;
+    page: number;
+    limit: number;
+  }> {
     return this.withSchema(tenantId, async (manager) => {
       const repo = manager.getRepository(CatalogPartEntity);
       const qb = repo.createQueryBuilder('p');
-      if (search) qb.where('p.nome ILIKE :s OR p.codigo ILIKE :s', { s: `%${search}%` });
+      if (search)
+        qb.where('p.nome ILIKE :s OR p.codigo ILIKE :s', { s: `%${search}%` });
       const [data, total] = await qb
         .skip((page - 1) * limit)
         .take(limit)
@@ -57,14 +67,19 @@ export class CatalogPartsService {
     });
   }
 
-  async create(tenantId: string, dto: CreateCatalogPartDto): Promise<CatalogPartEntity> {
+  async create(
+    tenantId: string,
+    dto: CreateCatalogPartDto,
+  ): Promise<CatalogPartEntity> {
     return this.withSchema(tenantId, async (manager) => {
       const repo = manager.getRepository(CatalogPartEntity);
-      return repo.save(repo.create({
-        nome: dto.nome,
-        codigo: dto.codigo ?? null,
-        precoUnitario: dto.precoUnitario,
-      }));
+      return repo.save(
+        repo.create({
+          nome: dto.nome,
+          codigo: dto.codigo ?? null,
+          precoUnitario: dto.precoUnitario,
+        }),
+      );
     });
   }
 
@@ -80,7 +95,9 @@ export class CatalogPartsService {
       Object.assign(item, {
         ...(dto.nome !== undefined && { nome: dto.nome }),
         ...(dto.codigo !== undefined && { codigo: dto.codigo }),
-        ...(dto.precoUnitario !== undefined && { precoUnitario: dto.precoUnitario }),
+        ...(dto.precoUnitario !== undefined && {
+          precoUnitario: dto.precoUnitario,
+        }),
       });
       return repo.save(item);
     });

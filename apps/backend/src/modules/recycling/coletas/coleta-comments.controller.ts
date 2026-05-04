@@ -1,6 +1,14 @@
 import {
-  Body, Controller, Delete, Get, HttpCode, Param,
-  ParseUUIDPipe, Post, Request, UseGuards,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  Request,
+  UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../../core/auth/jwt-auth.guard';
 import { AuthUser } from '../../core/auth/jwt.strategy';
@@ -35,7 +43,12 @@ export class ColetaCommentsController {
     @Param('coletaId', ParseUUIDPipe) coletaId: string,
     @Body() dto: CreateColetaCommentDto,
   ) {
-    return this.commentsService.addComment(req.user.tenantId, coletaId, dto, req.user.userId);
+    return this.commentsService.addComment(
+      req.user.tenantId,
+      coletaId,
+      dto,
+      req.user.userId,
+    );
   }
 
   @Delete(':commentId')
@@ -45,9 +58,14 @@ export class ColetaCommentsController {
     @Param('coletaId', ParseUUIDPipe) coletaId: string,
     @Param('commentId', ParseUUIDPipe) commentId: string,
   ) {
-    return this.commentsService.deleteComment(req.user.tenantId, coletaId, commentId, {
-      userId: req.user.userId,
-      role: req.user.role,
-    });
+    return this.commentsService.deleteComment(
+      req.user.tenantId,
+      coletaId,
+      commentId,
+      {
+        userId: req.user.userId,
+        role: req.user.role,
+      },
+    );
   }
 }

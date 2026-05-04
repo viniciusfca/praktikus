@@ -1,13 +1,21 @@
 import {
-  Body, Controller, Get, Param, ParseUUIDPipe,
-  Post, Request, UseGuards,
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  Request,
+  UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../../core/auth/jwt-auth.guard';
 import { AuthUser } from '../../core/auth/jwt.strategy';
 import { CashRegisterService } from './cash-register.service';
 import { AddTransactionDto } from './dto/add-transaction.dto';
 
-interface RequestWithUser extends Request { user: AuthUser; }
+interface RequestWithUser extends Request {
+  user: AuthUser;
+}
 
 @Controller('recycling/cash-register')
 @UseGuards(JwtAuthGuard)
@@ -30,7 +38,10 @@ export class CashRegisterController {
   }
 
   @Post('transactions')
-  addTransaction(@Request() req: RequestWithUser, @Body() dto: AddTransactionDto) {
+  addTransaction(
+    @Request() req: RequestWithUser,
+    @Body() dto: AddTransactionDto,
+  ) {
     return this.cashRegisterService.addTransaction(req.user.tenantId, dto);
   }
 
@@ -39,6 +50,9 @@ export class CashRegisterController {
     @Request() req: RequestWithUser,
     @Param('sessionId', ParseUUIDPipe) sessionId: string,
   ) {
-    return this.cashRegisterService.getTransactions(req.user.tenantId, sessionId);
+    return this.cashRegisterService.getTransactions(
+      req.user.tenantId,
+      sessionId,
+    );
   }
 }

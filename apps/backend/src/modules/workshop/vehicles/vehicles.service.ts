@@ -9,7 +9,11 @@ export class VehiclesService {
   constructor(private readonly dataSource: DataSource) {}
 
   private getSchemaName(tenantId: string): string {
-    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(tenantId)) {
+    if (
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+        tenantId,
+      )
+    ) {
       throw new Error('Invalid tenantId');
     }
     return `tenant_${tenantId.replace(/-/g, '')}`;
@@ -35,15 +39,19 @@ export class VehiclesService {
     page: number,
     limit: number,
     search?: string,
-  ): Promise<{ data: VehicleEntity[]; total: number; page: number; limit: number }> {
+  ): Promise<{
+    data: VehicleEntity[];
+    total: number;
+    page: number;
+    limit: number;
+  }> {
     return this.withSchema(tenantId, async (manager) => {
       const repo = manager.getRepository(VehicleEntity);
       const qb = repo.createQueryBuilder('v');
       if (search) {
-        qb.where(
-          'v.placa ILIKE :s OR v.marca ILIKE :s OR v.modelo ILIKE :s',
-          { s: `%${search}%` },
-        );
+        qb.where('v.placa ILIKE :s OR v.marca ILIKE :s OR v.modelo ILIKE :s', {
+          s: `%${search}%`,
+        });
       }
       const [data, total] = await qb
         .skip((page - 1) * limit)
@@ -63,7 +71,10 @@ export class VehiclesService {
     });
   }
 
-  async create(tenantId: string, dto: CreateVehicleDto): Promise<VehicleEntity> {
+  async create(
+    tenantId: string,
+    dto: CreateVehicleDto,
+  ): Promise<VehicleEntity> {
     return this.withSchema(tenantId, async (manager) => {
       const repo = manager.getRepository(VehicleEntity);
       const vehicle = repo.create({
@@ -109,7 +120,9 @@ export class VehiclesService {
 
   async getServiceOrders(tenantId: string, vehicleId: string) {
     return this.withSchema(tenantId, async (manager) => {
-      const vehicle = await manager.getRepository(VehicleEntity).findOne({ where: { id: vehicleId } });
+      const vehicle = await manager
+        .getRepository(VehicleEntity)
+        .findOne({ where: { id: vehicleId } });
       if (!vehicle) throw new NotFoundException('Veículo não encontrado.');
 
       const orders = await manager.query<any[]>(
@@ -155,12 +168,20 @@ export class VehiclesService {
       return orders.map((o) => {
         const itemsServices = services.filter((s) => s.soId === o.id);
         const itemsParts = parts.filter((p) => p.soId === o.id);
-        const totalServices = itemsServices.reduce((acc, s) => acc + Number(s.valor), 0);
+        const totalServices = itemsServices.reduce(
+          (acc, s) => acc + Number(s.valor),
+          0,
+        );
         const totalParts = itemsParts.reduce(
           (acc, p) => acc + Number(p.valorUnitario) * Number(p.quantidade),
           0,
         );
-        return { ...o, itemsServices, itemsParts, total: Math.round((totalServices + totalParts) * 100) / 100 };
+        return {
+          ...o,
+          itemsServices,
+          itemsParts,
+          total: Math.round((totalServices + totalParts) * 100) / 100,
+        };
       });
     });
   }

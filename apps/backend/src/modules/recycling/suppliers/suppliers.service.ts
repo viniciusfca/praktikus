@@ -1,4 +1,8 @@
-import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
 import { DataSource, EntityManager } from 'typeorm';
 import { SupplierEntity } from './supplier.entity';
 import { CreateSupplierDto } from './dto/create-supplier.dto';
@@ -9,14 +13,20 @@ export class SuppliersService {
   constructor(private readonly dataSource: DataSource) {}
 
   private getSchemaName(tenantId: string): string {
-    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(tenantId)) {
+    if (
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+        tenantId,
+      )
+    ) {
       throw new Error('Invalid tenantId');
     }
     return `tenant_${tenantId.replace(/-/g, '')}`;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private async withSchema<T>(tenantId: string, fn: (manager: EntityManager, qr: any) => Promise<T>): Promise<T> {
+  private async withSchema<T>(
+    tenantId: string,
+    fn: (manager: EntityManager, qr: any) => Promise<T>,
+  ): Promise<T> {
     const schemaName = this.getSchemaName(tenantId);
     const qr = this.dataSource.createQueryRunner();
     await qr.connect();
@@ -28,12 +38,24 @@ export class SuppliersService {
     }
   }
 
-  async list(tenantId: string, page: number, limit: number, search?: string): Promise<{ data: SupplierEntity[]; total: number; page: number; limit: number }> {
+  async list(
+    tenantId: string,
+    page: number,
+    limit: number,
+    search?: string,
+  ): Promise<{
+    data: SupplierEntity[];
+    total: number;
+    page: number;
+    limit: number;
+  }> {
     return this.withSchema(tenantId, async (manager) => {
       const repo = manager.getRepository(SupplierEntity);
       const qb = repo.createQueryBuilder('s');
       if (search) {
-        qb.where('s.name ILIKE :s OR s.document ILIKE :s', { s: `%${search}%` });
+        qb.where('s.name ILIKE :s OR s.document ILIKE :s', {
+          s: `%${search}%`,
+        });
       }
       const [data, total] = await qb
         .orderBy('s.name', 'ASC')
@@ -53,7 +75,10 @@ export class SuppliersService {
     });
   }
 
-  async create(tenantId: string, dto: CreateSupplierDto): Promise<SupplierEntity> {
+  async create(
+    tenantId: string,
+    dto: CreateSupplierDto,
+  ): Promise<SupplierEntity> {
     return this.withSchema(tenantId, async (manager) => {
       const repo = manager.getRepository(SupplierEntity);
       const supplier = repo.create({
@@ -67,7 +92,11 @@ export class SuppliersService {
     });
   }
 
-  async update(tenantId: string, id: string, dto: UpdateSupplierDto): Promise<SupplierEntity> {
+  async update(
+    tenantId: string,
+    id: string,
+    dto: UpdateSupplierDto,
+  ): Promise<SupplierEntity> {
     return this.withSchema(tenantId, async (manager) => {
       const repo = manager.getRepository(SupplierEntity);
       const supplier = await repo.findOne({ where: { id } });
@@ -83,9 +112,11 @@ export class SuppliersService {
       const supplier = await repo.findOne({ where: { id } });
       if (!supplier) throw new NotFoundException('Fornecedor não encontrado.');
       const [{ count }] = await qr.query(
-        `SELECT COUNT(*) as count FROM purchases WHERE supplier_id = $1`, [id]
+        `SELECT COUNT(*) as count FROM purchases WHERE supplier_id = $1`,
+        [id],
       );
-      if (Number(count) > 0) throw new ConflictException('Fornecedor possui compras registradas.');
+      if (Number(count) > 0)
+        throw new ConflictException('Fornecedor possui compras registradas.');
       await repo.remove(supplier);
     });
   }

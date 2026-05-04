@@ -17,7 +17,9 @@ export class IsStrongPasswordConstraint implements ValidatorConstraintInterface 
   }
 }
 
-export function IsStrongPassword(options?: ValidationOptions): PropertyDecorator {
+export function IsStrongPassword(
+  options?: ValidationOptions,
+): PropertyDecorator {
   return (object: object, propertyName: string | symbol) => {
     registerDecorator({
       target: object.constructor,

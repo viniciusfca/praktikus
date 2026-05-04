@@ -43,7 +43,9 @@ describe('AppointmentCommentsService', () => {
         { provide: DataSource, useValue: mockDataSource },
       ],
     }).compile();
-    service = module.get<AppointmentCommentsService>(AppointmentCommentsService);
+    service = module.get<AppointmentCommentsService>(
+      AppointmentCommentsService,
+    );
     jest.clearAllMocks();
     mockQueryRunner.manager.getRepository.mockImplementation((entity: any) => {
       if (entity?.name === 'AppointmentEntity') return mockApptRepo;
@@ -67,17 +69,31 @@ describe('AppointmentCommentsService', () => {
       mockApptRepo.findOne.mockResolvedValue(null);
 
       await expect(
-        service.addComment(TENANT_ID, 'nonexistent', { texto: 'teste' }, 'user1'),
+        service.addComment(
+          TENANT_ID,
+          'nonexistent',
+          { texto: 'teste' },
+          'user1',
+        ),
       ).rejects.toThrow(NotFoundException);
     });
 
     it('should create and return comment when appointment exists', async () => {
       mockApptRepo.findOne.mockResolvedValue({ id: 'a1' });
-      const comment = { id: 'c1', texto: 'Ligou, não atendeu', appointmentId: 'a1' };
+      const comment = {
+        id: 'c1',
+        texto: 'Ligou, não atendeu',
+        appointmentId: 'a1',
+      };
       mockCommentRepo.create.mockReturnValue(comment);
       mockCommentRepo.save.mockResolvedValue(comment);
 
-      const result = await service.addComment(TENANT_ID, 'a1', { texto: 'Ligou, não atendeu' }, 'user1');
+      const result = await service.addComment(
+        TENANT_ID,
+        'a1',
+        { texto: 'Ligou, não atendeu' },
+        'user1',
+      );
 
       expect(result).toEqual(comment);
     });

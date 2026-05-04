@@ -9,7 +9,11 @@ export class AppointmentCommentsService {
   constructor(private readonly dataSource: DataSource) {}
 
   private getSchemaName(tenantId: string): string {
-    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(tenantId)) {
+    if (
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+        tenantId,
+      )
+    ) {
       throw new Error('Invalid tenantId');
     }
     return `tenant_${tenantId.replace(/-/g, '')}`;
@@ -36,7 +40,10 @@ export class AppointmentCommentsService {
   ): Promise<AppointmentCommentEntity[]> {
     return this.withSchema(tenantId, async (qr) => {
       const repo = qr.manager.getRepository(AppointmentCommentEntity);
-      return repo.find({ where: { appointmentId }, order: { createdAt: 'ASC' } });
+      return repo.find({
+        where: { appointmentId },
+        order: { createdAt: 'ASC' },
+      });
     });
   }
 
@@ -53,7 +60,11 @@ export class AppointmentCommentsService {
 
       const commentRepo = qr.manager.getRepository(AppointmentCommentEntity);
       return commentRepo.save(
-        commentRepo.create({ appointmentId, texto: dto.texto, createdById: userId }),
+        commentRepo.create({
+          appointmentId,
+          texto: dto.texto,
+          createdById: userId,
+        }),
       );
     });
   }
@@ -65,7 +76,9 @@ export class AppointmentCommentsService {
   ): Promise<void> {
     return this.withSchema(tenantId, async (qr) => {
       const repo = qr.manager.getRepository(AppointmentCommentEntity);
-      const item = await repo.findOne({ where: { id: commentId, appointmentId } });
+      const item = await repo.findOne({
+        where: { id: commentId, appointmentId },
+      });
       if (!item) throw new NotFoundException('Comentário não encontrado.');
       await repo.remove(item);
     });

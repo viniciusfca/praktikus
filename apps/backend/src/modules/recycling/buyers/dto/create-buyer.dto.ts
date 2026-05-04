@@ -1,4 +1,10 @@
-import { IsString, IsOptional, IsIn, ValidateIf, MinLength } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsIn,
+  ValidateIf,
+  MinLength,
+} from 'class-validator';
 import { IsValidDocument } from '../../../core/validation';
 
 export class CreateBuyerDto {

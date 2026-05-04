@@ -1,6 +1,16 @@
 import {
-  Body, Controller, Delete, Get, HttpCode,
-  Param, ParseUUIDPipe, Patch, Post, Query, Request, UseGuards,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Query,
+  Request,
+  UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../../core/auth/jwt-auth.guard';
 import { RolesGuard } from '../../core/auth/roles.guard';
@@ -11,7 +21,9 @@ import { SuppliersService } from './suppliers.service';
 import { CreateSupplierDto } from './dto/create-supplier.dto';
 import { UpdateSupplierDto } from './dto/update-supplier.dto';
 
-interface RequestWithUser extends Request { user: AuthUser; }
+interface RequestWithUser extends Request {
+  user: AuthUser;
+}
 
 @Controller('recycling/suppliers')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -25,11 +37,19 @@ export class SuppliersController {
     @Query('limit') limit = '20',
     @Query('search') search?: string,
   ) {
-    return this.suppliersService.list(req.user.tenantId, Number(page), Number(limit), search);
+    return this.suppliersService.list(
+      req.user.tenantId,
+      Number(page),
+      Number(limit),
+      search,
+    );
   }
 
   @Get(':id')
-  getById(@Request() req: RequestWithUser, @Param('id', ParseUUIDPipe) id: string) {
+  getById(
+    @Request() req: RequestWithUser,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
     return this.suppliersService.getById(req.user.tenantId, id);
   }
 
@@ -50,7 +70,10 @@ export class SuppliersController {
   @Delete(':id')
   @Roles(UserRole.OWNER)
   @HttpCode(204)
-  delete(@Request() req: RequestWithUser, @Param('id', ParseUUIDPipe) id: string) {
+  delete(
+    @Request() req: RequestWithUser,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
     return this.suppliersService.delete(req.user.tenantId, id);
   }
 }

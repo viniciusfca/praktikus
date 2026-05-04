@@ -20,6 +20,7 @@ import {
 } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
 import { cilPlus, cilTrash, cilArrowLeft, cilWarning } from '@coreui/icons';
+import { PaymentMethod } from '@praktikus/shared';
 import { salesService } from '../../../services/recycling/sales.service';
 import { PrintPromptModal } from '../../../components/PrintPromptModal';
 import { SalePdf } from '../../../components/recycling/SalePdf';
@@ -40,6 +41,9 @@ const itemSchema = z.object({
 const schema = z.object({
   buyerId: z.string().uuid('Selecione um comprador'),
   items: z.array(itemSchema).min(1, 'Adicione ao menos um item'),
+  paymentMethod: z.nativeEnum(PaymentMethod, {
+    message: 'Selecione a forma de pagamento',
+  }),
   notes: z.string().optional(),
 });
 
@@ -172,6 +176,7 @@ export function NewSalePage() {
     defaultValues: {
       buyerId: '',
       items: [{ productId: '', quantity: 1, unitPrice: 0 }],
+      paymentMethod: PaymentMethod.CASH,
       notes: '',
     },
   });
@@ -218,6 +223,7 @@ export function NewSalePage() {
           quantity: item.quantity,
           unitPrice: item.unitPrice,
         })),
+        paymentMethod: data.paymentMethod,
         notes: data.notes || undefined,
       });
       setNewSaleId(created.id);
@@ -316,6 +322,19 @@ export function NewSalePage() {
                   ))}
                 </CFormSelect>
                 {errors.buyerId && <CFormFeedback invalid>{errors.buyerId.message}</CFormFeedback>}
+              </div>
+
+              <div style={{ marginTop: 14 }}>
+                <CFormLabel style={labelStyle}>Forma de pagamento *</CFormLabel>
+                <CFormSelect {...register('paymentMethod')} invalid={!!errors.paymentMethod}>
+                  <option value={PaymentMethod.CASH}>Dinheiro</option>
+                  <option value={PaymentMethod.PIX}>PIX</option>
+                  <option value={PaymentMethod.CARD}>Cartão</option>
+                  <option value={PaymentMethod.ON_CREDIT}>A prazo</option>
+                </CFormSelect>
+                {errors.paymentMethod && (
+                  <CFormFeedback invalid>{errors.paymentMethod.message}</CFormFeedback>
+                )}
               </div>
 
               <div style={{ marginTop: 14 }}>
