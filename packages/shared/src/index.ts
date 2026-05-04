@@ -7,5 +7,6 @@ export * from './enums/whatsapp.enums';
 export * from './types/top-material';
 export * from './types/coleta';
 export * from './types/cep';
+export * from './types/recycling';
 export * from './utils';
 export * from './validators';
