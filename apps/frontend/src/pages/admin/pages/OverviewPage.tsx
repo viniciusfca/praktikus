@@ -38,9 +38,8 @@ export function OverviewPage() {
           gap: 16,
         }}
       >
-        {/* NOSONAR(typescript:S6479) — lista estática de skeletons sem identidade; índice é a única chave possível */}
-        {Array.from({ length: 4 }).map((_, i) => (
-          <Skeleton key={i} height={88} />
+        {['kpi-0', 'kpi-1', 'kpi-2', 'kpi-3'].map((id) => (
+          <Skeleton key={id} height={88} />
         ))}
       </div>
     );

@@ -29,9 +29,8 @@ export function DataTable<T extends { id: string }>({
   if (isLoading) {
     return (
       <div style={{ padding: 16 }}>
-        {/* NOSONAR(typescript:S6479) — lista estática de skeletons sem identidade; índice é a única chave possível */}
-        {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} style={{ marginBottom: 8 }}>
+        {['row-0', 'row-1', 'row-2', 'row-3', 'row-4'].map((id) => (
+          <div key={id} style={{ marginBottom: 8 }}>
             <Skeleton height={36} />
           </div>
         ))}

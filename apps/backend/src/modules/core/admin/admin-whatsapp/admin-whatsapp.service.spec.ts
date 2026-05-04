@@ -66,4 +66,71 @@ describe('AdminWhatsappService', () => {
     const out = await service.list();
     expect(out.kpis.adoptionRate).toBe(0);
   });
+
+  it('mapeia tenants para WhatsappAdoptionTenant com enabledAt preenchido', async () => {
+    const updatedAt = new Date('2025-01-15T10:00:00.000Z');
+    const tenant = {
+      id: 'tid-1',
+      nomeFantasia: 'Oficina A',
+      segment: TenantSegment.WORKSHOP,
+      status: TenantStatus.ACTIVE,
+      whatsappPlan: 'STARTER',
+      whatsappEnabled: true,
+      updatedAt,
+    } as unknown as TenantEntity;
+    repo.count
+      .mockResolvedValueOnce(1)
+      .mockResolvedValueOnce(1)
+      .mockResolvedValueOnce(1)
+      .mockResolvedValueOnce(0)
+      .mockResolvedValueOnce(0);
+    repo.find
+      .mockResolvedValueOnce([tenant])
+      .mockResolvedValueOnce([]);
+    repo.getRawMany.mockResolvedValueOnce([]);
+    const out = await service.list();
+    expect(out.using[0].enabledAt).toBe(updatedAt.toISOString());
+    expect(out.using[0].whatsappPlan).toBe('STARTER');
+    expect(out.using[0].monthlyVolume).toBeNull();
+  });
+
+  it('mapeia tenant com whatsappEnabled=false para enabledAt=null e whatsappPlan=null', async () => {
+    const tenant = {
+      id: 'tid-2',
+      nomeFantasia: 'Desmanche B',
+      segment: TenantSegment.RECYCLING,
+      status: TenantStatus.TRIAL,
+      whatsappPlan: null,
+      whatsappEnabled: false,
+      updatedAt: new Date(),
+    } as unknown as TenantEntity;
+    repo.count
+      .mockResolvedValueOnce(1)
+      .mockResolvedValueOnce(0)
+      .mockResolvedValueOnce(0)
+      .mockResolvedValueOnce(0)
+      .mockResolvedValueOnce(0);
+    repo.find
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([tenant]);
+    repo.getRawMany.mockResolvedValueOnce([]);
+    const out = await service.list();
+    expect(out.notUsing[0].enabledAt).toBeNull();
+    expect(out.notUsing[0].whatsappPlan).toBeNull();
+  });
+
+  it('adoptionBySegment rate=0 quando eligible=0', async () => {
+    repo.count
+      .mockResolvedValueOnce(0)
+      .mockResolvedValueOnce(0)
+      .mockResolvedValueOnce(0)
+      .mockResolvedValueOnce(0)
+      .mockResolvedValueOnce(0);
+    repo.find.mockResolvedValue([]);
+    repo.getRawMany.mockResolvedValueOnce([
+      { segment: 'WORKSHOP', using: '0', eligible: '0' },
+    ]);
+    const out = await service.list();
+    expect(out.adoptionBySegment[0].rate).toBe(0);
+  });
 });
