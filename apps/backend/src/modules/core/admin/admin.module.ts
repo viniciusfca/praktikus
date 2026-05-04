@@ -18,6 +18,8 @@ import { AdminSegmentsController } from './admin-segments/admin-segments.control
 import { AdminSegmentsService } from './admin-segments/admin-segments.service';
 import { AdminWhatsappController } from './admin-whatsapp/admin-whatsapp.controller';
 import { AdminWhatsappService } from './admin-whatsapp/admin-whatsapp.service';
+import { AdminFinancialController } from './admin-financial/admin-financial.controller';
+import { AdminFinancialService } from './admin-financial/admin-financial.service';
 import { TenantEntity } from '../tenancy/tenant.entity';
 import { BillingEntity } from '../billing/billing.entity';
 
@@ -44,7 +46,7 @@ import { BillingEntity } from '../billing/billing.entity';
       { name: 'default', ttl: 15 * 60 * 1000, limit: 1000 },
     ]),
   ],
-  controllers: [PlatformAuthController, AdminOverviewController, AdminTenantsController, AdminSegmentsController, AdminWhatsappController],
+  controllers: [PlatformAuthController, AdminOverviewController, AdminTenantsController, AdminSegmentsController, AdminWhatsappController, AdminFinancialController],
   providers: [
     PlatformAuthService,
     PlatformJwtStrategy,
@@ -52,6 +54,7 @@ import { BillingEntity } from '../billing/billing.entity';
     AdminTenantsService,
     AdminSegmentsService,
     AdminWhatsappService,
+    AdminFinancialService,
     { provide: APP_GUARD, useClass: ThrottlerGuard },
   ],
   exports: [PlatformAuthService],
