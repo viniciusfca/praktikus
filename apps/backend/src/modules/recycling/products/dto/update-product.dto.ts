@@ -1,15 +1,20 @@
 import {
   IsBoolean,
-  IsNumber,
+  IsObject,
   IsOptional,
-  IsPositive,
   IsString,
   IsUUID,
+  MaxLength,
 } from 'class-validator';
+import { IsPriceMap } from '../../../../common/validators/price-map.validator';
 
 export class UpdateProductDto {
-  @IsOptional() @IsString() name?: string;
+  @IsOptional() @IsString() @MaxLength(120) name?: string;
   @IsOptional() @IsUUID() unitId?: string;
-  @IsOptional() @IsNumber() @IsPositive() pricePerUnit?: number;
   @IsOptional() @IsBoolean() active?: boolean;
+
+  @IsOptional()
+  @IsObject()
+  @IsPriceMap()
+  prices?: Record<string, number | null>;
 }
