@@ -149,6 +149,7 @@ export function NewPurchasePage() {
     control,
     watch,
     setValue,
+    getValues,
     formState: { errors, isSubmitting },
   } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -166,10 +167,10 @@ export function NewPurchasePage() {
 
   useEffect(() => {
     if (!priceTables.length) return;
-    if (watch('priceTableId')) return;
+    if (getValues('priceTableId')) return;
     const def = priceTables.find((t) => t.isDefault) ?? priceTables[0];
     if (def) setValue('priceTableId', def.id);
-  }, [priceTables, watch, setValue]);
+  }, [priceTables, getValues, setValue]);
 
   const handleProductChange = (index: number, productId: string) => {
     const product = products.find((p) => p.id === productId);
@@ -337,7 +338,7 @@ export function NewPurchasePage() {
                 </div>
 
                 <div>
-                  <CFormLabel style={labelStyle}>Tabela de preço *</CFormLabel>
+                  <CFormLabel htmlFor="purchase-pricetable" style={labelStyle}>Tabela de preço *</CFormLabel>
                   <Controller
                     control={control}
                     name="priceTableId"
