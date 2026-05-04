@@ -77,7 +77,7 @@ export function LoginPage() {
             style={{ display: 'flex', flexDirection: 'column', gap: 12 }}
           >
             <label style={{ fontSize: 12, fontWeight: 600 }}>
-              E-mail
+              <span>E-mail</span>
               <input
                 type="email"
                 autoComplete="username"
@@ -99,7 +99,7 @@ export function LoginPage() {
               )}
             </label>
             <label style={{ fontSize: 12, fontWeight: 600 }}>
-              Senha
+              <span>Senha</span>
               <input
                 type="password"
                 autoComplete="current-password"

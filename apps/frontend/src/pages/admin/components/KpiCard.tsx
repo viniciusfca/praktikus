@@ -13,6 +13,15 @@ interface Props {
   nullHint?: string;
 }
 
+function resolveSparklineNode(
+  isNull: boolean,
+  sparkline: number[] | undefined,
+): ReactNode {
+  if (isNull) return <Skeleton width={80} height={32} />;
+  if (sparkline && sparkline.length > 0) return <SparklineSvg data={sparkline} />;
+  return null;
+}
+
 export function KpiCard({
   label,
   value,
@@ -23,11 +32,16 @@ export function KpiCard({
   nullHint = 'Disponível na Fase 1.5',
 }: Props) {
   const isNull = value == null;
-  const display = isNull
-    ? '—'
-    : formatValue
-      ? formatValue(value as number | string)
-      : String(value);
+  let display: string;
+  if (value == null) {
+    display = '—';
+  } else if (formatValue) {
+    display = formatValue(value);
+  } else {
+    display = String(value);
+  }
+
+  const sparklineNode = resolveSparklineNode(isNull, sparkline);
 
   return (
     <div
@@ -77,11 +91,7 @@ export function KpiCard({
         style={{ position: 'absolute', right: 16, bottom: 16 }}
         aria-hidden="true"
       >
-        {isNull ? (
-          <Skeleton width={80} height={32} />
-        ) : sparkline && sparkline.length > 0 ? (
-          <SparklineSvg data={sparkline} />
-        ) : null}
+        {sparklineNode}
       </div>
     </div>
   );

@@ -13,7 +13,15 @@ export class AdminSegmentsService {
   ) {}
 
   async list(): Promise<SegmentsResponseDto> {
-    const [total, byStatusRows, whatsappRows, newRows] = await Promise.all([
+    type ByStatusRow = { segment: string; status: string; count: string };
+    type CountRow = { segment: string; count: string };
+
+    const [total, byStatusRows, whatsappRows, newRows]: [
+      number,
+      ByStatusRow[],
+      CountRow[],
+      CountRow[],
+    ] = await Promise.all([
       this.repo.count(),
       this.repo
         .createQueryBuilder('t')
@@ -22,23 +30,21 @@ export class AdminSegmentsService {
         .addSelect('COUNT(*)', 'count')
         .groupBy('t.segment')
         .addGroupBy('t.status')
-        .getRawMany() as Promise<
-        Array<{ segment: string; status: string; count: string }>
-      >,
+        .getRawMany(),
       this.repo
         .createQueryBuilder('t')
         .select('t.segment', 'segment')
         .addSelect('COUNT(*)', 'count')
         .where('t.whatsapp_enabled = true')
         .groupBy('t.segment')
-        .getRawMany() as Promise<Array<{ segment: string; count: string }>>,
+        .getRawMany(),
       this.repo
         .createQueryBuilder('t')
         .select('t.segment', 'segment')
         .addSelect('COUNT(*)', 'count')
         .where(`t.created_at >= NOW() - INTERVAL '30 days'`)
         .groupBy('t.segment')
-        .getRawMany() as Promise<Array<{ segment: string; count: string }>>,
+        .getRawMany(),
     ]);
 
     const segments = new Map<TenantSegment, SegmentBreakdown>();

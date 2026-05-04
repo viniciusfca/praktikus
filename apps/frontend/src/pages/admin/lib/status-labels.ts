@@ -1,5 +1,3 @@
-import { TenantStatus } from '@praktikus/shared';
-
 export type AdminTenantStatus = 'TRIAL' | 'ACTIVE' | 'OVERDUE' | 'SUSPENDED';
 
 export const STATUS_LABEL: Record<AdminTenantStatus, string> = {

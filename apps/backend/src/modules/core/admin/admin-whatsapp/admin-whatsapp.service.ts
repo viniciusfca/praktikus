@@ -32,7 +32,13 @@ export class AdminWhatsappService {
       this.repo.count({ where: { whatsappPlan: WhatsappPlan.ENTERPRISE } as any }),
     ]);
 
-    const [using, notUsing, segmentRows] = await Promise.all([
+    type SegmentRow = { segment: string; using: string; eligible: string };
+
+    const [using, notUsing, segmentRows]: [
+      TenantEntity[],
+      TenantEntity[],
+      SegmentRow[],
+    ] = await Promise.all([
       this.repo.find({
         where: { whatsappEnabled: true },
         order: { updatedAt: 'DESC' },
@@ -56,9 +62,7 @@ export class AdminWhatsappService {
         .addSelect('COUNT(*)', 'eligible')
         .where('t.status IN (:...statuses)', { statuses: eligibleStatuses })
         .groupBy('t.segment')
-        .getRawMany() as Promise<
-        Array<{ segment: string; using: string; eligible: string }>
-      >,
+        .getRawMany(),
     ]);
 
     return {

@@ -32,9 +32,9 @@ export function StackedBar({ segments, height = 14 }: Props) {
         background: 'var(--adm-bg-muted)',
       }}
     >
-      {segments.map((s, i) => (
+      {segments.map((s) => (
         <div
-          key={i}
+          key={s.label}
           title={`${s.label}: ${s.value} (${((s.value / total) * 100).toFixed(0)}%)`}
           style={{
             flex: s.value,

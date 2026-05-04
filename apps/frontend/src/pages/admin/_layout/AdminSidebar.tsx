@@ -130,9 +130,13 @@ export function AdminSidebar() {
         </div>
         <button
           onClick={() => {
-            void logout().then(() => {
-              window.location.href = '/admin/login';
-            });
+            logout()
+              .then(() => {
+                globalThis.location.href = '/admin/login';
+              })
+              .catch(() => {
+                globalThis.location.href = '/admin/login';
+              });
           }}
           style={{
             background: 'transparent',

@@ -75,9 +75,9 @@ export function BrazilTilemap({ data }: Props) {
         width={width}
         height={height}
         viewBox={`0 0 ${width} ${height}`}
-        role="img"
-        aria-label="Distribuição de clientes por UF"
+        aria-labelledby="tilemap-title"
       >
+        <title id="tilemap-title">Distribuição de clientes por UF</title>
         {Object.entries(UF_COORDS).map(([uf, pos]) => {
           const x = pos.c * (TILE + GAP);
           const y = pos.r * (TILE + GAP);
