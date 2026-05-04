@@ -14,6 +14,8 @@ import { AdminOverviewController } from './admin-overview/admin-overview.control
 import { AdminOverviewService } from './admin-overview/admin-overview.service';
 import { AdminTenantsController } from './admin-tenants/admin-tenants.controller';
 import { AdminTenantsService } from './admin-tenants/admin-tenants.service';
+import { AdminSegmentsController } from './admin-segments/admin-segments.controller';
+import { AdminSegmentsService } from './admin-segments/admin-segments.service';
 import { TenantEntity } from '../tenancy/tenant.entity';
 import { BillingEntity } from '../billing/billing.entity';
 
@@ -40,12 +42,13 @@ import { BillingEntity } from '../billing/billing.entity';
       { name: 'default', ttl: 15 * 60 * 1000, limit: 1000 },
     ]),
   ],
-  controllers: [PlatformAuthController, AdminOverviewController, AdminTenantsController],
+  controllers: [PlatformAuthController, AdminOverviewController, AdminTenantsController, AdminSegmentsController],
   providers: [
     PlatformAuthService,
     PlatformJwtStrategy,
     AdminOverviewService,
     AdminTenantsService,
+    AdminSegmentsService,
     { provide: APP_GUARD, useClass: ThrottlerGuard },
   ],
   exports: [PlatformAuthService],
