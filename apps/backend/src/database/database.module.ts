@@ -20,6 +20,8 @@ import { CashSessionEntity } from '../modules/recycling/cash-register/cash-sessi
 import { CashTransactionEntity } from '../modules/recycling/cash-register/cash-transaction.entity';
 import { EmployeePermissionsEntity } from '../modules/recycling/employees/employee-permissions.entity';
 import { ProductEntity } from '../modules/recycling/products/product.entity';
+import { ProductPriceEntity } from '../modules/recycling/products/product-price.entity';
+import { PriceTableEntity } from '../modules/recycling/price-tables/price-table.entity';
 import { PurchaseEntity } from '../modules/recycling/purchases/purchase.entity';
 import { PurchaseItemEntity } from '../modules/recycling/purchases/purchase-item.entity';
 import { StockMovementEntity } from '../modules/recycling/purchases/stock-movement.entity';
@@ -64,6 +66,8 @@ import { PlatformRefreshTokenEntity } from '../modules/core/admin/admin-auth/pla
           CashTransactionEntity,
           EmployeePermissionsEntity,
           ProductEntity,
+          ProductPriceEntity,
+          PriceTableEntity,
           PurchaseEntity,
           PurchaseItemEntity,
           StockMovementEntity,
