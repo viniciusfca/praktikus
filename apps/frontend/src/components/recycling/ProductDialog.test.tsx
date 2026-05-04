@@ -51,13 +51,12 @@ describe('<ProductDialog />', () => {
     expect(replicar).toBeDisabled();
   });
 
-  it('submit transforma string vazia em null nos preços', async () => {
+  it('submit auto-preenche tabelas vazias com o valor da Tabela 1', async () => {
     const onSave = vi.fn();
     const user = userEvent.setup();
     render(<ProductDialog {...baseProps} onSave={onSave} />);
 
     await user.type(screen.getByLabelText(/Nome/i), 'Alumínio');
-    // Select unit
     const unitSelect = screen.getByLabelText(/Unidade/i);
     await user.selectOptions(unitSelect, '11111111-1111-1111-1111-111111111111');
     const inputs = screen.getAllByRole('spinbutton');
@@ -71,8 +70,36 @@ describe('<ProductDialog />', () => {
           name: 'Alumínio',
           prices: expect.objectContaining({
             t1: 8,
-            t2: null,
-            t3: null,
+            t2: 8,
+            t3: 8,
+          }),
+        }),
+      );
+    });
+  });
+
+  it('submit preserva valor explícito em tabelas não-padrão', async () => {
+    const onSave = vi.fn();
+    const user = userEvent.setup();
+    render(<ProductDialog {...baseProps} onSave={onSave} />);
+
+    await user.type(screen.getByLabelText(/Nome/i), 'Cobre');
+    const unitSelect = screen.getByLabelText(/Unidade/i);
+    await user.selectOptions(unitSelect, '11111111-1111-1111-1111-111111111111');
+    const inputs = screen.getAllByRole('spinbutton');
+    await user.type(inputs[0], '6');     // padrão
+    await user.type(inputs[1], '7');     // t2 explícito
+    // t3 fica vazio → auto-fill
+
+    await user.click(screen.getByRole('button', { name: /Salvar/i }));
+
+    await waitFor(() => {
+      expect(onSave).toHaveBeenCalledWith(
+        expect.objectContaining({
+          prices: expect.objectContaining({
+            t1: 6,
+            t2: 7,
+            t3: 6,
           }),
         }),
       );

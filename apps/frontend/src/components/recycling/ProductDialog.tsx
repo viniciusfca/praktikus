@@ -93,10 +93,20 @@ export function ProductDialog({
   };
 
   const onSubmit = handleSubmit(async (data) => {
+    const defaultTable = sorted.find((t) => t.isDefault);
+    if (!defaultTable) throw new Error('Tabela padrão não configurada');
+    const defaultRaw = data.prices[defaultTable.id];
+    const defaultValue = Number(defaultRaw);
+
     const prices: Record<string, number | null> = {};
     for (const [k, v] of Object.entries(data.prices)) {
       const raw = v as number | string | null;
-      prices[k] = raw == null || raw === '' ? null : Number(raw);
+      if (raw == null || raw === '') {
+        // Auto-fill: vazio em tabela não-padrão = valor da padrão
+        prices[k] = k === defaultTable.id ? null : defaultValue;
+      } else {
+        prices[k] = Number(raw);
+      }
     }
     await onSave({
       name: data.name,
@@ -270,9 +280,7 @@ export function ProductDialog({
               >
                 <CIcon icon={cilCheck} size="sm" style={{ marginTop: 2, flexShrink: 0 }} />
                 <span>
-                  As tabelas são gerenciadas em{' '}
-                  <strong>Configurações → Tabelas de preço</strong>. Tabelas em
-                  branco aparecerão como "—" na listagem.
+                  A Tabela 1 (Padrão) é obrigatória. <strong>Se você deixar as outras tabelas em branco, elas vão herdar o valor da Tabela 1 ao salvar.</strong>
                 </span>
               </div>
             </section>
