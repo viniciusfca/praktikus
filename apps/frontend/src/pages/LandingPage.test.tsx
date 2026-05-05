@@ -1,4 +1,4 @@
-import { act, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { LandingPage } from './LandingPage';
 
@@ -100,11 +100,16 @@ describe('LandingPage', () => {
 
   it('FAQ "Preciso instalar algo?" não menciona PWA nem offline', () => {
     render(<LandingPage />);
-    // Open the accordion by clicking the question
     const question = screen.getByText(/Preciso instalar algo\?/i);
-    question.click();
+    // The accordion's onClick lives on the outer <div> (grandparent of the <span>).
+    // closest('div') reaches the inner flex row; .parentElement reaches the outer div with onClick.
+    const accordionRow = question.closest('div')?.parentElement;
+    expect(accordionRow).not.toBeNull();
+    fireEvent.click(accordionRow as HTMLElement);
+    // Now the answer should be in the DOM. Assert no PWA/offline anywhere in the FAQ section.
     const faqSection = question.closest('section');
     expect(faqSection).not.toBeNull();
+    expect(faqSection!.textContent).toMatch(/Praktikus roda 100% no navegador/i);
     expect(faqSection!.textContent).not.toMatch(/PWA/i);
     expect(faqSection!.textContent).not.toMatch(/offline/i);
   });
