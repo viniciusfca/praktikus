@@ -206,19 +206,6 @@ export function LandingPage() {
         alignItems: 'center',
       }}>
         <div>
-          <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: 8,
-            padding: '4px 12px 4px 6px', border: '1px solid var(--cui-border-color)',
-            background: 'var(--cui-card-bg)', borderRadius: 999, fontSize: 12.5,
-            color: 'var(--cui-secondary-color)', marginBottom: isMobile ? 16 : 22,
-            maxWidth: '100%',
-          }}>
-            <span style={{ background: 'rgba(52,142,145,0.12)', color: 'var(--cui-primary)', fontWeight: 600, padding: '2px 8px', borderRadius: 999, fontSize: 11, flexShrink: 0 }}>Novo</span>
-            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              <strong style={{ color: 'var(--cui-body-color)' }}>Relatórios v2</strong> — ticket médio e funil
-            </span>
-          </div>
-
           <h1 style={{
             fontSize: 'clamp(30px, 7vw, 54px)',
             lineHeight: 1.05, letterSpacing: '-0.035em', fontWeight: 600,
