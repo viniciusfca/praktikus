@@ -221,7 +221,7 @@ export function LandingPage() {
             lineHeight: 1.55, color: 'var(--cui-secondary-color)',
             maxWidth: 520, margin: '0 0 24px',
           }}>
-            Plataforma feita para oficinas, clínicas e recicladoras. Agenda, ordens de serviço, clientes, estoque e relatórios — sem planilha, sem complicação.
+            Plataforma feita para oficinas e recicladoras. Agenda, ordens de serviço, compras, vendas, estoque e relatórios — sem planilha, sem complicação.
           </p>
 
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
