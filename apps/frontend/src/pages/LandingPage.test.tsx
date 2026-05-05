@@ -97,4 +97,15 @@ describe('LandingPage', () => {
     expect(screen.queryByText(/com sua marca/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Suporte prioritário/i)).not.toBeInTheDocument();
   });
+
+  it('FAQ "Preciso instalar algo?" não menciona PWA nem offline', () => {
+    render(<LandingPage />);
+    // Open the accordion by clicking the question
+    const question = screen.getByText(/Preciso instalar algo\?/i);
+    question.click();
+    const faqSection = question.closest('section');
+    expect(faqSection).not.toBeNull();
+    expect(faqSection!.textContent).not.toMatch(/PWA/i);
+    expect(faqSection!.textContent).not.toMatch(/offline/i);
+  });
 });

@@ -70,7 +70,7 @@ const faqs = [
   { q: 'Como é a cobrança?', a: 'Mensalidade única de R$ 89,90 no cartão de crédito, processada de forma segura via Asaas. Você pode cancelar a qualquer momento direto pelo painel.' },
   { q: 'Posso cancelar quando quiser?', a: 'Sim. O cancelamento é feito direto pelo painel, sem multa e sem burocracia. Seus dados ficam disponíveis para exportação por 30 dias após o cancelamento.' },
   { q: 'Meus dados ficam seguros?', a: 'Sim. Infraestrutura na nuvem com criptografia em repouso e em trânsito, backups diários automáticos e conformidade com a LGPD.' },
-  { q: 'Preciso instalar algo?', a: 'Não. Praktikus roda 100% no navegador — também temos app PWA instalável no celular para usar offline em casos pontuais.' },
+  { q: 'Preciso instalar algo?', a: 'Não. Praktikus roda 100% no navegador, em qualquer dispositivo — basta acessar app.praktikus.com.br. Layout responsivo para celular e tablet.' },
 ];
 
 // ── Mobile detection hook ───────────────────────────────────────────────────
