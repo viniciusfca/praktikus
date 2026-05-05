@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { CButton } from '@coreui/react';
 import { Logo } from '../components/Logo';
 
@@ -195,6 +195,17 @@ export function LandingPage() {
   const [faqOpen, setFaqOpen] = useState<number>(-1);
   const isMobile = useIsMobile();
 
+  const [heroVariant, setHeroVariant] = useState<HeroVariant>('workshop');
+  const heroPausedRef = useRef(false);
+
+  useEffect(() => {
+    const id = globalThis.setInterval(() => {
+      if (heroPausedRef.current) return;
+      setHeroVariant(v => (v === 'workshop' ? 'recycling' : 'workshop'));
+    }, 5000);
+    return () => globalThis.clearInterval(id);
+  }, []);
+
   const containerPad = isMobile ? '0 18px' : '0 24px';
   const sectionMaxWidth = 1180;
 
@@ -281,7 +292,13 @@ export function LandingPage() {
             ))}
           </div>
         </div>
-        <HeroMockup compact={isMobile} variant="workshop" />
+        <div
+          onMouseEnter={() => { heroPausedRef.current = true; }}
+          onMouseLeave={() => { heroPausedRef.current = false; }}
+          style={{ transition: 'opacity 0.4s ease' }}
+        >
+          <HeroMockup compact={isMobile} variant={heroVariant} />
+        </div>
       </section>
 
       {/* ── SEGMENTS ─────────────────────────────────────────────────────── */}

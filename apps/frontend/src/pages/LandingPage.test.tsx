@@ -1,5 +1,5 @@
-import { render, screen } from '@testing-library/react';
-import { describe, it, expect } from 'vitest';
+import { act, render, screen } from '@testing-library/react';
+import { describe, it, expect, vi } from 'vitest';
 import { LandingPage } from './LandingPage';
 
 describe('LandingPage', () => {
@@ -29,5 +29,21 @@ describe('LandingPage', () => {
     expect(screen.getByText('Ticket médio')).toBeInTheDocument();
     expect(screen.getAllByText('Agendamentos').length).toBeGreaterThan(0);
     expect(screen.getByText('Veículos')).toBeInTheDocument();
+  });
+
+  it('mockup alterna automaticamente para a variante recycling após ~5s', async () => {
+    vi.useFakeTimers();
+    render(<LandingPage />);
+    // Antes do swap: KPIs de workshop, sem KPIs de recycling.
+    expect(screen.getByText('OS abertas')).toBeInTheDocument();
+    expect(screen.queryByText('Compras hoje')).not.toBeInTheDocument();
+
+    await act(async () => { await vi.advanceTimersByTimeAsync(5000); });
+
+    // Depois do swap: KPIs de recycling, sem KPIs de workshop.
+    expect(screen.queryByText('OS abertas')).not.toBeInTheDocument();
+    expect(screen.getByText('Compras hoje')).toBeInTheDocument();
+
+    vi.useRealTimers();
   });
 });
