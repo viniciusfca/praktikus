@@ -81,14 +81,54 @@ function useIsMobile(): boolean {
 
 // ── Hero mockup ──────────────────────────────────────────────────────────────
 
-function HeroMockup({ compact }: { compact: boolean }) {
+type HeroVariant = 'workshop' | 'recycling';
+
+interface HeroMockupContent {
+  menu: string[];
+  kpis: { label: string; value: string }[];
+  chartLabel: string;
+  ariaLabel: string;
+}
+
+const HERO_CONTENT: Record<HeroVariant, HeroMockupContent> = {
+  workshop: {
+    menu: ['Dashboard', 'Agendamentos', 'OS', 'Clientes', 'Veículos'],
+    kpis: [
+      { label: 'OS abertas', value: '24' },
+      { label: 'Faturamento', value: 'R$ 18.4k' },
+      { label: 'Agendamentos', value: '47' },
+      { label: 'Ticket médio', value: 'R$ 386' },
+    ],
+    chartLabel: '📈 Gráfico de faturamento',
+    ariaLabel: 'Pré-visualização do painel para oficinas',
+  },
+  recycling: {
+    // Filled by Task 4 — for now mirrors workshop so the component compiles.
+    menu: ['Dashboard', 'Agendamentos', 'OS', 'Clientes', 'Veículos'],
+    kpis: [
+      { label: 'OS abertas', value: '24' },
+      { label: 'Faturamento', value: 'R$ 18.4k' },
+      { label: 'Agendamentos', value: '47' },
+      { label: 'Ticket médio', value: 'R$ 386' },
+    ],
+    chartLabel: '📈 Gráfico de faturamento',
+    ariaLabel: 'Pré-visualização do painel',
+  },
+};
+
+function HeroMockup({ compact, variant }: { compact: boolean; variant: HeroVariant }) {
+  const content = HERO_CONTENT[variant];
   return (
-    <div style={{
-      borderRadius: 14, overflow: 'hidden',
-      border: '1px solid var(--cui-border-color)',
-      boxShadow: '0 20px 48px rgba(10,12,13,0.14)',
-      background: 'var(--cui-card-bg)',
-    }}>
+    <div
+      role="img"
+      aria-label={content.ariaLabel}
+      style={{
+        borderRadius: 14, overflow: 'hidden',
+        border: '1px solid var(--cui-border-color)',
+        boxShadow: '0 20px 48px rgba(10,12,13,0.14)',
+        background: 'var(--cui-card-bg)',
+      }}
+    >
       {/* browser chrome */}
       <div style={{
         display: 'flex', alignItems: 'center', gap: 6,
@@ -109,7 +149,7 @@ function HeroMockup({ compact }: { compact: boolean }) {
           <div style={{ marginBottom: 12 }}>
             <Logo size={12} />
           </div>
-          {['Dashboard', 'Agendamentos', 'OS', 'Clientes', 'Veículos'].map((item, i) => (
+          {content.menu.map((item, i) => (
             <div key={item} style={{
               padding: '6px 8px', borderRadius: 6, fontSize: 10.5, fontWeight: i === 0 ? 600 : 400,
               color: i === 0 ? 'var(--cui-primary)' : 'var(--cui-secondary-color)',
@@ -123,12 +163,7 @@ function HeroMockup({ compact }: { compact: boolean }) {
         <div style={{ padding: compact ? 12 : 14, minWidth: 0 }}>
           <div style={{ fontSize: 12.5, fontWeight: 600, marginBottom: 10, color: 'var(--cui-body-color)' }}>Bom dia, Vini 👋</div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 10 }}>
-            {[
-              { label: 'OS abertas', value: '24' },
-              { label: 'Faturamento', value: 'R$ 18.4k' },
-              { label: 'Agendamentos', value: '47' },
-              { label: 'Ticket médio', value: 'R$ 386' },
-            ].map(kpi => (
+            {content.kpis.map(kpi => (
               <div key={kpi.label} style={{
                 padding: '10px 12px', borderRadius: 8,
                 border: '1px solid var(--cui-border-color)',
@@ -147,7 +182,7 @@ function HeroMockup({ compact }: { compact: boolean }) {
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: 11, color: 'var(--cui-secondary-color)',
           }}>
-            📈 Gráfico de faturamento
+            {content.chartLabel}
           </div>
         </div>
       </div>
@@ -247,7 +282,7 @@ export function LandingPage() {
             ))}
           </div>
         </div>
-        <HeroMockup compact={isMobile} />
+        <HeroMockup compact={isMobile} variant="workshop" />
       </section>
 
       {/* ── SEGMENTS ─────────────────────────────────────────────────────── */}

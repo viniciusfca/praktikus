@@ -20,4 +20,14 @@ describe('LandingPage', () => {
     expect(subtitle.textContent).toMatch(/oficinas e recicladoras/i);
     expect(subtitle.textContent).not.toMatch(/clínica/i);
   });
+
+  it('mockup do hero (workshop) mostra itens da oficina', () => {
+    render(<LandingPage />);
+    // "OS abertas" and "Ticket médio" are unique to workshop KPIs;
+    // "Agendamentos" appears in both menu and KPI label, so we use getAllByText.
+    expect(screen.getByText('OS abertas')).toBeInTheDocument();
+    expect(screen.getByText('Ticket médio')).toBeInTheDocument();
+    expect(screen.getAllByText('Agendamentos').length).toBeGreaterThan(0);
+    expect(screen.getByText('Veículos')).toBeInTheDocument();
+  });
 });
