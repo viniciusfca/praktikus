@@ -33,7 +33,7 @@ describe('<ProductDialog />', () => {
     render(<ProductDialog {...baseProps} />);
     const inputs = screen.getAllByPlaceholderText('0,00');
     await user.clear(inputs[0]);
-    await user.type(inputs[0], '8.5');
+    await user.type(inputs[0], '8,5');
 
     const replicar = screen.getByRole('button', { name: /Replicar Tabela 1/i });
     expect(replicar).not.toBeDisabled();

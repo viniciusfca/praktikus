@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { PriceRow } from './PriceRow';
@@ -59,5 +60,32 @@ describe('<PriceRow />', () => {
     const { container } = render(<PriceRow {...baseProps} value="" />);
     const row = container.querySelector('[data-filled="false"]');
     expect(row).toBeInTheDocument();
+  });
+
+  it('preserva texto digitado ao tipar decimal incompleto (0 → , → 5 → 5 = 0,55)', () => {
+    function Wrapper() {
+      const [value, setValue] = useState<string>('');
+      return (
+        <PriceRow
+          {...baseProps}
+          value={value}
+          onChange={(v) => setValue(v)}
+        />
+      );
+    }
+    render(<Wrapper />);
+    const input = screen.getByPlaceholderText('0,00') as HTMLInputElement;
+
+    fireEvent.change(input, { target: { value: '0' } });
+    expect(input.value).toBe('0');
+
+    fireEvent.change(input, { target: { value: '0,' } });
+    expect(input.value).toBe('0,');
+
+    fireEvent.change(input, { target: { value: '0,5' } });
+    expect(input.value).toBe('0,5');
+
+    fireEvent.change(input, { target: { value: '0,55' } });
+    expect(input.value).toBe('0,55');
   });
 });

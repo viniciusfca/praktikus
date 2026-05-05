@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { CFormInput } from '@coreui/react';
 import { formatDecimal, parseDecimal } from '../../utils/masks';
 
@@ -30,37 +30,41 @@ export function PriceRow({
   value,
   onChange,
   error,
-}: PriceRowProps) {
+}: Readonly<PriceRowProps>) {
   const [text, setText] = useState<string>(() => formatInitial(value));
+  // Última string emitida via onChange. Usado para distinguir "echo do form" (devemos
+  // manter o texto digitado) de "mudança externa" (replicar tabela, reset, prefill).
+  const lastEmittedRef = useRef<string>(value == null ? '' : String(value));
 
-  // Sincroniza com valor externo (form reset, replicar tabela 1, etc)
   useEffect(() => {
-    const incoming = formatInitial(value);
-    const parsedCurrent = parseDecimal(text, 2);
-    const parsedIncoming = parseDecimal(incoming, 2);
-    if (parsedCurrent !== parsedIncoming) {
-      setText(incoming);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- text é estado interno; só re-sincroniza quando value externo muda
+    const valueStr = value == null ? '' : String(value);
+    if (valueStr === lastEmittedRef.current) return;
+    lastEmittedRef.current = valueStr;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: re-formata texto quando value externo muda (replicar Tabela 1, reset, prefill)
+    setText(formatInitial(value));
   }, [value]);
+
+  function emit(next: string) {
+    lastEmittedRef.current = next;
+    onChange(next);
+  }
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const raw = e.target.value;
     if (!/^[\d.,]*$/.test(raw)) return; // só dígitos, vírgula e ponto
     setText(raw);
-    const normalized = raw.replace(',', '.');
-    onChange(normalized);
+    emit(raw.replace(',', '.'));
   }
 
   function handleBlur() {
     const parsed = parseDecimal(text, 2);
     if (parsed === null) {
       setText('');
-      onChange('');
+      emit('');
       return;
     }
     setText(formatDecimal(parsed, 2));
-    onChange(String(parsed));
+    emit(String(parsed));
   }
 
   const filled = text !== '';
