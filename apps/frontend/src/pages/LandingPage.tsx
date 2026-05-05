@@ -103,16 +103,15 @@ const HERO_CONTENT: Record<HeroVariant, HeroMockupContent> = {
     ariaLabel: 'Pré-visualização do painel para oficinas',
   },
   recycling: {
-    // Filled by Task 4 — for now mirrors workshop so the component compiles.
-    menu: ['Dashboard', 'Agendamentos', 'OS', 'Clientes', 'Veículos'],
+    menu: ['Dashboard', 'Compras', 'Vendas', 'Caixa', 'Estoque'],
     kpis: [
-      { label: 'OS abertas', value: '24' },
-      { label: 'Faturamento', value: 'R$ 18.4k' },
-      { label: 'Agendamentos', value: '47' },
-      { label: 'Ticket médio', value: 'R$ 386' },
+      { label: 'Compras hoje', value: 'R$ 4.2k' },
+      { label: 'Faturamento', value: 'R$ 22.7k' },
+      { label: 'Caixa', value: 'R$ 1.840' },
+      { label: 'Estoque', value: '8.4t' },
     ],
-    chartLabel: '📈 Gráfico de faturamento',
-    ariaLabel: 'Pré-visualização do painel',
+    chartLabel: '📈 Compras por material',
+    ariaLabel: 'Pré-visualização do painel para recicladoras',
   },
 };
 
