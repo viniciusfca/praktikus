@@ -1,8 +1,12 @@
 import { act, render, screen } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { LandingPage } from './LandingPage';
 
 describe('LandingPage', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('renderiza sem crashar', () => {
     const { container } = render(<LandingPage />);
     expect(container.firstChild).not.toBeNull();
@@ -43,7 +47,6 @@ describe('LandingPage', () => {
     // Depois do swap: KPIs de recycling, sem KPIs de workshop.
     expect(screen.queryByText('OS abertas')).not.toBeInTheDocument();
     expect(screen.getByText('Compras hoje')).toBeInTheDocument();
-
-    vi.useRealTimers();
+    // vi.useRealTimers() moved to afterEach
   });
 });

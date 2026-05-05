@@ -199,11 +199,12 @@ export function LandingPage() {
   const heroPausedRef = useRef(false);
 
   useEffect(() => {
-    const id = globalThis.setInterval(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const id = setInterval(() => {
       if (heroPausedRef.current) return;
       setHeroVariant(v => (v === 'workshop' ? 'recycling' : 'workshop'));
     }, 5000);
-    return () => globalThis.clearInterval(id);
+    return () => clearInterval(id);
   }, []);
 
   const containerPad = isMobile ? '0 18px' : '0 24px';
@@ -295,7 +296,6 @@ export function LandingPage() {
         <div
           onMouseEnter={() => { heroPausedRef.current = true; }}
           onMouseLeave={() => { heroPausedRef.current = false; }}
-          style={{ transition: 'opacity 0.4s ease' }}
         >
           <HeroMockup compact={isMobile} variant={heroVariant} />
         </div>
