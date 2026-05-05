@@ -51,8 +51,8 @@ const plan = {
     'OS e agendamentos ilimitados',
     'Até 5 usuários inclusos',
     'Relatórios avançados',
-    'PDF profissional (OS, orçamentos e tabelas)',
-    'PIX, cartão e recorrência via Asaas',
+    'PDF com sua marca',
+    'Multi-unidade',
     'Suporte prioritário em português',
   ],
 };

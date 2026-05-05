@@ -1,4 +1,4 @@
-import { act, render, screen } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { LandingPage } from './LandingPage';
 
@@ -51,9 +51,12 @@ describe('LandingPage', () => {
   });
 
   it('seção features não menciona Multi-unidade nem "com sua marca"', () => {
-    render(<LandingPage />);
-    expect(screen.queryByText(/Multi-unidade/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/com sua marca/i)).not.toBeInTheDocument();
+    const { container } = render(<LandingPage />);
+    const featuresSection = container.querySelector('section#features');
+    expect(featuresSection).not.toBeNull();
+    const utils = within(featuresSection as HTMLElement);
+    expect(utils.queryByText(/Multi-unidade/i)).not.toBeInTheDocument();
+    expect(utils.queryByText(/com sua marca/i)).not.toBeInTheDocument();
   });
 
   it('seção features inclui Cobrança automática (Asaas)', () => {
