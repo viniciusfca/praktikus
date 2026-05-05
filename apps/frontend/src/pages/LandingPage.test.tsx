@@ -49,4 +49,31 @@ describe('LandingPage', () => {
     expect(screen.getByText('Compras hoje')).toBeInTheDocument();
     // vi.useRealTimers() moved to afterEach
   });
+
+  it('seção features não menciona Multi-unidade nem "com sua marca"', () => {
+    render(<LandingPage />);
+    expect(screen.queryByText(/Multi-unidade/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/com sua marca/i)).not.toBeInTheDocument();
+  });
+
+  it('seção features inclui Cobrança automática (Asaas)', () => {
+    render(<LandingPage />);
+    expect(screen.getByText(/Cobrança automática/i)).toBeInTheDocument();
+    // "Asaas" também aparece no FAQ e no rodapé do pricing — usar getAllByText.
+    expect(screen.getAllByText(/Asaas/i).length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('seção features inclui WhatsApp integrado com selo "Em breve"', () => {
+    render(<LandingPage />);
+    expect(screen.getByText(/WhatsApp integrado/i)).toBeInTheDocument();
+    // O selo "Em breve" aparece em segmentos (Médica/Odonto) e agora também no card de WhatsApp.
+    const seloMatches = screen.getAllByText(/^Em breve$/i);
+    expect(seloMatches.length).toBeGreaterThanOrEqual(3);
+  });
+
+  it('subtítulo da seção features diz "sete superpoderes"', () => {
+    render(<LandingPage />);
+    expect(screen.getByText(/sete superpoderes/i)).toBeInTheDocument();
+    expect(screen.queryByText(/seis superpoderes/i)).not.toBeInTheDocument();
+  });
 });

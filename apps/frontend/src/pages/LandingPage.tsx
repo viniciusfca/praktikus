@@ -33,13 +33,14 @@ const segments = [
   },
 ];
 
-const features = [
+const features: { emoji: string; title: string; desc: string; soon?: boolean }[] = [
   { emoji: '⚡', title: 'Configure em minutos', desc: 'Onboarding guiado por segmento. Seus primeiros agendamentos e OS em menos de 10 min.' },
   { emoji: '🔒', title: 'Dados seguros e exportáveis', desc: 'Backups diários, LGPD-friendly. Seus dados são seus — exporte em CSV ou PDF quando quiser.' },
   { emoji: '✨', title: 'Feito no Brasil', desc: 'Suporte em português, adaptado à realidade de pequenos e médios negócios brasileiros.' },
   { emoji: '📊', title: 'Relatórios que importam', desc: 'Faturamento, ticket médio, top serviços. Decisões baseadas em dados, não em intuição.' },
-  { emoji: '🖨️', title: 'PDF profissional', desc: 'Ordens de serviço e orçamentos prontos para imprimir ou enviar, com sua marca.' },
-  { emoji: '🏢', title: 'Multi-unidade', desc: 'Gerencie várias filiais com permissões granulares e relatórios consolidados.' },
+  { emoji: '🖨️', title: 'PDF profissional', desc: 'Ordens de serviço, orçamentos e tabelas de preço prontos para imprimir ou enviar.' },
+  { emoji: '💳', title: 'Cobrança automática', desc: 'PIX, cartão e recorrência via Asaas. Inadimplência tratada automaticamente — você não precisa lembrar.' },
+  { emoji: '💬', title: 'WhatsApp integrado', desc: 'Atendimento e notificações pelo número da sua empresa, direto do Praktikus.', soon: true },
 ];
 
 const plan = {
@@ -50,8 +51,8 @@ const plan = {
     'OS e agendamentos ilimitados',
     'Até 5 usuários inclusos',
     'Relatórios avançados',
-    'PDF com sua marca',
-    'Multi-unidade',
+    'PDF profissional (OS, orçamentos e tabelas)',
+    'PIX, cartão e recorrência via Asaas',
     'Suporte prioritário em português',
   ],
 };
@@ -385,7 +386,7 @@ export function LandingPage() {
             <em style={{ fontStyle: 'italic', fontFamily: "'Instrument Serif', serif", color: 'var(--cui-primary)', fontWeight: 400 }}>nada que você não</em>.
           </h2>
           <p style={{ color: 'var(--cui-secondary-color)', margin: 0, fontSize: isMobile ? 14 : 15 }}>
-            Um único sistema, seis superpoderes.
+            Um único sistema, sete superpoderes.
           </p>
         </div>
         <div style={{
@@ -395,10 +396,21 @@ export function LandingPage() {
         }}>
           {features.map(f => (
             <div key={f.title} style={{
+              position: 'relative',
               padding: isMobile ? 20 : 24, borderRadius: 14,
               border: '1px solid var(--cui-border-color)',
               background: 'var(--cui-card-bg)',
             }}>
+              {f.soon && (
+                <span style={{
+                  position: 'absolute', top: 12, right: 12,
+                  fontSize: 11, fontWeight: 600, padding: '2px 8px',
+                  borderRadius: 999, background: 'var(--cui-secondary-bg, #f4f5f5)',
+                  color: 'var(--cui-secondary-color)', border: '1px solid var(--cui-border-color)',
+                }}>
+                  Em breve
+                </span>
+              )}
               <div style={{
                 width: 36, height: 36, borderRadius: 10, fontSize: 18,
                 background: 'rgba(52,142,145,0.1)',
