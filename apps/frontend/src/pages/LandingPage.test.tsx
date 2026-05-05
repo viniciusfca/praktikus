@@ -10,7 +10,7 @@ describe('LandingPage', () => {
 
   it('não exibe o selo "Novo · Relatórios v2"', () => {
     render(<LandingPage />);
-    expect(screen.queryByText(/Relatórios v2/i)).toBeNull();
-    expect(screen.queryByText(/^Novo$/i)).toBeNull();
+    expect(screen.queryByText(/Relatórios v2/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/^Novo$/i)).not.toBeInTheDocument();
   });
 });
