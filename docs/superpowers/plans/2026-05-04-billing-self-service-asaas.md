@@ -150,11 +150,7 @@ export class AddBillingSelfServiceFields1750000000000 implements MigrationInterf
     `);
 
     await queryRunner.query(`
-      CREATE INDEX IF NOT EXISTS "idx_billing_invoices_tenant_id"
-        ON "public"."billing_invoices" ("tenant_id")
-    `);
-    await queryRunner.query(`
-      CREATE INDEX IF NOT EXISTS "idx_billing_invoices_status"
+      CREATE INDEX IF NOT EXISTS "idx_billing_invoices_tenant_status"
         ON "public"."billing_invoices" ("tenant_id", "status")
     `);
   }
