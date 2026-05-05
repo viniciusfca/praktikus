@@ -4,6 +4,7 @@ export * from './enums/tenant-segment.enum';
 export * from './enums/cash-register.enums';
 export * from './enums/coleta-status.enum';
 export * from './enums/whatsapp.enums';
+export * from './enums/billing-type.enum';
 export * from './types/top-material';
 export * from './types/coleta';
 export * from './types/cep';
