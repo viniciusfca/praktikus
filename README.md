@@ -2,7 +2,7 @@
 
 Plataforma SaaS multi-tenant para prestadores de serviço. O primeiro segmento atendido são **oficinas mecânicas** (loja de pneus, estética veicular, auto elétrica, troca de óleo). Segmentos futuros planejados: clínicas médicas, odontológicas e barbearias.
 
-**Modelo de negócio:** 30 dias de trial gratuito + R$69,90/mês, com reajuste anual configurável.
+**Modelo de negócio:** 30 dias de trial gratuito + R$ 89,90/mês.
 
 ---
 
