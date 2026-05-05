@@ -79,4 +79,22 @@ describe('LandingPage', () => {
     expect(screen.getByText(/sete superpoderes/i)).toBeInTheDocument();
     expect(screen.queryByText(/seis superpoderes/i)).not.toBeInTheDocument();
   });
+
+  it('pricing: card mostra R$ 89,90 e três listas (universal + oficinas + recicladoras)', () => {
+    render(<LandingPage />);
+    expect(screen.getByText(/R\$ 89,90/)).toBeInTheDocument();
+    expect(screen.getByText(/^Para oficinas$/i)).toBeInTheDocument();
+    expect(screen.getByText(/^Para recicladoras$/i)).toBeInTheDocument();
+    expect(screen.getByText(/Cadastros e movimentações ilimitados/i)).toBeInTheDocument();
+    expect(screen.getByText(/Múltiplas tabelas de preço/i)).toBeInTheDocument();
+    expect(screen.getByText(/Coletas agendadas/i)).toBeInTheDocument();
+  });
+
+  it('pricing: card NÃO menciona "5 usuários", "Multi-unidade", "com sua marca", nem "prioritário"', () => {
+    render(<LandingPage />);
+    expect(screen.queryByText(/5 usuários/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Multi-unidade/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/com sua marca/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Suporte prioritário/i)).not.toBeInTheDocument();
+  });
 });

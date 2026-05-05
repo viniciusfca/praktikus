@@ -47,13 +47,21 @@ const plan = {
   name: 'Praktikus Pro',
   price: 89.90,
   desc: 'Acesso completo, sem limites, sem surpresas.',
-  features: [
-    'OS e agendamentos ilimitados',
-    'Até 5 usuários inclusos',
-    'Relatórios avançados',
-    'PDF com sua marca',
-    'Multi-unidade',
-    'Suporte prioritário em português',
+  universal: [
+    'Cadastros e movimentações ilimitados',
+    'Relatórios mensais e exportação em PDF/CSV',
+    'Suporte em português',
+  ],
+  workshop: [
+    'Agenda, OS e prontuário',
+    'Clientes e veículos com histórico',
+    'Catálogo de serviços e peças',
+  ],
+  recycling: [
+    'Compras, vendas e caixa',
+    'Estoque por material',
+    'Múltiplas tabelas de preço',
+    'Coletas agendadas',
   ],
 };
 
@@ -470,14 +478,43 @@ export function LandingPage() {
 
             <p style={{ margin: 0, fontSize: 14.5, color: 'var(--cui-secondary-color)', lineHeight: 1.5 }}>{plan.desc}</p>
 
-            <ul style={{ listStyle: 'none', padding: 0, margin: '4px 0', display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {plan.features.map(f => (
+            <ul style={{ listStyle: 'none', padding: 0, margin: '4px 0 0', display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {plan.universal.map(f => (
                 <li key={f} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', fontSize: 14 }}>
                   <span style={{ color: 'var(--cui-primary)', flexShrink: 0, marginTop: 1, fontWeight: 700 }}>✓</span>
                   <span>{f}</span>
                 </li>
               ))}
             </ul>
+
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
+              gap: isMobile ? 16 : 20,
+              marginTop: 4,
+              paddingTop: 16,
+              borderTop: '1px solid var(--cui-border-color)',
+            }}>
+              {(['workshop', 'recycling'] as const).map(seg => (
+                <div key={seg}>
+                  <div style={{
+                    fontSize: 11, fontWeight: 600, letterSpacing: '0.08em',
+                    textTransform: 'uppercase', color: 'var(--cui-secondary-color)',
+                    marginBottom: 8,
+                  }}>
+                    {seg === 'workshop' ? 'Para oficinas' : 'Para recicladoras'}
+                  </div>
+                  <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {plan[seg].map(item => (
+                      <li key={item} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', fontSize: 13.5, color: 'var(--cui-body-color)' }}>
+                        <span style={{ color: 'var(--cui-primary)', flexShrink: 0, marginTop: 1 }}>•</span>
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
 
             <CButton
               color="primary"
