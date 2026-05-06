@@ -127,6 +127,7 @@ const HERO_CONTENT: Record<HeroVariant, HeroMockupContent> = {
 function HeroMockup({ compact, variant }: { compact: boolean; variant: HeroVariant }) {
   const content = HERO_CONTENT[variant];
   return (
+    // NOSONAR(rule:S6819) — mockup é uma árvore DOM sintetizada (browser chrome + sidebar + KPIs), não uma imagem real; role="img" é o padrão ARIA correto para apresentar todo o bloco como um único gráfico decorativo-informativo a leitores de tela.
     <div
       role="img"
       aria-label={content.ariaLabel}
@@ -302,6 +303,7 @@ export function LandingPage() {
             ))}
           </div>
         </div>
+        {/* NOSONAR(rule:S6848) — wrapper detecta apenas hover para pausar o auto-swap; não há onClick/keyboard/touch porque é uma feature passiva (a interação ativa fica no HeroMockup interno, que já tem role="img" e aria-label). */}
         <div
           onMouseEnter={() => { heroPausedRef.current = true; }}
           onMouseLeave={() => { heroPausedRef.current = false; }}
