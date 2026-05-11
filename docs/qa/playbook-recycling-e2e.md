@@ -27,7 +27,7 @@ Versão executável das 11 fases descritas em [docs/superpowers/specs/2026-05-11
 
 **Pré-condição**: DB resetado, stack rodando, persona gerada.
 
-1. Abra `http://localhost:8080/register/segment`.
+1. Abra `http://localhost:8080/register`.
 2. **Screenshot ✓** (CP1) — confirme que vê o grid de segmentos (Oficina Mecânica, Recicladoras, etc.).
 3. Clique no card "Recicladoras".
 4. **Checkpoint**: deve redirecionar para `/register/recycling` mostrando um wizard de 2 passos.
@@ -182,14 +182,14 @@ Versão executável das 11 fases descritas em [docs/superpowers/specs/2026-05-11
 
 ## Fase 4 — Abrir caixa
 
+> **Regra de negócio**: o caixa físico só recebe transações de pagamento em **dinheiro (CASH)**. Compras PIX/CARD/ON_CREDIT NÃO tocam o caixa físico. Vendas (qualquer método) **nunca** geram transação automática no caixa — o caixa é controle independente do lojista.
+
 1. Navegue para `/recycling/cash-register`.
 2. **Checkpoint**: deve mostrar status "Caixa fechado" + botão "Abrir caixa".
 3. **Screenshot ✓** (CP1).
-4. Clique "Abrir caixa".
-5. Saldo inicial: `100,00`.
-6. Confirme.
-7. **Checkpoint**: status muda para "Caixa aberto" + horário de abertura visível.
-8. **Screenshot ✓** (CP2).
+4. Clique "Abrir caixa". A sessão abre com saldo inicial R$ 0,00 (puxado do fechamento anterior, ou zerado na primeira sessão).
+5. **Checkpoint**: status muda para "Caixa aberto" + horário de abertura visível.
+6. **Screenshot ✓** (CP2).
 
 **Atualize o running-log.md.**
 
@@ -201,25 +201,27 @@ Versão executável das 11 fases descritas em [docs/superpowers/specs/2026-05-11
 2. **Checkpoint**: lista vazia + KPIs zerados.
 3. **Screenshot ✓** (CP1).
 4. Clique "Nova compra".
-5. **Passo 1**: selecione fornecedor `Cooperativa Reciclar`.
-6. **Screenshot ✓** (CP2) — passo 1.
-7. **Passo 2 — Itens**:
-   - Adicione `Papelão` × `50` kg × R$ `0,50` = R$ 25,00
-   - Adicione `Alumínio` × `10` kg × R$ `8,00` = R$ 80,00
-   - Total geral: R$ 105,00
-8. **Screenshot ✓** (CP3) — passo 2.
-9. **Passo 3 — Pagamento**: Método `PIX`, observações `Compra E2E teste`.
-10. **Screenshot ✓** (CP4) — passo 3.
-11. Clique "Finalizar".
-12. **Checkpoint**: redirect para `/recycling/purchases` (lista) com a nova compra na primeira linha.
-13. **Screenshot ✓** (CP5) — listagem com a compra.
-14. **Checkpoint extra**: navegue para `/recycling/stock` e confirme:
+5. No formulário (página única, não wizard):
+   - Selecione fornecedor `Cooperativa Reciclar`.
+   - Adicione 2 itens:
+     - `Papelão` × `50` kg × R$ `0,50` = R$ 25,00
+     - `Alumínio` × `10` kg × R$ `8,00` = R$ 80,00
+   - Total geral esperado: R$ 105,00.
+   - Método de pagamento: `PIX`.
+   - Observações: `Compra E2E teste`.
+6. **Screenshot ✓** (CP2) — formulário preenchido com total visível.
+7. Clique "Finalizar".
+8. **Checkpoint**: redirect para `/recycling/purchases` (lista) com a nova compra na primeira linha.
+9. **Screenshot ✓** (CP3) — listagem com a compra.
+10. **Checkpoint extra (estoque)**: navegue para `/recycling/stock` e confirme:
     - Papelão: 50 kg
     - Alumínio: 10 kg
     - Ferro: 0 kg
-15. **Screenshot ✓** (CP6) — estoque.
+11. **Screenshot ✓** (CP4) — estoque.
+12. **Checkpoint extra (caixa)**: navegue para `/recycling/cash-register`. Confirme que **NÃO houve transação de saída** no histórico (compra foi PIX, não toca caixa físico). KPI "Saídas" = R$ 0,00.
+13. **Screenshot ✓** (CP5) — caixa sem saídas.
 
-**Bugs comuns a observar**: total não bate, estoque não atualiza, observações perdidas.
+**Bugs comuns a observar**: total não bate, estoque não atualiza, observações perdidas, compra PIX criando movimento no caixa (regressão do bug 🚨-01).
 
 **Atualize o running-log.md.**
 
@@ -234,8 +236,7 @@ Versão executável das 11 fases descritas em [docs/superpowers/specs/2026-05-11
 5. **Passo do form**:
    - Fornecedor: `EcoMaterial Comércio`
    - Data: amanhã
-   - Hora início: `10:00`
-   - Hora fim: `12:00`
+   - Hora: `10:00`
    - Observações: `Coleta de teste`
 6. Salve. **Checkpoint**: coleta aparece no calendário com status "AGENDADA".
 7. **Screenshot ✓** (CP2).
@@ -258,20 +259,20 @@ Versão executável das 11 fases descritas em [docs/superpowers/specs/2026-05-11
 2. **Checkpoint**: lista vazia + KPIs zerados.
 3. **Screenshot ✓** (CP1).
 4. Clique "Nova venda".
-5. **Passo 1**: selecione comprador `Indústria Verde Ltda`.
-6. **Screenshot ✓** (CP2).
-7. **Passo 2 — Itens**:
-   - Adicione `Papelão` × `30` kg × R$ `0,80` = R$ 24,00
-   - **Checkpoint**: o seletor de produto só deve mostrar produtos COM estoque > 0 (Papelão e Alumínio, NÃO Ferro).
-   - **Screenshot ✓** (CP3) — dropdown de produtos disponíveis.
-8. **Passo 3 — Pagamento**: Método `CASH` (Dinheiro), observações `Venda E2E teste`.
-9. Finalize.
-10. **Checkpoint**: redirect para lista, venda na primeira linha.
+5. No formulário (página única):
+   - Selecione comprador `Indústria Verde Ltda`.
+   - Adicione `Papelão` × `30` kg × R$ `0,80` = R$ 24,00.
+   - **Checkpoint UX**: o seletor de produto só deve mostrar produtos COM estoque > 0 (Papelão e Alumínio, NÃO Ferro).
+   - Método de pagamento: `CASH` (Dinheiro).
+   - Observações: `Venda E2E teste`.
+6. **Screenshot ✓** (CP2) — formulário preenchido.
+7. Finalize.
+8. **Checkpoint**: redirect para lista, venda na primeira linha.
+9. **Screenshot ✓** (CP3).
+10. Navegue para `/recycling/stock`. **Checkpoint**: Papelão agora 20 kg (50 − 30).
 11. **Screenshot ✓** (CP4).
-12. Navegue para `/recycling/stock`. **Checkpoint**: Papelão agora 20 kg (50 − 30).
-13. **Screenshot ✓** (CP5).
-14. Navegue para `/recycling/cash-register`. **Checkpoint**: transação automática de R$ 24,00 (entrada CASH) aparece no histórico.
-15. **Screenshot ✓** (CP6).
+12. Navegue para `/recycling/cash-register`. **Checkpoint**: vendas **NÃO** geram transação automática no caixa (regra de negócio). Histórico segue sem entradas; KPI "Entradas" = R$ 0,00.
+13. **Screenshot ✓** (CP5) — caixa sem entradas automáticas de vendas.
 
 **Atualize o running-log.md.**
 
@@ -305,33 +306,34 @@ Versão executável das 11 fases descritas em [docs/superpowers/specs/2026-05-11
 
 ## Fase 9 — Billing self-service ⭐
 
-**Pré-condição CRÍTICA**: `ASAAS_API_KEY` no `.env` aponta para sandbox real, NÃO `mock`. Se for `mock`, pule esta fase com `BLOCKED` e registre como nota.
+**Pré-condição**: `ASAAS_API_KEY` no `.env` pode estar como `mock` (modo dev) **ou** apontar para sandbox real.
+
+### 9.A — Modo mock (default em dev)
+
+Quando `ASAAS_API_KEY=mock`, o backend retorna a URL `/dev/mock-checkout?tenantId=...&type=card`. O frontend abre essa página em popup local; ela tem botões "Simular sucesso" e "Simular falha". Sucesso → chama o endpoint dev `POST /api/billing/dev/simulate-card-checkout` que injeta um webhook fake `CHECKOUT_PAID`.
 
 1. Navegue para `/recycling/settings` → aba "Assinatura".
 2. Clique "Cadastrar forma de pagamento".
-3. **Checkpoint**: popup do Asaas Checkout abre (janela separada, origem `sandbox.asaas.com`).
-4. **Screenshot ✓** (CP1) — popup aberto.
-5. **Limitação esperada**: Claude for Chrome pode não conseguir interagir com a janela popup cross-origin. Tente, mas se travar, registre nota e prossiga.
-6. Se for possível interagir, preencha cartão de teste:
-   - Número: `5162306219378829` (Mastercard sandbox, sempre aprova)
-   - Nome no cartão: `TESTE QA`
-   - CVV: `123`
-   - Validade: `12/29` (ou qualquer futura)
-   - Submeta.
-7. **Checkpoint**: popup fecha automaticamente OU mostra "pagamento aprovado".
-8. Volte para `/recycling/settings` → Assinatura.
-9. **Checkpoint** (com webhook funcionando — ngrok configurado):
-   - Card "Forma de pagamento" agora mostra `MASTERCARD •••• 8829, vence 12/29`.
-   - Botões "Trocar cartão" e "Remover".
-10. **Screenshot ✓** (CP2) — cartão exibido.
-11. Teste **Cancelar assinatura**:
-    - Clique "Cancelar assinatura" no rodapé.
-    - Confirme no modal.
-    - **Checkpoint**: tela mostra `canceledAt` preenchido. Tenant continua com acesso (status ainda ACTIVE).
-12. **Screenshot ✓** (CP3).
+3. **Checkpoint**: popup local abre em `/dev/mock-checkout`.
+4. **Screenshot ✓** (CP1) — popup aberto com botões.
+5. Clique "Simular sucesso".
+6. **Checkpoint**: popup fecha sozinho após ~1,5s.
+7. **Checkpoint**: aba Assinatura mostra `VISA •••• 1234, vence 12/29` no card "Forma de pagamento".
+8. **Screenshot ✓** (CP2) — cartão exibido.
+
+### 9.B — Modo sandbox real (opcional, se configurado)
+
+Mesma sequência, mas o popup abre a página real do Asaas (origem `sandbox.asaas.com`). Use cartão de teste `5162306219378829` / CVV `123` / validade `12/29` / nome `TESTE QA`. Webhook precisa de ngrok pra chegar no backend local.
+
+### 9.C — Cancelar assinatura
+
+1. Clique "Cancelar assinatura" no rodapé.
+2. Confirme no modal.
+3. **Checkpoint**: tela mostra `canceledAt` preenchido. Tenant continua com acesso (status ainda ACTIVE até fim do ciclo).
+4. **Screenshot ✓** (CP3).
 
 **Bugs comuns a observar**:
-- Popup bloqueado (browser blocker).
+- Popup bloqueado (browser popup blocker).
 - Webhook não chega → cartão não aparece após retorno.
 - ConflictException ao tentar "Cadastrar cartão" depois de cancelar.
 
@@ -342,19 +344,21 @@ Versão executável das 11 fases descritas em [docs/superpowers/specs/2026-05-11
 ## Fase 10 — Fechar caixa
 
 1. Navegue para `/recycling/cash-register`.
-2. **Checkpoint**: status "Aberto" desde a Fase 4. Histórico mostra a transação CASH de R$ 24 (venda).
+2. **Checkpoint**: status "Aberto" desde a Fase 4. Como a compra foi PIX e venda nunca toca caixa, o histórico está vazio. KPI Entradas/Saídas = R$ 0,00 / R$ 0,00.
 3. **Screenshot ✓** (CP1).
 4. Clique "Fechar caixa".
 5. Sistema deve apresentar reconciliação:
-   - Saldo inicial: R$ 100,00
-   - Vendas CASH: R$ +24,00
-   - Compras CASH: R$ 0,00 (compra foi PIX)
-   - Saldo final esperado: R$ 124,00
-6. **Checkpoint**: confirme R$ 124,00 (com dinheiro físico hipotético).
+   - Saldo inicial: R$ 0,00
+   - Entradas CASH: R$ 0,00
+   - Saídas CASH: R$ 0,00
+   - Saldo final esperado: R$ 0,00
+6. **Checkpoint**: confirme R$ 0,00 (sem dinheiro físico movimentado nesta sessão).
 7. **Screenshot ✓** (CP2) — tela de reconciliação.
 8. Confirme fechamento.
 9. **Checkpoint**: status volta para "Caixa fechado". Histórico da sessão preservado.
 10. **Screenshot ✓** (CP3).
+
+> **Nota**: pra exercitar o fluxo de reconciliação com valores, faça um lançamento manual antes de fechar — clique "Nova transação", selecione `Entrada / CASH / R$ 50,00 / Suprimento de caixa`. Aí o saldo final esperado vira R$ 50,00.
 
 **Atualize o running-log.md.**
 
