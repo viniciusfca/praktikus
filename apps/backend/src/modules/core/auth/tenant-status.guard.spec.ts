@@ -3,7 +3,13 @@ import { TenantStatusGuard } from './tenant-status.guard';
 
 function makeCtx(user: any): ExecutionContext {
   return {
-    switchToHttp: () => ({ getRequest: () => ({ user }) }),
+    switchToHttp: () => ({ getRequest: () => ({ user, url: '/' }) }),
+  } as any;
+}
+
+function makeCtxWithUrl(user: any, url: string): ExecutionContext {
+  return {
+    switchToHttp: () => ({ getRequest: () => ({ user, url }) }),
   } as any;
 }
 
@@ -34,5 +40,26 @@ describe('TenantStatusGuard', () => {
 
   it('should allow requests without user (unauthenticated routes)', () => {
     expect(guard.canActivate(makeCtx(undefined))).toBe(true);
+  });
+
+  it('lets SUSPENDED tenant access /billing endpoints', () => {
+    expect(
+      guard.canActivate(makeCtxWithUrl({ tenantStatus: 'SUSPENDED' }, '/billing')),
+    ).toBe(true);
+    expect(
+      guard.canActivate(makeCtxWithUrl({ tenantStatus: 'SUSPENDED' }, '/billing/invoices/open')),
+    ).toBe(true);
+  });
+
+  it('lets SUSPENDED tenant access /auth endpoints', () => {
+    expect(
+      guard.canActivate(makeCtxWithUrl({ tenantStatus: 'SUSPENDED' }, '/auth/refresh')),
+    ).toBe(true);
+  });
+
+  it('blocks SUSPENDED tenant on other paths', () => {
+    expect(() =>
+      guard.canActivate(makeCtxWithUrl({ tenantStatus: 'SUSPENDED' }, '/orders')),
+    ).toThrow(/conta_suspensa/);
   });
 });
