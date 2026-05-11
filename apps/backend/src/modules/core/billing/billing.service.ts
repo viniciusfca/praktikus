@@ -1,4 +1,9 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
@@ -11,6 +16,7 @@ import { TenancyService } from '../tenancy/tenancy.service';
 import { MailService } from '../mail/mail.service';
 import { BillingSummaryDto } from './dto/billing-summary.dto';
 import { OpenInvoiceDto } from './dto/open-invoice.dto';
+import { CheckoutSessionDto } from './dto/checkout-session.dto';
 
 @Injectable()
 export class BillingService {
@@ -271,6 +277,104 @@ export class BillingService {
       billingType: i.billingType,
       pix: null,
     }));
+  }
+
+  async createCheckoutSessionForCard(
+    tenantId: string,
+    email: string,
+  ): Promise<CheckoutSessionDto> {
+    const tenant = await this.tenancyService.findById(tenantId);
+    if (!tenant) throw new NotFoundException('Tenant not found');
+    const billing = await this.billingRepo.findOne({ where: { tenantId } });
+    if (!billing?.asaasCustomerId) {
+      throw new ConflictException('Tenant billing not initialized');
+    }
+
+    if (this.isMock) {
+      return {
+        checkoutUrl: `https://mock-checkout.local/${tenantId}`,
+        sessionId: `mock_chk_${tenantId}_${Date.now()}`,
+      };
+    }
+
+    if (
+      tenant.status !== TenantStatus.TRIAL &&
+      tenant.status !== TenantStatus.ACTIVE
+    ) {
+      throw new ConflictException(
+        `Cannot create card checkout for tenant in status ${tenant.status}. Pay open invoice first.`,
+      );
+    }
+
+    const planValue = parseFloat(
+      this.config.get<string>('ASAAS_PLAN_VALUE', '89.90'),
+    );
+    const expireMinutes = parseInt(
+      this.config.get<string>('ASAAS_CHECKOUT_EXPIRE_MINUTES', '30'),
+      10,
+    );
+
+    // TODO: nextDueDate uses local-time setDate() with UTC toISOString() — risk of off-by-one near midnight in BRT. Use timezone-aware formatter.
+    let nextDueDate: string;
+    if (tenant.status === TenantStatus.TRIAL && tenant.trialEndsAt) {
+      nextDueDate = tenant.trialEndsAt.toISOString().split('T')[0];
+    } else {
+      const d = new Date();
+      d.setDate(d.getDate() + 30);
+      nextDueDate = d.toISOString().split('T')[0];
+    }
+
+    const res = await this.asaas.post<{ id: string; link: string }>(
+      '/checkouts',
+      {
+        billingTypes: ['CREDIT_CARD'],
+        chargeTypes: ['RECURRENT'],
+        minutesToExpire: expireMinutes,
+        callback: {
+          successUrl: this.config.get<string>('ASAAS_CHECKOUT_SUCCESS_URL'),
+          cancelUrl: this.config.get<string>('ASAAS_CHECKOUT_CANCEL_URL'),
+          expiredUrl: this.config.get<string>('ASAAS_CHECKOUT_EXPIRED_URL'),
+        },
+        items: [{ name: 'Plano Praktikus', value: planValue, quantity: 1 }],
+        customerData: {
+          name: tenant.nomeFantasia,
+          email,
+          cpfCnpj: tenant.cnpj,
+        },
+        subscription: {
+          cycle: 'MONTHLY',
+          nextDueDate,
+        },
+        externalReference: `tenant_${tenantId}`,
+      },
+    );
+
+    return { checkoutUrl: res.link, sessionId: res.id };
+  }
+
+  async createCheckoutSessionForInvoice(
+    tenantId: string,
+    invoiceId: string,
+  ): Promise<CheckoutSessionDto> {
+    const invoice = await this.invoiceRepo.findOne({
+      where: { id: invoiceId },
+    });
+    if (!invoice || invoice.tenantId !== tenantId) {
+      throw new NotFoundException('Invoice not found');
+    }
+
+    if (this.isMock) {
+      return {
+        checkoutUrl: `https://mock-checkout.local/inv/${invoiceId}`,
+        sessionId: `mock_chk_inv_${invoiceId}`,
+      };
+    }
+
+    const res = await this.asaas.post<{ link: string }>(
+      `/payments/${invoice.asaasPaymentId}/checkoutPayment`,
+      {},
+    );
+    return { checkoutUrl: res.link, sessionId: invoice.asaasPaymentId };
   }
 
   private async fetchIpcaAccumulado12Months(): Promise<number> {

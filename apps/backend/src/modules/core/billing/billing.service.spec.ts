@@ -432,4 +432,149 @@ describe('BillingService', () => {
       expect(list).toHaveLength(1);
     });
   });
+
+  describe('createCheckoutSessionForCard', () => {
+    beforeEach(() => {
+      mockAsaasClient.isMock = false;
+      mockConfig.get.mockImplementation((k: string, d?: string) => {
+        const map: Record<string, string> = {
+          ASAAS_API_KEY: 'real',
+          ASAAS_PLAN_VALUE: '89.90',
+          ASAAS_CHECKOUT_SUCCESS_URL: 'https://app/success',
+          ASAAS_CHECKOUT_CANCEL_URL: 'https://app/cancel',
+          ASAAS_CHECKOUT_EXPIRED_URL: 'https://app/expired',
+          ASAAS_CHECKOUT_EXPIRE_MINUTES: '30',
+        };
+        return map[k] ?? d;
+      });
+    });
+
+    it('uses trialEndsAt as nextDueDate when tenant in TRIAL', async () => {
+      const trialEnd = new Date('2026-06-04');
+      mockTenancyService.findById.mockResolvedValue({
+        id: 't1',
+        status: 'TRIAL',
+        trialEndsAt: trialEnd,
+        cnpj: '12345678901234',
+        nomeFantasia: 'Foo',
+        razaoSocial: 'Foo Ltda',
+      });
+      mockBillingRepo.findOne.mockResolvedValue({ asaasCustomerId: 'cus_1' });
+      mockAsaasClient.post.mockResolvedValue({
+        id: 'chk_1',
+        link: 'https://asaas/checkout/1',
+      });
+
+      await service.createCheckoutSessionForCard('t1', 'a@b.com');
+
+      expect(mockAsaasClient.post).toHaveBeenCalledWith(
+        '/checkouts',
+        expect.objectContaining({
+          billingTypes: ['CREDIT_CARD'],
+          chargeTypes: ['RECURRENT'],
+          subscription: expect.objectContaining({ nextDueDate: '2026-06-04' }),
+          externalReference: 'tenant_t1',
+        }),
+      );
+    });
+
+    it('uses today+30 as nextDueDate when tenant ACTIVE', async () => {
+      mockTenancyService.findById.mockResolvedValue({
+        id: 't1',
+        status: 'ACTIVE',
+        trialEndsAt: null,
+        cnpj: '12345678901234',
+        nomeFantasia: 'Foo',
+        razaoSocial: 'Foo Ltda',
+      });
+      mockBillingRepo.findOne.mockResolvedValue({ asaasCustomerId: 'cus_1' });
+      mockAsaasClient.post.mockResolvedValue({
+        id: 'chk_1',
+        link: 'https://asaas/2',
+      });
+
+      await service.createCheckoutSessionForCard('t1', 'a@b.com');
+
+      const call = mockAsaasClient.post.mock.calls[0][1] as any;
+      const expected = new Date();
+      expected.setDate(expected.getDate() + 30);
+      expect(call.subscription.nextDueDate).toBe(
+        expected.toISOString().split('T')[0],
+      );
+    });
+
+    it('returns mock URL in mock mode', async () => {
+      mockAsaasClient.isMock = true;
+      mockTenancyService.findById.mockResolvedValue({
+        id: 't1',
+        status: 'TRIAL',
+        trialEndsAt: new Date(),
+        cnpj: '12345678901234',
+        nomeFantasia: 'Foo',
+        razaoSocial: 'Foo Ltda',
+      });
+      mockBillingRepo.findOne.mockResolvedValue({ asaasCustomerId: 'cus_1' });
+
+      const result = await service.createCheckoutSessionForCard(
+        't1',
+        'a@b.com',
+      );
+      expect(result.checkoutUrl).toMatch(/mock-checkout/);
+      expect(result.sessionId).toMatch(/^mock_chk_/);
+    });
+
+    it('throws ConflictException when tenant status is SUSPENDED', async () => {
+      mockAsaasClient.isMock = false;
+      mockTenancyService.findById.mockResolvedValue({
+        id: 't1',
+        status: 'SUSPENDED',
+        trialEndsAt: null,
+        cnpj: '12345678901234',
+        nomeFantasia: 'Foo',
+      });
+      mockBillingRepo.findOne.mockResolvedValue({ asaasCustomerId: 'cus_1' });
+
+      await expect(
+        service.createCheckoutSessionForCard('t1', 'a@b.com'),
+      ).rejects.toThrow(
+        /Cannot create card checkout for tenant in status SUSPENDED/,
+      );
+    });
+  });
+
+  describe('createCheckoutSessionForInvoice', () => {
+    it('calls checkoutPayment endpoint for given invoice', async () => {
+      mockAsaasClient.isMock = false;
+      mockInvoiceRepo.findOne.mockResolvedValue({
+        id: 'inv1',
+        asaasPaymentId: 'pay_1',
+        tenantId: 't1',
+      });
+      mockAsaasClient.post.mockResolvedValue({
+        link: 'https://asaas/inv-pay/1',
+      });
+
+      const result = await service.createCheckoutSessionForInvoice(
+        't1',
+        'inv1',
+      );
+
+      expect(mockAsaasClient.post).toHaveBeenCalledWith(
+        '/payments/pay_1/checkoutPayment',
+        {},
+      );
+      expect(result.checkoutUrl).toBe('https://asaas/inv-pay/1');
+    });
+
+    it('throws if invoice belongs to another tenant', async () => {
+      mockInvoiceRepo.findOne.mockResolvedValue({
+        id: 'inv1',
+        asaasPaymentId: 'pay_1',
+        tenantId: 'OTHER',
+      });
+      await expect(
+        service.createCheckoutSessionForInvoice('t1', 'inv1'),
+      ).rejects.toThrow(/not found/i);
+    });
+  });
 });
