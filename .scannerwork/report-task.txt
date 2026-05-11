@@ -1,0 +1,6 @@
+projectKey=praktikus
+serverUrl=http://localhost:9000
+serverVersion=10.7.0.96327
+dashboardUrl=http://localhost:9000/dashboard?id=praktikus
+ceTaskId=15b4b266-b11b-4d0a-a042-57793366a256
+ceTaskUrl=http://localhost:9000/api/ce/task?id=15b4b266-b11b-4d0a-a042-57793366a256

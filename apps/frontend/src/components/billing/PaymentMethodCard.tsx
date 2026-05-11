@@ -3,15 +3,45 @@ import type { BillingSummary } from '../../services/billing.service';
 
 interface Props {
   readonly summary: BillingSummary;
+  readonly hasOpenInvoice?: boolean;
   readonly onAddCard: () => void;       // abre popup checkout
   readonly onRemoveCard: () => void;
 }
 
 function CardContent({
   summary,
+  hasOpenInvoice = false,
   onAddCard,
   onRemoveCard,
 }: Props) {
+  // When there's an open invoice, block payment method changes
+  if (hasOpenInvoice) {
+    if (summary.card) {
+      return (
+        <>
+          <div style={{ fontSize: 15, fontWeight: 600 }}>
+            {summary.card.brand} •••• {summary.card.last4}
+          </div>
+          <div style={{ fontSize: 13, color: '#5b6868' }}>Vence {summary.card.expiry}</div>
+          <div style={{ marginTop: 12, fontSize: 12, color: '#92400e' }}>
+            Pague a fatura aberta acima para gerenciar a forma de pagamento.
+          </div>
+        </>
+      );
+    }
+
+    return (
+      <>
+        <div style={{ fontSize: 14, color: '#5b6868', marginBottom: 12 }}>
+          Nenhuma forma de pagamento cadastrada.
+        </div>
+        <div style={{ fontSize: 12, color: '#92400e' }}>
+          Pague a fatura aberta acima para gerenciar a forma de pagamento.
+        </div>
+      </>
+    );
+  }
+
   if (summary.card) {
     return (
       <>

@@ -84,9 +84,7 @@ describe('AdminWhatsappService', () => {
       .mockResolvedValueOnce(1)
       .mockResolvedValueOnce(0)
       .mockResolvedValueOnce(0);
-    repo.find
-      .mockResolvedValueOnce([tenant])
-      .mockResolvedValueOnce([]);
+    repo.find.mockResolvedValueOnce([tenant]).mockResolvedValueOnce([]);
     repo.getRawMany.mockResolvedValueOnce([]);
     const out = await service.list();
     expect(out.using[0].enabledAt).toBe(updatedAt.toISOString());
@@ -110,9 +108,7 @@ describe('AdminWhatsappService', () => {
       .mockResolvedValueOnce(0)
       .mockResolvedValueOnce(0)
       .mockResolvedValueOnce(0);
-    repo.find
-      .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([tenant]);
+    repo.find.mockResolvedValueOnce([]).mockResolvedValueOnce([tenant]);
     repo.getRawMany.mockResolvedValueOnce([]);
     const out = await service.list();
     expect(out.notUsing[0].enabledAt).toBeNull();

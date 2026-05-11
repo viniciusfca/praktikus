@@ -15,7 +15,7 @@ export interface WhatsappResponseDto {
   kpis: {
     adoptionRate: number; // 0..1
     starterCount: number; // WhatsappPlan.STARTER
-    proCount: number;     // WhatsappPlan.PRO
+    proCount: number; // WhatsappPlan.PRO
     enterpriseCount: number; // WhatsappPlan.ENTERPRISE
     addOnMrr: null;
   };

@@ -3,10 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { TenantEntity, TenantStatus } from '../../tenancy/tenant.entity';
 import { ListTenantsQueryDto } from './dto/list-tenants-query.dto';
-import {
-  TenantListItem,
-  TenantsResponseDto,
-} from './dto/tenants-response.dto';
+import { TenantListItem, TenantsResponseDto } from './dto/tenants-response.dto';
 
 @Injectable()
 export class AdminTenantsService {

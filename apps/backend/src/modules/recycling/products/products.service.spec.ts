@@ -395,5 +395,4 @@ describe('ProductsService.list e getById', () => {
       active: true,
     });
   });
-
 });

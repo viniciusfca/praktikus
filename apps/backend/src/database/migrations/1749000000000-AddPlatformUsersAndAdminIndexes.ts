@@ -1,8 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class AddPlatformUsersAndAdminIndexes1749000000000
-  implements MigrationInterface
-{
+export class AddPlatformUsersAndAdminIndexes1749000000000 implements MigrationInterface {
   name = 'AddPlatformUsersAndAdminIndexes1749000000000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
@@ -84,8 +82,6 @@ export class AddPlatformUsersAndAdminIndexes1749000000000
     await queryRunner.query(
       `DROP TABLE IF EXISTS "public"."platform_refresh_tokens"`,
     );
-    await queryRunner.query(
-      `DROP TABLE IF EXISTS "public"."platform_users"`,
-    );
+    await queryRunner.query(`DROP TABLE IF EXISTS "public"."platform_users"`);
   }
 }

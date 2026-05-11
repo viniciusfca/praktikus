@@ -37,7 +37,9 @@ describe('PriceTablesService', () => {
   });
 
   it('list() rejeita tenantId inválido', async () => {
-    await expect(service.list('not-a-uuid')).rejects.toThrow('Invalid tenantId');
+    await expect(service.list('not-a-uuid')).rejects.toThrow(
+      'Invalid tenantId',
+    );
   });
 
   it('list() seta search_path e retorna tabelas ativas ordenadas', async () => {

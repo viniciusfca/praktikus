@@ -46,7 +46,14 @@ import { BillingEntity } from '../billing/billing.entity';
       { name: 'default', ttl: 15 * 60 * 1000, limit: 1000 },
     ]),
   ],
-  controllers: [PlatformAuthController, AdminOverviewController, AdminTenantsController, AdminSegmentsController, AdminWhatsappController, AdminFinancialController],
+  controllers: [
+    PlatformAuthController,
+    AdminOverviewController,
+    AdminTenantsController,
+    AdminSegmentsController,
+    AdminWhatsappController,
+    AdminFinancialController,
+  ],
   providers: [
     PlatformAuthService,
     PlatformJwtStrategy,

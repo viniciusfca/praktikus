@@ -37,7 +37,11 @@ export class AdminOverviewService {
 
     return {
       kpis: {
-        activeTenants: { value: activeCount, deltaVsLastMonth: null, sparkline },
+        activeTenants: {
+          value: activeCount,
+          deltaVsLastMonth: null,
+          sparkline,
+        },
         trialTenants: { value: trialCount, deltaVsLastMonth: null, sparkline },
         whatsappTenants: {
           value: whatsappCount,
@@ -72,12 +76,13 @@ export class AdminOverviewService {
   }
 
   private async segmentDistribution() {
-    const rows: Array<{ segment: string; count: string }> = await this.tenantRepo
-      .createQueryBuilder('t')
-      .select('t.segment', 'segment')
-      .addSelect('COUNT(*)', 'count')
-      .groupBy('t.segment')
-      .getRawMany();
+    const rows: Array<{ segment: string; count: string }> =
+      await this.tenantRepo
+        .createQueryBuilder('t')
+        .select('t.segment', 'segment')
+        .addSelect('COUNT(*)', 'count')
+        .groupBy('t.segment')
+        .getRawMany();
     return rows.map((r) => ({
       segment: r.segment as TenantSegment,
       count: Number(r.count),
@@ -85,13 +90,13 @@ export class AdminOverviewService {
   }
 
   private async ufDistribution() {
-    const rows: Array<{ uf: string | null; count: string }> = await this
-      .tenantRepo
-      .createQueryBuilder('t')
-      .select(`COALESCE(t.endereco->>'state', 'UNKNOWN')`, 'uf')
-      .addSelect('COUNT(*)', 'count')
-      .groupBy(`COALESCE(t.endereco->>'state', 'UNKNOWN')`)
-      .getRawMany();
+    const rows: Array<{ uf: string | null; count: string }> =
+      await this.tenantRepo
+        .createQueryBuilder('t')
+        .select(`COALESCE(t.endereco->>'state', 'UNKNOWN')`, 'uf')
+        .addSelect('COUNT(*)', 'count')
+        .groupBy(`COALESCE(t.endereco->>'state', 'UNKNOWN')`)
+        .getRawMany();
     return rows
       .map((r) => ({ uf: r.uf ?? 'UNKNOWN', count: Number(r.count) }))
       .sort((a, b) => b.count - a.count);

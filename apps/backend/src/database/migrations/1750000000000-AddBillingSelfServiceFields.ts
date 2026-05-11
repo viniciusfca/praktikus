@@ -43,7 +43,9 @@ export class AddBillingSelfServiceFields1750000000000 implements MigrationInterf
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`DROP TABLE IF EXISTS "public"."billing_invoices" CASCADE`);
+    await queryRunner.query(
+      `DROP TABLE IF EXISTS "public"."billing_invoices" CASCADE`,
+    );
     await queryRunner.query(`
       ALTER TABLE "public"."billing"
         DROP COLUMN IF EXISTS "canceled_at",

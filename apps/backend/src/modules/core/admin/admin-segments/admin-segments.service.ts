@@ -3,7 +3,10 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { TenantEntity } from '../../tenancy/tenant.entity';
 import { TenantSegment } from '@praktikus/shared';
-import { SegmentBreakdown, SegmentsResponseDto } from './dto/segments-response.dto';
+import {
+  SegmentBreakdown,
+  SegmentsResponseDto,
+} from './dto/segments-response.dto';
 
 @Injectable()
 export class AdminSegmentsService {

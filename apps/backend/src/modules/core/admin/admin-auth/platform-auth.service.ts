@@ -86,7 +86,9 @@ export class PlatformAuthService {
     };
     const expiresIn =
       this.config.get<string>('PLATFORM_JWT_EXPIRES_IN') ?? '8h';
-    const signOptions: JwtSignOptions = { expiresIn: expiresIn as JwtSignOptions['expiresIn'] };
+    const signOptions: JwtSignOptions = {
+      expiresIn: expiresIn as JwtSignOptions['expiresIn'],
+    };
     const accessToken = this.jwt.sign(payload, signOptions);
 
     const refreshToken = crypto.randomBytes(40).toString('hex');

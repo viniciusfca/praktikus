@@ -261,16 +261,16 @@ describe('PurchasesService', () => {
 
     it('rejeita priceTableId que não existe', async () => {
       mockPriceTableRepo.findOne.mockResolvedValue(null);
-      await expect(
-        service.create(TENANT2, OPERATOR2, baseDto),
-      ).rejects.toThrow('Tabela de preço inválida ou inativa');
+      await expect(service.create(TENANT2, OPERATOR2, baseDto)).rejects.toThrow(
+        'Tabela de preço inválida ou inativa',
+      );
     });
 
     it('rejeita priceTableId de tabela inativa (query filtra por active=true)', async () => {
       mockPriceTableRepo.findOne.mockResolvedValue(null);
-      await expect(
-        service.create(TENANT2, OPERATOR2, baseDto),
-      ).rejects.toThrow('Tabela de preço inválida ou inativa');
+      await expect(service.create(TENANT2, OPERATOR2, baseDto)).rejects.toThrow(
+        'Tabela de preço inválida ou inativa',
+      );
       expect(mockPriceTableRepo.findOne).toHaveBeenCalledWith({
         where: { id: TABLE, active: true },
       });
@@ -282,8 +282,14 @@ describe('PurchasesService', () => {
         isDefault: true,
         active: true,
       });
-      mockSessionRepo.findOne.mockResolvedValue({ id: 'session-1', status: 'OPEN' });
-      mockPurchaseRepo.create.mockImplementation((p) => ({ ...p, id: 'purchase-1' }));
+      mockSessionRepo.findOne.mockResolvedValue({
+        id: 'session-1',
+        status: 'OPEN',
+      });
+      mockPurchaseRepo.create.mockImplementation((p) => ({
+        ...p,
+        id: 'purchase-1',
+      }));
       mockPurchaseRepo.save.mockImplementation((p) => Promise.resolve(p));
 
       await service.create(TENANT2, OPERATOR2, baseDto);
@@ -299,13 +305,22 @@ describe('PurchasesService', () => {
         isDefault: true,
         active: true,
       });
-      mockSessionRepo.findOne.mockResolvedValue({ id: 'session-1', status: 'OPEN' });
-      mockPurchaseRepo.create.mockImplementation((p) => ({ ...p, id: 'purchase-1' }));
+      mockSessionRepo.findOne.mockResolvedValue({
+        id: 'session-1',
+        status: 'OPEN',
+      });
+      mockPurchaseRepo.create.mockImplementation((p) => ({
+        ...p,
+        id: 'purchase-1',
+      }));
       mockPurchaseRepo.save.mockImplementation((p) => Promise.resolve(p));
       mockItemRepo.create.mockImplementation((p) => p);
       mockItemRepo.save.mockImplementation((p) => Promise.resolve(p));
 
-      const dto = { ...baseDto, items: [{ ...baseDto.items[0], unitPrice: 999 }] };
+      const dto = {
+        ...baseDto,
+        items: [{ ...baseDto.items[0], unitPrice: 999 }],
+      };
       await service.create(TENANT2, OPERATOR2, dto);
 
       expect(mockItemRepo.create).toHaveBeenCalledWith(
@@ -313,7 +328,9 @@ describe('PurchasesService', () => {
       );
 
       // Assert NO product-prices lookup happened during create
-      const allCalls = mockQueryRunner.manager.getRepository.mock.calls.map(([entity]) => (entity as { name: string }).name);
+      const allCalls = mockQueryRunner.manager.getRepository.mock.calls.map(
+        ([entity]) => (entity as { name: string }).name,
+      );
       expect(allCalls).not.toContain('ProductEntity');
       expect(allCalls).not.toContain('ProductPriceEntity');
     });

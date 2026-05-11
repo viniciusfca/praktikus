@@ -18,19 +18,18 @@ export class AdminWhatsappService {
   async list(): Promise<WhatsappResponseDto> {
     const eligibleStatuses = [TenantStatus.ACTIVE, TenantStatus.TRIAL];
 
-    const [
-      eligibleCount,
-      usingCount,
-      starterCount,
-      proCount,
-      enterpriseCount,
-    ] = await Promise.all([
-      this.repo.count({ where: { status: In(eligibleStatuses) } }),
-      this.repo.count({ where: { whatsappEnabled: true } }),
-      this.repo.count({ where: { whatsappPlan: WhatsappPlan.STARTER } as any }),
-      this.repo.count({ where: { whatsappPlan: WhatsappPlan.PRO } as any }),
-      this.repo.count({ where: { whatsappPlan: WhatsappPlan.ENTERPRISE } as any }),
-    ]);
+    const [eligibleCount, usingCount, starterCount, proCount, enterpriseCount] =
+      await Promise.all([
+        this.repo.count({ where: { status: In(eligibleStatuses) } }),
+        this.repo.count({ where: { whatsappEnabled: true } }),
+        this.repo.count({
+          where: { whatsappPlan: WhatsappPlan.STARTER } as any,
+        }),
+        this.repo.count({ where: { whatsappPlan: WhatsappPlan.PRO } as any }),
+        this.repo.count({
+          where: { whatsappPlan: WhatsappPlan.ENTERPRISE } as any,
+        }),
+      ]);
 
     type SegmentRow = { segment: string; using: string; eligible: string };
 

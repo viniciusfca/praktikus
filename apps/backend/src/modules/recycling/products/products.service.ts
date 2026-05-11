@@ -80,7 +80,9 @@ export class ProductsService {
     const tablesById = new Map(tables.map((t) => [t.id, t]));
     const defaultTable = tables.find((t) => t.isDefault);
     if (!defaultTable) {
-      throw new InternalServerErrorException('Configuração de tabelas de preço inválida.');
+      throw new InternalServerErrorException(
+        'Configuração de tabelas de preço inválida.',
+      );
     }
 
     // Toda chave deve corresponder a uma tabela ativa.
@@ -224,10 +226,12 @@ export class ProductsService {
               .getRepository(ProductPriceEntity)
               .delete({ productId: id, priceTableId: tableId });
           } else {
-            await manager.getRepository(ProductPriceEntity).upsert(
-              { productId: id, priceTableId: tableId, price: price },
-              ['productId', 'priceTableId'],
-            );
+            await manager
+              .getRepository(ProductPriceEntity)
+              .upsert({ productId: id, priceTableId: tableId, price: price }, [
+                'productId',
+                'priceTableId',
+              ]);
           }
         }
         product.pricePerUnit = dto.prices[defaultTable.id] as number;

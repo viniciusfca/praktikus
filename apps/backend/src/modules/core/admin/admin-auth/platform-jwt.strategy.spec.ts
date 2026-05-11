@@ -2,7 +2,10 @@ import { Test } from '@nestjs/testing';
 import { UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { PlatformJwtStrategy, PlatformJwtPayload } from './platform-jwt.strategy';
+import {
+  PlatformJwtStrategy,
+  PlatformJwtPayload,
+} from './platform-jwt.strategy';
 import { PlatformUserEntity } from './platform-user.entity';
 
 describe('PlatformJwtStrategy', () => {
@@ -60,7 +63,10 @@ describe('PlatformJwtStrategy', () => {
   });
 
   it('lança UnauthorizedException quando is_platform_user não é true', async () => {
-    const payload = { ...basePayload, is_platform_user: false } as unknown as PlatformJwtPayload;
+    const payload = {
+      ...basePayload,
+      is_platform_user: false,
+    } as unknown as PlatformJwtPayload;
     await expect(strategy.validate(payload)).rejects.toBeInstanceOf(
       UnauthorizedException,
     );

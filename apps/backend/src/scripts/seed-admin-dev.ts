@@ -9,12 +9,28 @@ import * as bcrypt from 'bcrypt';
 import { faker } from '@faker-js/faker/locale/pt_BR';
 import { AppDataSource } from '../database/data-source';
 import { PlatformUserEntity } from '../modules/core/admin/admin-auth/platform-user.entity';
-import { TenantEntity, TenantStatus } from '../modules/core/tenancy/tenant.entity';
+import {
+  TenantEntity,
+  TenantStatus,
+} from '../modules/core/tenancy/tenant.entity';
 import { TenantSegment } from '@praktikus/shared';
 
 const UFS = [
-  'SP', 'RJ', 'MG', 'RS', 'PR', 'SC', 'BA', 'GO', 'PE', 'CE',
-  'DF', 'ES', 'PA', 'AM', 'MT',
+  'SP',
+  'RJ',
+  'MG',
+  'RS',
+  'PR',
+  'SC',
+  'BA',
+  'GO',
+  'PE',
+  'CE',
+  'DF',
+  'ES',
+  'PA',
+  'AM',
+  'MT',
 ];
 
 const CITIES_BY_UF: Record<string, string[]> = {
@@ -74,10 +90,9 @@ function buildFakeTenant(i: number): Partial<TenantEntity> {
   const wppEnabled = Math.random() < 0.4;
   const trialEndsAt = buildTrialEndsAt(status);
 
-  const cnpj = faker.string.numeric(14).replace(
-    /(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/,
-    '$1.$2.$3/$4-$5',
-  );
+  const cnpj = faker.string
+    .numeric(14)
+    .replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
 
   const idx = String(i).padStart(3, '0');
 
@@ -105,7 +120,10 @@ function buildFakeTenant(i: number): Partial<TenantEntity> {
   };
 }
 
-async function upsertPlatformOwner(ownerEmail: string, ownerPassword: string): Promise<void> {
+async function upsertPlatformOwner(
+  ownerEmail: string,
+  ownerPassword: string,
+): Promise<void> {
   const userRepo = AppDataSource.getRepository(PlatformUserEntity);
   const passwordHash = await bcrypt.hash(ownerPassword, 12);
   const existing = await userRepo.findOne({ where: { email: ownerEmail } });

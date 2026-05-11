@@ -135,7 +135,12 @@ export function SubscriptionTab() {
         />
       )}
 
-      <PaymentMethodCard summary={summary} onAddCard={startCardCheckout} onRemoveCard={removeCard} />
+      <PaymentMethodCard
+        summary={summary}
+        hasOpenInvoice={!!openInvoice && (openInvoice.status === 'PENDING' || openInvoice.status === 'OVERDUE')}
+        onAddCard={startCardCheckout}
+        onRemoveCard={removeCard}
+      />
 
       <Card header={<CardTitle title="Histórico de faturas" />}>
         <InvoiceHistoryTable invoices={history} />

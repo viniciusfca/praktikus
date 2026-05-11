@@ -21,10 +21,16 @@ export function IsPriceMap(options?: ValidationOptions) {
       options: { message: 'Mapa de preços inválido', ...options },
       validator: {
         validate(value: unknown, _args: ValidationArguments) {
-          if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+          if (
+            typeof value !== 'object' ||
+            value === null ||
+            Array.isArray(value)
+          ) {
             return false;
           }
-          for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+          for (const [k, v] of Object.entries(
+            value as Record<string, unknown>,
+          )) {
             if (!UUID_REGEX.test(k)) return false;
             if (v === null) continue;
             if (typeof v !== 'number' || !Number.isFinite(v) || v <= 0) {
