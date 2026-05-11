@@ -106,6 +106,12 @@ export class BillingService {
     return billing?.tenantId ?? null;
   }
 
+  async getInvoiceById(
+    invoiceId: string,
+  ): Promise<BillingInvoiceEntity | null> {
+    return this.invoiceRepo.findOne({ where: { id: invoiceId } });
+  }
+
   @Cron('0 9 1 * *') // dia 1 de cada mês às 9h
   async applyAnnualAdjustment(): Promise<void> {
     const today = new Date();
@@ -166,14 +172,13 @@ export class BillingService {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const paymentUrl =
-      this.config.get<string>(
-        'FRONTEND_URL',
-        'https://app.praktikus.com.br',
-      ) + '/workshop/settings';
+      this.config.get<string>('FRONTEND_URL', 'https://app.praktikus.com.br') +
+      '/workshop/settings';
 
     for (const tenant of tenants) {
       try {
-        if (tenant.status !== TenantStatus.TRIAL || !tenant.trialEndsAt) continue;
+        if (tenant.status !== TenantStatus.TRIAL || !tenant.trialEndsAt)
+          continue;
         const end = new Date(tenant.trialEndsAt);
         end.setHours(0, 0, 0, 0);
         const daysLeft = Math.ceil(
@@ -216,10 +221,8 @@ export class BillingService {
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - graceDays);
     const paymentUrl =
-      this.config.get<string>(
-        'FRONTEND_URL',
-        'https://app.praktikus.com.br',
-      ) + '/workshop/settings';
+      this.config.get<string>('FRONTEND_URL', 'https://app.praktikus.com.br') +
+      '/workshop/settings';
 
     const tenants = await this.tenancyService.listAll();
     for (const tenant of tenants) {
@@ -229,7 +232,10 @@ export class BillingService {
         // (que avança em qualquer write no tenant e zeraria o grace period).
         if (!tenant.overdueAt || tenant.overdueAt > cutoff) continue;
 
-        await this.tenancyService.updateStatus(tenant.id, TenantStatus.SUSPENDED);
+        await this.tenancyService.updateStatus(
+          tenant.id,
+          TenantStatus.SUSPENDED,
+        );
         const owner = await this.tenancyService.findOwnerByTenantId(tenant.id);
         if (owner) {
           await this.mailService.sendAccountSuspended(
@@ -382,8 +388,12 @@ export class BillingService {
     }
 
     if (this.isMock) {
+      const frontendUrl = this.config.get<string>(
+        'FRONTEND_URL',
+        'http://localhost:8080',
+      );
       return {
-        checkoutUrl: `https://mock-checkout.local/${tenantId}`,
+        checkoutUrl: `${frontendUrl}/dev/mock-checkout?tenantId=${tenantId}&type=card`,
         sessionId: `mock_chk_${tenantId}_${Date.now()}`,
       };
     }
@@ -455,8 +465,12 @@ export class BillingService {
     }
 
     if (this.isMock) {
+      const frontendUrl = this.config.get<string>(
+        'FRONTEND_URL',
+        'http://localhost:8080',
+      );
       return {
-        checkoutUrl: `https://mock-checkout.local/inv/${invoiceId}`,
+        checkoutUrl: `${frontendUrl}/dev/mock-checkout?invoiceId=${invoiceId}&type=invoice`,
         sessionId: `mock_chk_inv_${invoiceId}`,
       };
     }

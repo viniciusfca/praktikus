@@ -44,6 +44,7 @@ import { SettingsPage } from './pages/workshop/settings/SettingsPage';
 import { WhatsappStubPage } from './pages/whatsapp/WhatsappStubPage';
 import { QuoteApprovalPage } from './pages/public/QuoteApprovalPage';
 import { SuspendedPage } from './pages/public/SuspendedPage';
+import { MockCheckoutPage } from './pages/dev/MockCheckoutPage';
 import { PrivateRoute } from './components/PrivateRoute';
 import { PublicOnlyRoute } from './components/PublicOnlyRoute';
 import { useAuthStore } from './store/auth.store';
@@ -133,6 +134,7 @@ function App() {
           <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
           <Route path="/quotes/:token" element={<QuoteApprovalPage />} />
           <Route path="/suspended" element={<SuspendedPage />} />
+          <Route path="/dev/mock-checkout" element={<MockCheckoutPage />} />
           <Route
             path="/workshop"
             element={
