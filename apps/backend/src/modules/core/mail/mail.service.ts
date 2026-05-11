@@ -71,6 +71,61 @@ export class MailService {
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/require-await
+  async sendTrialExpiringWarning(
+    email: string,
+    name: string,
+    daysLeft: number,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    paymentUrl: string, // NOSONAR(rule:S1172) — usado em Task 12 ao implementar template completo
+  ): Promise<void> {
+    // Placeholder — Task 12 substitui por chamada Resend completa (com await).
+    if (!this.resend) {
+      console.log(
+        `[mail dev] trial expiring (${daysLeft}d) for ${email} (${name})`,
+      );
+    }
+  }
+
+  // eslint-disable-next-line @typescript-eslint/require-await
+  async sendTrialExpiringTomorrow(
+    email: string,
+    name: string,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    paymentUrl: string, // NOSONAR(rule:S1172) — usado em Task 12 ao implementar template completo
+  ): Promise<void> {
+    // Placeholder — Task 12 substitui por chamada Resend completa (com await).
+    if (!this.resend) {
+      console.log(`[mail dev] trial expiring tomorrow for ${email} (${name})`);
+    }
+  }
+
+  // eslint-disable-next-line @typescript-eslint/require-await
+  async sendAccountSuspended(
+    email: string,
+    name: string,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    paymentUrl: string, // NOSONAR(rule:S1172) — usado em Task 12 ao implementar template completo
+  ): Promise<void> {
+    // Placeholder — Task 12 substitui por chamada Resend completa (com await).
+    if (!this.resend) {
+      console.log(`[mail dev] account suspended for ${email} (${name})`);
+    }
+  }
+
+  // eslint-disable-next-line @typescript-eslint/require-await
+  async sendPaymentRefundIssue(
+    email: string,
+    name: string,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    paymentUrl: string, // NOSONAR(rule:S1172) — usado em Task 12 ao implementar template completo
+  ): Promise<void> {
+    // Placeholder — Task 12 substitui por chamada Resend completa (com await).
+    if (!this.resend) {
+      console.log(`[mail dev] payment refund issue for ${email} (${name})`);
+    }
+  }
+
   async sendAccountReactivated(email: string, name: string): Promise<void> {
     if (!this.resend) {
       console.log(`[mail dev] account reactivated for ${email} (${name})`);

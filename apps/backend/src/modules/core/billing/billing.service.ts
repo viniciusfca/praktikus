@@ -9,11 +9,12 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import { Cron } from '@nestjs/schedule';
-import { InvoiceStatus, BillingType, TenantStatus } from '@praktikus/shared';
+import { InvoiceStatus, BillingType } from '@praktikus/shared';
 import { BillingEntity } from './billing.entity';
 import { BillingInvoiceEntity } from './billing-invoice.entity';
 import { AsaasClient } from './asaas.client';
 import { TenancyService } from '../tenancy/tenancy.service';
+import { TenantStatus } from '../tenancy/tenant.entity';
 import { MailService } from '../mail/mail.service';
 import { BillingSummaryDto } from './dto/billing-summary.dto';
 import { OpenInvoiceDto } from './dto/open-invoice.dto';
@@ -31,7 +32,7 @@ export class BillingService {
     private readonly config: ConfigService,
     private readonly tenancyService: TenancyService,
     private readonly asaas: AsaasClient,
-    private readonly mailService: MailService, // NOSONAR(rule:S1068) — usado nas tasks 9-10 do plano de cobrança self-service
+    private readonly mailService: MailService,
   ) {}
 
   /** Getter (not captured) so tests can flip mockAsaasClient.isMock; in production AsaasClient.isMock is itself readonly. */
@@ -159,6 +160,90 @@ export class BillingService {
     }
   }
 
+  @Cron('0 9 * * *') // todo dia 9h — verifica trials prestes a vencer
+  async sendTrialReminders(): Promise<void> {
+    const tenants = await this.tenancyService.listAll();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const paymentUrl =
+      this.config.get<string>(
+        'FRONTEND_URL',
+        'https://app.praktikus.com.br',
+      ) + '/workshop/settings';
+
+    for (const tenant of tenants) {
+      try {
+        if (tenant.status !== TenantStatus.TRIAL || !tenant.trialEndsAt) continue;
+        const end = new Date(tenant.trialEndsAt);
+        end.setHours(0, 0, 0, 0);
+        const daysLeft = Math.ceil(
+          (end.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
+        );
+
+        if (daysLeft !== 7 && daysLeft !== 1) continue;
+
+        const owner = await this.tenancyService.findOwnerByTenantId(tenant.id);
+        if (!owner) continue;
+
+        if (daysLeft === 7) {
+          await this.mailService.sendTrialExpiringWarning(
+            owner.email,
+            owner.name,
+            7,
+            paymentUrl,
+          );
+        } else {
+          await this.mailService.sendTrialExpiringTomorrow(
+            owner.email,
+            owner.name,
+            paymentUrl,
+          );
+        }
+      } catch (err) {
+        this.logger.warn(
+          `Trial reminder failed for tenant ${tenant.id}: ${(err as Error).message}`,
+        );
+      }
+    }
+  }
+
+  @Cron('0 10 * * *') // todo dia 10h — promove OVERDUE → SUSPENDED após grace
+  async transitionOverdueToSuspended(): Promise<void> {
+    const graceDays = parseInt(
+      this.config.get<string>('PRAKTIKUS_GRACE_PERIOD_DAYS', '5'),
+      10,
+    );
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - graceDays);
+    const paymentUrl =
+      this.config.get<string>(
+        'FRONTEND_URL',
+        'https://app.praktikus.com.br',
+      ) + '/workshop/settings';
+
+    const tenants = await this.tenancyService.listAll();
+    for (const tenant of tenants) {
+      try {
+        if (tenant.status !== TenantStatus.OVERDUE) continue;
+        if (!tenant.updatedAt || tenant.updatedAt > cutoff) continue;
+
+        await this.tenancyService.updateStatus(tenant.id, TenantStatus.SUSPENDED);
+        const owner = await this.tenancyService.findOwnerByTenantId(tenant.id);
+        if (owner) {
+          await this.mailService.sendAccountSuspended(
+            owner.email,
+            owner.name,
+            paymentUrl,
+          );
+        }
+      } catch (err) {
+        this.logger.warn(
+          `Overdue→Suspended transition failed for tenant ${tenant.id}: ${(err as Error).message}`,
+        );
+      }
+    }
+  }
+
   async getCurrentBilling(tenantId: string): Promise<BillingSummaryDto> {
     const tenant = await this.tenancyService.findById(tenantId);
     if (!tenant) throw new NotFoundException('Tenant not found');
@@ -170,10 +255,7 @@ export class BillingService {
     let daysUntilTrialEnds: number | null = null;
     if (tenant.status === TenantStatus.TRIAL && tenant.trialEndsAt) {
       const diff = new Date(tenant.trialEndsAt).getTime() - Date.now();
-      daysUntilTrialEnds = Math.max(
-        0,
-        Math.ceil(diff / (1000 * 60 * 60 * 24)),
-      );
+      daysUntilTrialEnds = Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
     }
 
     return {
@@ -181,13 +263,14 @@ export class BillingService {
       planName: 'Plano Praktikus',
       planValue,
       billingType: billing?.billingType ?? null,
-      card: billing?.cardLast4 && billing.cardBrand && billing.cardExpiry
-        ? {
-            last4: billing.cardLast4,
-            brand: billing.cardBrand,
-            expiry: billing.cardExpiry,
-          }
-        : null,
+      card:
+        billing?.cardLast4 && billing.cardBrand && billing.cardExpiry
+          ? {
+              last4: billing.cardLast4,
+              brand: billing.cardBrand,
+              expiry: billing.cardExpiry,
+            }
+          : null,
       nextDueDate: billing?.nextDueDate?.toISOString() ?? null,
       trialEndsAt: tenant.trialEndsAt?.toISOString() ?? null,
       daysUntilTrialEnds,
@@ -384,10 +467,9 @@ export class BillingService {
       throw new NotFoundException('Billing not found');
     }
     if (!this.isMock) {
-      await this.asaas.patch(
-        `/subscriptions/${billing.asaasSubscriptionId}`,
-        { billingType: 'PIX' },
-      );
+      await this.asaas.patch(`/subscriptions/${billing.asaasSubscriptionId}`, {
+        billingType: 'PIX',
+      });
     }
     billing.cardLast4 = null;
     billing.cardBrand = null;

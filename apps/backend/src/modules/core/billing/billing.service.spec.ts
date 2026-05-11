@@ -21,7 +21,12 @@ const mockInvoiceRepo = {
   find: jest.fn(),
   update: jest.fn(),
 };
-const mockTenancyService = { findById: jest.fn(), updateStatus: jest.fn() };
+const mockTenancyService = {
+  findById: jest.fn(),
+  updateStatus: jest.fn(),
+  listAll: jest.fn(),
+  findOwnerByTenantId: jest.fn(),
+};
 const mockAsaasClient = {
   isMock: true,
   post: jest.fn(),
@@ -63,6 +68,8 @@ describe('BillingService', () => {
     mockInvoiceRepo.update.mockReset();
     mockTenancyService.findById.mockReset();
     mockTenancyService.updateStatus.mockReset();
+    mockTenancyService.listAll.mockReset();
+    mockTenancyService.findOwnerByTenantId.mockReset();
     mockAsaasClient.post.mockReset();
     mockAsaasClient.get.mockReset();
     mockAsaasClient.patch.mockReset();
@@ -202,6 +209,85 @@ describe('BillingService', () => {
 
       expect(mockAsaasClient.patch).not.toHaveBeenCalled();
       Date.now = realDateNow;
+    });
+  });
+
+  describe('sendTrialReminders', () => {
+    it('emails tenant whose trialEndsAt is in 7 days', async () => {
+      const trialEnd = new Date();
+      trialEnd.setDate(trialEnd.getDate() + 7);
+      trialEnd.setHours(12, 0, 0, 0);
+      mockTenancyService.listAll.mockResolvedValue([
+        { id: 't1', status: 'TRIAL', trialEndsAt: trialEnd },
+      ]);
+      mockTenancyService.findOwnerByTenantId.mockResolvedValue({
+        email: 'a@b.com',
+        name: 'Foo',
+      });
+
+      await service.sendTrialReminders();
+
+      expect(mockMailService.sendTrialExpiringWarning).toHaveBeenCalledWith(
+        'a@b.com',
+        'Foo',
+        7,
+        expect.any(String),
+      );
+    });
+
+    it('emails tenant whose trial ends tomorrow', async () => {
+      const trialEnd = new Date();
+      trialEnd.setDate(trialEnd.getDate() + 1);
+      mockTenancyService.listAll.mockResolvedValue([
+        { id: 't1', status: 'TRIAL', trialEndsAt: trialEnd },
+      ]);
+      mockTenancyService.findOwnerByTenantId.mockResolvedValue({
+        email: 'a@b.com',
+        name: 'Foo',
+      });
+
+      await service.sendTrialReminders();
+
+      expect(mockMailService.sendTrialExpiringTomorrow).toHaveBeenCalled();
+    });
+  });
+
+  describe('transitionOverdueToSuspended', () => {
+    it('moves tenants overdue > graceDays to SUSPENDED', async () => {
+      const overdueAt = new Date();
+      overdueAt.setDate(overdueAt.getDate() - 6);
+      mockTenancyService.listAll.mockResolvedValue([
+        { id: 't1', status: 'OVERDUE', updatedAt: overdueAt },
+      ]);
+      mockTenancyService.findOwnerByTenantId.mockResolvedValue({
+        email: 'a@b.com',
+        name: 'Foo',
+      });
+      mockConfig.get.mockImplementation((k: string, d?: any) =>
+        k === 'PRAKTIKUS_GRACE_PERIOD_DAYS' ? '5' : d,
+      );
+
+      await service.transitionOverdueToSuspended();
+
+      expect(mockTenancyService.updateStatus).toHaveBeenCalledWith(
+        't1',
+        'SUSPENDED',
+      );
+      expect(mockMailService.sendAccountSuspended).toHaveBeenCalled();
+    });
+
+    it('does not transition tenants still inside grace period', async () => {
+      const overdueAt = new Date();
+      overdueAt.setDate(overdueAt.getDate() - 3);
+      mockTenancyService.listAll.mockResolvedValue([
+        { id: 't1', status: 'OVERDUE', updatedAt: overdueAt },
+      ]);
+      mockConfig.get.mockImplementation((k: string, d?: any) =>
+        k === 'PRAKTIKUS_GRACE_PERIOD_DAYS' ? '5' : d,
+      );
+
+      await service.transitionOverdueToSuspended();
+      expect(mockTenancyService.updateStatus).not.toHaveBeenCalled();
     });
   });
 
@@ -495,7 +581,7 @@ describe('BillingService', () => {
 
       await service.createCheckoutSessionForCard('t1', 'a@b.com');
 
-      const call = mockAsaasClient.post.mock.calls[0][1] as any;
+      const call = mockAsaasClient.post.mock.calls[0][1];
       const expected = new Date();
       expected.setDate(expected.getDate() + 30);
       expect(call.subscription.nextDueDate).toBe(

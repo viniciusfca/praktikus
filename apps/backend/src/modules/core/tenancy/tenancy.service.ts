@@ -127,6 +127,10 @@ export class TenancyService {
     return this.tenantRepo.findOne({ where: { id } });
   }
 
+  async listAll(): Promise<TenantEntity[]> {
+    return this.tenantRepo.find();
+  }
+
   async findByCnpj(cnpj: string): Promise<TenantEntity | null> {
     return this.tenantRepo.findOne({ where: { cnpj } });
   }

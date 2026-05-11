@@ -19,6 +19,7 @@ const mockTenantRepo = {
   create: jest.fn(),
   save: jest.fn(),
   findOne: jest.fn(),
+  find: jest.fn(),
 };
 
 const mockUserRepo = {
@@ -217,6 +218,26 @@ describe('TenancyService', () => {
       mockTenantRepo.findOne.mockResolvedValue(null);
       const result = await service.findByCnpj('00000000000000');
       expect(result).toBeNull();
+    });
+  });
+
+  describe('listAll', () => {
+    it('should return all tenants from the repo', async () => {
+      const tenants = [
+        { id: 't-1', nomeFantasia: 'Foo', status: TenantStatus.TRIAL },
+        { id: 't-2', nomeFantasia: 'Bar', status: TenantStatus.ACTIVE },
+      ];
+      mockTenantRepo.find.mockResolvedValue(tenants);
+
+      const result = await service.listAll();
+      expect(result).toEqual(tenants);
+      expect(mockTenantRepo.find).toHaveBeenCalledWith();
+    });
+
+    it('should return empty array when no tenants exist', async () => {
+      mockTenantRepo.find.mockResolvedValue([]);
+      const result = await service.listAll();
+      expect(result).toEqual([]);
     });
   });
 
