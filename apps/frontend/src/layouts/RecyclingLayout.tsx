@@ -16,7 +16,6 @@ import {
   CDropdownDivider,
   CAvatar,
   CTooltip,
-  CAlert,
 } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
 import {
@@ -69,6 +68,62 @@ function getInitials(name: string | undefined | null): string {
     .slice(0, 2)
     .map((w) => w[0].toUpperCase())
     .join('');
+}
+
+function TenantBanner({ status, trialEndsAt, basePath }: { status?: string; trialEndsAt?: string | null; basePath: string }) {
+  const navigate = useNavigate();
+
+  if (status === 'OVERDUE') {
+    return (
+      <div style={{ background: '#dc2626', color: '#fff', padding: '8px 16px', textAlign: 'center', fontSize: 14 }}>
+        Sua assinatura está em atraso. Pague agora para evitar a suspensão.{' '}
+        <button
+          type="button"
+          onClick={() => navigate(`${basePath}/settings`)}
+          style={{
+            color: '#fff',
+            textDecoration: 'underline',
+            cursor: 'pointer',
+            background: 'none',
+            border: 'none',
+            padding: 0,
+            font: 'inherit',
+          }}
+        >
+          Pagar agora
+        </button>
+      </div>
+    );
+  }
+
+  if (status === 'TRIAL' && trialEndsAt) {
+    const diffDays = Math.ceil((new Date(trialEndsAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+    const warnAtDays = 7;
+    if (diffDays <= warnAtDays && diffDays >= 0) {
+      return (
+        <div style={{ background: '#fef3c7', color: '#92400e', padding: '8px 16px', textAlign: 'center', fontSize: 14 }}>
+          Seu trial termina em <strong>{diffDays} {diffDays === 1 ? 'dia' : 'dias'}</strong>. Cadastre uma forma de pagamento.{' '}
+          <button
+            type="button"
+            onClick={() => navigate(`${basePath}/settings`)}
+            style={{
+              color: '#92400e',
+              textDecoration: 'underline',
+              cursor: 'pointer',
+              background: 'none',
+              border: 'none',
+              padding: 0,
+              font: 'inherit',
+            }}
+          >
+            Cadastrar agora
+          </button>
+        </div>
+      );
+    }
+  }
+
+  return null;
 }
 
 export function RecyclingLayout() {
@@ -285,11 +340,11 @@ export function RecyclingLayout() {
 
         {/* Page content */}
         <div className="body flex-grow-1 p-3 p-md-4">
-          {user?.tenant_status === 'OVERDUE' && (
-            <CAlert color="warning" className="mb-0 rounded-0 text-center py-2">
-              Pagamento em atraso. Regularize para evitar suspensão da conta.
-            </CAlert>
-          )}
+          <TenantBanner
+            status={user?.tenant_status}
+            trialEndsAt={user?.trial_ends_at}
+            basePath="/recycling"
+          />
           <Outlet />
         </div>
       </div>

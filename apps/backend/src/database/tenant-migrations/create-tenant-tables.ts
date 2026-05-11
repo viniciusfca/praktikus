@@ -1,5 +1,10 @@
 import { TenantSegment } from '@praktikus/shared';
 import { buildWhatsappTablesSql } from './whatsapp-tables.sql';
+import {
+  buildPriceTablesSql,
+  buildPriceTablesSeedSql,
+  buildPurchasesPriceTableSetupSql,
+} from './price-tables.sql';
 
 /**
  * Gera as instruções SQL para criar as tabelas de um novo tenant.
@@ -243,7 +248,15 @@ export function createTenantTablesSql(
   const whatsappTables = buildWhatsappTablesSql(schemaName);
 
   if (segment === TenantSegment.RECYCLING) {
-    return [...recyclingTables, ...whatsappTables];
+    const priceTables = buildPriceTablesSql(schemaName);
+    const priceTablesSeed = buildPriceTablesSeedSql(schemaName);
+    return [
+      ...recyclingTables,
+      ...priceTables,
+      ...priceTablesSeed,
+      ...buildPurchasesPriceTableSetupSql(schemaName),
+      ...whatsappTables,
+    ];
   }
   return [...workshopTables, ...whatsappTables];
 }

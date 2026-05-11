@@ -93,4 +93,66 @@ describe('MailService', () => {
       ).resolves.toBeUndefined();
     });
   });
+
+  describe('billing emails', () => {
+    let service: MailService;
+
+    beforeEach(async () => {
+      const module: TestingModule = await buildModule({
+        RESEND_API_KEY: 'rk_test',
+        MAIL_FROM: 'Praktikus <no-reply@praktikus.com.br>',
+      });
+      service = module.get<MailService>(MailService);
+    });
+
+    it('sendTrialExpiringWarning sends email with daysLeft and CTA url', async () => {
+      await service.sendTrialExpiringWarning(
+        'a@b.com',
+        'Foo',
+        7,
+        'https://app/x',
+      );
+
+      expect(mockResendSend).toHaveBeenCalledTimes(1);
+      const payload = mockResendSend.mock.calls[0][0];
+      expect(payload.to).toBe('a@b.com');
+      expect(payload.subject).toMatch(/7 dias/);
+      expect(payload.html).toContain('https://app/x');
+      expect(payload.html).toContain('Foo');
+    });
+
+    it('sendTrialExpiringTomorrow sends email with tomorrow subject and CTA url', async () => {
+      await service.sendTrialExpiringTomorrow(
+        'a@b.com',
+        'Foo',
+        'https://app/y',
+      );
+
+      expect(mockResendSend).toHaveBeenCalledTimes(1);
+      const payload = mockResendSend.mock.calls[0][0];
+      expect(payload.to).toBe('a@b.com');
+      expect(payload.subject).toMatch(/amanhã/);
+      expect(payload.html).toContain('https://app/y');
+    });
+
+    it('sendAccountSuspended sends email with suspension subject and CTA url', async () => {
+      await service.sendAccountSuspended('a@b.com', 'Foo', 'https://app/z');
+
+      expect(mockResendSend).toHaveBeenCalledTimes(1);
+      const payload = mockResendSend.mock.calls[0][0];
+      expect(payload.to).toBe('a@b.com');
+      expect(payload.subject).toMatch(/suspensa/i);
+      expect(payload.html).toContain('https://app/z');
+    });
+
+    it('sendPaymentRefundIssue sends email with refund subject and CTA url', async () => {
+      await service.sendPaymentRefundIssue('a@b.com', 'Foo', 'https://app/w');
+
+      expect(mockResendSend).toHaveBeenCalledTimes(1);
+      const payload = mockResendSend.mock.calls[0][0];
+      expect(payload.to).toBe('a@b.com');
+      expect(payload.subject).toMatch(/problema com seu pagamento/i);
+      expect(payload.html).toContain('https://app/w');
+    });
+  });
 });

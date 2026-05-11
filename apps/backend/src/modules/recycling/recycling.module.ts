@@ -10,6 +10,7 @@ import { BuyersModule } from './buyers/buyers.module';
 import { SalesModule } from './sales/sales.module';
 import { ReportsModule } from './reports/reports.module';
 import { ColetasModule } from './coletas/coletas.module';
+import { PriceTablesModule } from './price-tables/price-tables.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { ColetasModule } from './coletas/coletas.module';
     SalesModule,
     ReportsModule,
     ColetasModule,
+    PriceTablesModule,
   ],
 })
 export class RecyclingModule {}

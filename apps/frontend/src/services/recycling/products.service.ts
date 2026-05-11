@@ -1,3 +1,4 @@
+import type { ProductPriceMap } from '@praktikus/shared';
 import { api } from '../api';
 
 export interface Product {
@@ -5,8 +6,18 @@ export interface Product {
   name: string;
   unitId: string;
   pricePerUnit: number;
+  prices: ProductPriceMap;
   active: boolean;
 }
+
+export interface CreateProductPayload {
+  name: string;
+  unitId: string;
+  active?: boolean;
+  prices: ProductPriceMap;
+}
+
+export type UpdateProductPayload = Partial<CreateProductPayload>;
 
 export const productsService = {
   async list(includeInactive = false): Promise<Product[]> {
@@ -19,12 +30,15 @@ export const productsService = {
     const { data } = await api.get<Product>(`/recycling/products/${id}`);
     return data;
   },
-  async create(payload: { name: string; unitId: string; pricePerUnit: number }): Promise<Product> {
+  async create(payload: CreateProductPayload): Promise<Product> {
     const { data } = await api.post<Product>('/recycling/products', payload);
     return data;
   },
-  async update(id: string, payload: Partial<{ name: string; unitId: string; pricePerUnit: number; active: boolean }>): Promise<Product> {
-    const { data } = await api.patch<Product>(`/recycling/products/${id}`, payload);
+  async update(id: string, payload: UpdateProductPayload): Promise<Product> {
+    const { data } = await api.patch<Product>(
+      `/recycling/products/${id}`,
+      payload,
+    );
     return data;
   },
 };

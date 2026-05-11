@@ -13,3 +13,4 @@ coverage/
 Thumbs.db
 .worktrees/
 _design-reference/.scannerwork/
+_design-reference/

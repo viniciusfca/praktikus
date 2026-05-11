@@ -13,6 +13,10 @@ export class WhatsappDepartmentUserEntity {
   @Column({ name: 'user_id', type: 'uuid' })
   userId: string;
 
-  @Column({ name: 'role_in_dept', type: 'varchar', default: WhatsappRoleInDept.AGENT })
+  @Column({
+    name: 'role_in_dept',
+    type: 'varchar',
+    default: WhatsappRoleInDept.AGENT,
+  })
   roleInDept: WhatsappRoleInDept;
 }

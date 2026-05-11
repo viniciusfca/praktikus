@@ -3,6 +3,7 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 import { TenancyService } from './tenancy.service';
 import { TenantEntity, TenantStatus } from './tenant.entity';
+import { UserEntity, UserRole } from '../auth/user.entity';
 
 const mockQueryRunner = {
   connect: jest.fn(),
@@ -18,6 +19,12 @@ const mockTenantRepo = {
   create: jest.fn(),
   save: jest.fn(),
   findOne: jest.fn(),
+  find: jest.fn(),
+  update: jest.fn(),
+};
+
+const mockUserRepo = {
+  findOne: jest.fn(),
 };
 
 describe('TenancyService', () => {
@@ -28,6 +35,7 @@ describe('TenancyService', () => {
       providers: [
         TenancyService,
         { provide: getRepositoryToken(TenantEntity), useValue: mockTenantRepo },
+        { provide: getRepositoryToken(UserEntity), useValue: mockUserRepo },
         { provide: DataSource, useValue: mockDataSource },
       ],
     }).compile();
@@ -210,6 +218,120 @@ describe('TenancyService', () => {
     it('should return null when CNPJ not found', async () => {
       mockTenantRepo.findOne.mockResolvedValue(null);
       const result = await service.findByCnpj('00000000000000');
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('listAll', () => {
+    it('should return all tenants from the repo', async () => {
+      const tenants = [
+        { id: 't-1', nomeFantasia: 'Foo', status: TenantStatus.TRIAL },
+        { id: 't-2', nomeFantasia: 'Bar', status: TenantStatus.ACTIVE },
+      ];
+      mockTenantRepo.find.mockResolvedValue(tenants);
+
+      const result = await service.listAll();
+      expect(result).toEqual(tenants);
+      expect(mockTenantRepo.find).toHaveBeenCalledWith();
+    });
+
+    it('should return empty array when no tenants exist', async () => {
+      mockTenantRepo.find.mockResolvedValue([]);
+      const result = await service.listAll();
+      expect(result).toEqual([]);
+    });
+  });
+
+  describe('updateStatus', () => {
+    it('sets overdueAt when transitioning ACTIVE → OVERDUE (tenant has no overdueAt yet)', async () => {
+      mockTenantRepo.findOne.mockResolvedValue({
+        id: 't1',
+        status: TenantStatus.ACTIVE,
+        overdueAt: null,
+      });
+      mockTenantRepo.update.mockResolvedValue({} as any);
+
+      await service.updateStatus('t1', TenantStatus.OVERDUE);
+
+      expect(mockTenantRepo.update).toHaveBeenCalledWith(
+        { id: 't1' },
+        expect.objectContaining({
+          status: TenantStatus.OVERDUE,
+          overdueAt: expect.any(Date),
+        }),
+      );
+    });
+
+    it('preserves existing overdueAt on OVERDUE → OVERDUE (idempotent webhook)', async () => {
+      const existing = new Date('2026-05-01T00:00:00Z');
+      mockTenantRepo.findOne.mockResolvedValue({
+        id: 't1',
+        status: TenantStatus.OVERDUE,
+        overdueAt: existing,
+      });
+      mockTenantRepo.update.mockResolvedValue({} as any);
+
+      await service.updateStatus('t1', TenantStatus.OVERDUE);
+
+      const call = mockTenantRepo.update.mock.calls[0][1];
+      expect(call.status).toBe(TenantStatus.OVERDUE);
+      expect(call.overdueAt).toBeUndefined();
+    });
+
+    it('clears overdueAt when transitioning OVERDUE → ACTIVE', async () => {
+      mockTenantRepo.update.mockResolvedValue({} as any);
+
+      await service.updateStatus('t1', TenantStatus.ACTIVE);
+
+      expect(mockTenantRepo.update).toHaveBeenCalledWith(
+        { id: 't1' },
+        { status: TenantStatus.ACTIVE, overdueAt: null },
+      );
+    });
+
+    it('clears overdueAt when transitioning to TRIAL', async () => {
+      mockTenantRepo.update.mockResolvedValue({} as any);
+
+      await service.updateStatus('t1', TenantStatus.TRIAL);
+
+      expect(mockTenantRepo.update).toHaveBeenCalledWith(
+        { id: 't1' },
+        { status: TenantStatus.TRIAL, overdueAt: null },
+      );
+    });
+
+    it('preserves overdueAt when transitioning OVERDUE → SUSPENDED (cron acted on it)', async () => {
+      mockTenantRepo.update.mockResolvedValue({} as any);
+
+      await service.updateStatus('t1', TenantStatus.SUSPENDED);
+
+      const call = mockTenantRepo.update.mock.calls[0][1];
+      expect(call.status).toBe(TenantStatus.SUSPENDED);
+      expect(call.overdueAt).toBeUndefined();
+    });
+  });
+
+  describe('findOwnerByTenantId', () => {
+    it('should return the OWNER user for the tenant', async () => {
+      const owner = {
+        id: 'u-1',
+        tenantId: 't-1',
+        email: 'owner@example.com',
+        name: 'Owner Foo',
+        role: UserRole.OWNER,
+      };
+      mockUserRepo.findOne.mockResolvedValue(owner);
+
+      const result = await service.findOwnerByTenantId('t-1');
+      expect(result).toEqual(owner);
+      expect(mockUserRepo.findOne).toHaveBeenCalledWith({
+        where: { tenantId: 't-1', role: UserRole.OWNER },
+      });
+    });
+
+    it('should return null when no owner exists for tenant', async () => {
+      mockUserRepo.findOne.mockResolvedValue(null);
+      const result = await service.findOwnerByTenantId('t-missing');
       expect(result).toBeNull();
     });
   });

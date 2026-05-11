@@ -71,6 +71,144 @@ export class MailService {
     }
   }
 
+  async sendTrialExpiringWarning(
+    email: string,
+    name: string,
+    daysLeft: number,
+    paymentUrl: string,
+  ): Promise<void> {
+    await this.send(
+      email,
+      `Seu trial termina em ${daysLeft} dias — Praktikus`,
+      this.billingHtml(
+        name,
+        `Seu trial termina em <strong>${daysLeft} dias</strong>.`,
+        'Cadastre uma forma de pagamento para não perder acesso ao Praktikus.',
+        'Cadastrar pagamento',
+        paymentUrl,
+      ),
+    );
+  }
+
+  async sendTrialExpiringTomorrow(
+    email: string,
+    name: string,
+    paymentUrl: string,
+  ): Promise<void> {
+    await this.send(
+      email,
+      'Seu trial termina amanhã — Praktikus',
+      this.billingHtml(
+        name,
+        'Seu trial termina <strong>amanhã</strong>.',
+        'Cadastre uma forma de pagamento agora para evitar interrupção.',
+        'Cadastrar pagamento',
+        paymentUrl,
+      ),
+    );
+  }
+
+  async sendAccountSuspended(
+    email: string,
+    name: string,
+    paymentUrl: string,
+  ): Promise<void> {
+    await this.send(
+      email,
+      'Sua conta foi suspensa — Praktikus',
+      this.billingHtml(
+        name,
+        'Sua conta foi suspensa por inadimplência.',
+        'Pague a fatura em aberto para reativar imediatamente seu acesso.',
+        'Ver fatura e pagar',
+        paymentUrl,
+      ),
+    );
+  }
+
+  async sendPaymentRefundIssue(
+    email: string,
+    name: string,
+    paymentUrl: string,
+  ): Promise<void> {
+    await this.send(
+      email,
+      'Houve um problema com seu pagamento — Praktikus',
+      this.billingHtml(
+        name,
+        'Identificamos um estorno na sua última cobrança.',
+        'Entre em contato com seu banco e regularize o pagamento para evitar suspensão.',
+        'Ver fatura',
+        paymentUrl,
+      ),
+    );
+  }
+
+  async sendAccountReactivated(email: string, name: string): Promise<void> {
+    await this.send(
+      email,
+      'Sua conta foi reativada — Praktikus',
+      this.billingHtml(
+        name,
+        'Boa notícia! Recebemos seu pagamento e sua conta foi reativada.',
+        'Você já pode acessar normalmente todos os recursos do Praktikus.',
+        null,
+        null,
+      ),
+    );
+  }
+
+  private async send(to: string, subject: string, html: string): Promise<void> {
+    if (!this.resend) {
+      console.log(`[mail dev] ${subject} → ${to}`);
+      return;
+    }
+    try {
+      const { error } = await this.resend.emails.send({
+        from: this.from,
+        to,
+        subject,
+        html,
+      });
+      if (error) {
+        this.logger.warn(
+          `Resend error sending "${subject}" to ${to}: ${error.message}`,
+        );
+      }
+    } catch (err) {
+      this.logger.warn(
+        `Exception sending "${subject}" to ${to}: ${(err as Error).message}`,
+      );
+    }
+  }
+
+  private billingHtml(
+    name: string,
+    headline: string,
+    body: string,
+    ctaLabel: string | null,
+    ctaUrl: string | null,
+  ): string {
+    const cta =
+      ctaLabel && ctaUrl
+        ? `<p style="text-align:center; margin:28px 0;">
+         <a href="${ctaUrl}" style="display:inline-block; background:#348E91; color:#fff; padding:12px 24px; border-radius:8px; text-decoration:none; font-weight:600;">${escapeHtml(ctaLabel)}</a>
+       </p>`
+        : '';
+    return `<!DOCTYPE html>
+<html lang="pt-BR">
+<body style="font-family: -apple-system, system-ui, sans-serif; background:#f7f8f8; padding:32px; color:#0c1010;">
+  <div style="max-width:520px; margin:0 auto; background:#fff; border-radius:12px; padding:32px; border:1px solid #e3e7e7;">
+    <h1 style="margin:0 0 16px; font-size:20px; color:#0c1010;">Praktikus</h1>
+    <p>Olá, ${escapeHtml(name)}.</p>
+    <p>${headline}</p>
+    <p style="font-size:14px; color:#5b6868;">${escapeHtml(body)}</p>
+    ${cta}
+  </div>
+</body>
+</html>`;
+  }
+
   private passwordResetHtml(name: string, resetUrl: string): string {
     return `<!DOCTYPE html>
 <html lang="pt-BR">

@@ -20,6 +20,8 @@ import { CashSessionEntity } from '../modules/recycling/cash-register/cash-sessi
 import { CashTransactionEntity } from '../modules/recycling/cash-register/cash-transaction.entity';
 import { EmployeePermissionsEntity } from '../modules/recycling/employees/employee-permissions.entity';
 import { ProductEntity } from '../modules/recycling/products/product.entity';
+import { ProductPriceEntity } from '../modules/recycling/products/product-price.entity';
+import { PriceTableEntity } from '../modules/recycling/price-tables/price-table.entity';
 import { PurchaseEntity } from '../modules/recycling/purchases/purchase.entity';
 import { PurchaseItemEntity } from '../modules/recycling/purchases/purchase-item.entity';
 import { StockMovementEntity } from '../modules/recycling/purchases/stock-movement.entity';
@@ -29,6 +31,8 @@ import { SupplierEntity } from '../modules/recycling/suppliers/supplier.entity';
 import { UnitEntity } from '../modules/recycling/units/unit.entity';
 import { ColetaEntity } from '../modules/recycling/coletas/coleta.entity';
 import { ColetaCommentEntity } from '../modules/recycling/coletas/coleta-comment.entity';
+import { PlatformUserEntity } from '../modules/core/admin/admin-auth/platform-user.entity';
+import { PlatformRefreshTokenEntity } from '../modules/core/admin/admin-auth/platform-refresh-token.entity';
 
 @Module({
   imports: [
@@ -62,6 +66,8 @@ import { ColetaCommentEntity } from '../modules/recycling/coletas/coleta-comment
           CashTransactionEntity,
           EmployeePermissionsEntity,
           ProductEntity,
+          ProductPriceEntity,
+          PriceTableEntity,
           PurchaseEntity,
           PurchaseItemEntity,
           StockMovementEntity,
@@ -71,6 +77,8 @@ import { ColetaCommentEntity } from '../modules/recycling/coletas/coleta-comment
           UnitEntity,
           ColetaEntity,
           ColetaCommentEntity,
+          PlatformUserEntity,
+          PlatformRefreshTokenEntity,
         ],
         synchronize: false,
         logging: config.get('NODE_ENV') === 'development',

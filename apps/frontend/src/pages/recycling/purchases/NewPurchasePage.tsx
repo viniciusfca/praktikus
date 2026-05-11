@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -22,6 +22,7 @@ import CIcon from '@coreui/icons-react';
 import { cilPlus, cilTrash, cilArrowLeft } from '@coreui/icons';
 import { purchasesService, PaymentMethod } from '../../../services/recycling/purchases.service';
 import { usePurchaseFormData } from '../../../hooks/recycling/usePurchaseFormData';
+import { usePriceTables } from '../../../hooks/recycling/usePriceTables';
 import { PrintPromptModal } from '../../../components/PrintPromptModal';
 import { PurchasePdf } from '../../../components/recycling/PurchasePdf';
 import { downloadPdf } from '../../../utils/downloadPdf';
@@ -37,6 +38,7 @@ const itemSchema = z.object({
 
 const schema = z.object({
   supplierId: z.string().uuid('Selecione um fornecedor'),
+  priceTableId: z.string().uuid('Selecione uma tabela'),
   paymentMethod: z.nativeEnum(PaymentMethod, { error: () => ({ message: 'Selecione a forma de pagamento' }) }),
   items: z.array(itemSchema).min(1, 'Adicione ao menos um item'),
   notes: z.string().optional(),
@@ -137,6 +139,7 @@ function SummaryRow({
 export function NewPurchasePage() {
   const navigate = useNavigate();
   const { suppliers, products, loading: loadingData, error: loadError } = usePurchaseFormData();
+  const { priceTables, loading: loadingTables } = usePriceTables();
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [newPurchaseId, setNewPurchaseId] = useState<string | null>(null);
 
@@ -146,11 +149,13 @@ export function NewPurchasePage() {
     control,
     watch,
     setValue,
+    getValues,
     formState: { errors, isSubmitting },
   } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
       supplierId: '',
+      priceTableId: '',
       paymentMethod: PaymentMethod.CASH,
       items: [{ productId: '', quantity: 1, unitPrice: 0 }],
       notes: '',
@@ -160,16 +165,47 @@ export function NewPurchasePage() {
   const { fields, append, remove } = useFieldArray({ control, name: 'items' });
   const watchedItems = watch('items');
 
+  useEffect(() => {
+    if (!priceTables.length) return;
+    if (getValues('priceTableId')) return;
+    const def = priceTables.find((t) => t.isDefault) ?? priceTables[0];
+    if (def) setValue('priceTableId', def.id);
+  }, [priceTables, getValues, setValue]);
+
   const handleProductChange = (index: number, productId: string) => {
     const product = products.find((p) => p.id === productId);
     if (!product) return;
-    setValue(`items.${index}.unitPrice`, product.pricePerUnit);
+    const tableId = watch('priceTableId');
+    const suggested = product.prices?.[tableId] ?? product.pricePerUnit;
+    setValue(`items.${index}.unitPrice`, suggested);
 
     // Auto-focus na quantidade da mesma linha após o re-render do Controller.
     requestAnimationFrame(() => {
       const el = document.getElementById(`item-quantity-${index}`) as HTMLInputElement | null;
       el?.focus();
       el?.select();
+    });
+  };
+
+  const handleTableChange = (newTableId: string) => {
+    const items = watch('items') ?? [];
+    const hasItems = items.some((i) => i.productId);
+    if (!hasItems) {
+      setValue('priceTableId', newTableId);
+      return;
+    }
+    const ok = window.confirm(
+      'Trocar a tabela vai recalcular o preço sugerido dos itens já adicionados, ' +
+      'sobrescrevendo edições manuais. Continuar?',
+    );
+    if (!ok) return;
+    setValue('priceTableId', newTableId);
+    items.forEach((it, idx) => {
+      if (!it.productId) return;
+      const product = products.find((p) => p.id === it.productId);
+      if (!product) return;
+      const newPrice = product.prices?.[newTableId] ?? product.pricePerUnit;
+      setValue(`items.${idx}.unitPrice`, newPrice);
     });
   };
 
@@ -189,6 +225,7 @@ export function NewPurchasePage() {
     try {
       const created = await purchasesService.create({
         supplierId: data.supplierId,
+        priceTableId: data.priceTableId,
         paymentMethod: data.paymentMethod,
         items: data.items.map((item) => ({
           productId: item.productId,
@@ -223,7 +260,7 @@ export function NewPurchasePage() {
     navigate('/recycling/purchases');
   };
 
-  if (loadingData) {
+  if (loadingData || loadingTables) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}>
         <CSpinner color="primary" />
@@ -284,7 +321,7 @@ export function NewPurchasePage() {
             <Card
               header={<CardTitle title="Dados da compra" desc="Fornecedor, pagamento e observações" />}
             >
-              <div className="pk-form-row-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+              <div className="pk-form-row-3" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 14 }}>
                 <div>
                   <CFormLabel style={labelStyle}>Fornecedor *</CFormLabel>
                   <CFormSelect {...register('supplierId')} invalid={!!errors.supplierId}>
@@ -297,6 +334,30 @@ export function NewPurchasePage() {
                   </CFormSelect>
                   {errors.supplierId && (
                     <CFormFeedback invalid>{errors.supplierId.message}</CFormFeedback>
+                  )}
+                </div>
+
+                <div>
+                  <CFormLabel htmlFor="purchase-pricetable" style={labelStyle}>Tabela de preço *</CFormLabel>
+                  <Controller
+                    control={control}
+                    name="priceTableId"
+                    render={({ field }) => (
+                      <CFormSelect
+                        id="purchase-pricetable"
+                        value={field.value ?? ''}
+                        onChange={(e) => handleTableChange(e.target.value)}
+                        invalid={!!errors.priceTableId}
+                      >
+                        <option value="">Selecione...</option>
+                        {[...priceTables].sort((a, b) => a.sortOrder - b.sortOrder).map((t) => (
+                          <option key={t.id} value={t.id}>{t.name}</option>
+                        ))}
+                      </CFormSelect>
+                    )}
+                  />
+                  {errors.priceTableId && (
+                    <CFormFeedback invalid>{errors.priceTableId.message}</CFormFeedback>
                   )}
                 </div>
 

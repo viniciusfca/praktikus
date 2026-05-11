@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { CButton } from '@coreui/react';
 import { Logo } from '../components/Logo';
 
@@ -33,26 +33,35 @@ const segments = [
   },
 ];
 
-const features = [
+const features: { emoji: string; title: string; desc: string; soon?: boolean }[] = [
   { emoji: '⚡', title: 'Configure em minutos', desc: 'Onboarding guiado por segmento. Seus primeiros agendamentos e OS em menos de 10 min.' },
   { emoji: '🔒', title: 'Dados seguros e exportáveis', desc: 'Backups diários, LGPD-friendly. Seus dados são seus — exporte em CSV ou PDF quando quiser.' },
   { emoji: '✨', title: 'Feito no Brasil', desc: 'Suporte em português, adaptado à realidade de pequenos e médios negócios brasileiros.' },
   { emoji: '📊', title: 'Relatórios que importam', desc: 'Faturamento, ticket médio, top serviços. Decisões baseadas em dados, não em intuição.' },
-  { emoji: '🖨️', title: 'PDF profissional', desc: 'Ordens de serviço e orçamentos prontos para imprimir ou enviar, com sua marca.' },
-  { emoji: '🏢', title: 'Multi-unidade', desc: 'Gerencie várias filiais com permissões granulares e relatórios consolidados.' },
+  { emoji: '🖨️', title: 'PDF profissional', desc: 'Ordens de serviço, orçamentos e tabelas de preço prontos para imprimir ou enviar.' },
+  { emoji: '💳', title: 'Cobrança automática', desc: 'PIX, cartão e recorrência via Asaas. Inadimplência tratada automaticamente — você não precisa lembrar.' },
+  { emoji: '💬', title: 'WhatsApp integrado', desc: 'Atendimento e notificações pelo número da sua empresa, direto do Praktikus.', soon: true },
 ];
 
 const plan = {
   name: 'Praktikus Pro',
   price: 89.90,
   desc: 'Acesso completo, sem limites, sem surpresas.',
-  features: [
-    'OS e agendamentos ilimitados',
-    'Até 5 usuários inclusos',
-    'Relatórios avançados',
-    'PDF com sua marca',
-    'Multi-unidade',
-    'Suporte prioritário em português',
+  universal: [
+    'Cadastros e movimentações ilimitados',
+    'Relatórios mensais e exportação em PDF/CSV',
+    'Suporte em português',
+  ],
+  workshop: [
+    'Agenda, OS e prontuário',
+    'Clientes e veículos com histórico',
+    'Catálogo de serviços e peças',
+  ],
+  recycling: [
+    'Compras, vendas e caixa',
+    'Estoque por material',
+    'Múltiplas tabelas de preço',
+    'Coletas agendadas',
   ],
 };
 
@@ -61,7 +70,7 @@ const faqs = [
   { q: 'Como é a cobrança?', a: 'Mensalidade única de R$ 89,90 no cartão de crédito, processada de forma segura via Asaas. Você pode cancelar a qualquer momento direto pelo painel.' },
   { q: 'Posso cancelar quando quiser?', a: 'Sim. O cancelamento é feito direto pelo painel, sem multa e sem burocracia. Seus dados ficam disponíveis para exportação por 30 dias após o cancelamento.' },
   { q: 'Meus dados ficam seguros?', a: 'Sim. Infraestrutura na nuvem com criptografia em repouso e em trânsito, backups diários automáticos e conformidade com a LGPD.' },
-  { q: 'Preciso instalar algo?', a: 'Não. Praktikus roda 100% no navegador — também temos app PWA instalável no celular para usar offline em casos pontuais.' },
+  { q: 'Preciso instalar algo?', a: 'Não. Praktikus roda 100% no navegador, em qualquer dispositivo — basta acessar app.praktikus.com.br. Layout responsivo para celular e tablet.' },
 ];
 
 // ── Mobile detection hook ───────────────────────────────────────────────────
@@ -81,14 +90,54 @@ function useIsMobile(): boolean {
 
 // ── Hero mockup ──────────────────────────────────────────────────────────────
 
-function HeroMockup({ compact }: { compact: boolean }) {
+type HeroVariant = 'workshop' | 'recycling';
+
+interface HeroMockupContent {
+  menu: string[];
+  kpis: { label: string; value: string }[];
+  chartLabel: string;
+  ariaLabel: string;
+}
+
+const HERO_CONTENT: Record<HeroVariant, HeroMockupContent> = {
+  workshop: {
+    menu: ['Dashboard', 'Agendamentos', 'OS', 'Clientes', 'Veículos'],
+    kpis: [
+      { label: 'OS abertas', value: '24' },
+      { label: 'Faturamento', value: 'R$ 18.4k' },
+      { label: 'Agendamentos', value: '47' },
+      { label: 'Ticket médio', value: 'R$ 386' },
+    ],
+    chartLabel: '📈 Gráfico de faturamento',
+    ariaLabel: 'Pré-visualização do painel para oficinas',
+  },
+  recycling: {
+    menu: ['Dashboard', 'Compras', 'Vendas', 'Caixa', 'Estoque'],
+    kpis: [
+      { label: 'Compras hoje', value: 'R$ 4.2k' },
+      { label: 'Faturamento', value: 'R$ 22.7k' },
+      { label: 'Caixa', value: 'R$ 1.840' },
+      { label: 'Estoque', value: '8.4t' },
+    ],
+    chartLabel: '📈 Compras por material',
+    ariaLabel: 'Pré-visualização do painel para recicladoras',
+  },
+};
+
+function HeroMockup({ compact, variant }: { compact: boolean; variant: HeroVariant }) {
+  const content = HERO_CONTENT[variant];
   return (
-    <div style={{
-      borderRadius: 14, overflow: 'hidden',
-      border: '1px solid var(--cui-border-color)',
-      boxShadow: '0 20px 48px rgba(10,12,13,0.14)',
-      background: 'var(--cui-card-bg)',
-    }}>
+    // NOSONAR(rule:S6819) — mockup é uma árvore DOM sintetizada (browser chrome + sidebar + KPIs), não uma imagem real; role="img" é o padrão ARIA correto para apresentar todo o bloco como um único gráfico decorativo-informativo a leitores de tela.
+    <div
+      role="img"
+      aria-label={content.ariaLabel}
+      style={{
+        borderRadius: 14, overflow: 'hidden',
+        border: '1px solid var(--cui-border-color)',
+        boxShadow: '0 20px 48px rgba(10,12,13,0.14)',
+        background: 'var(--cui-card-bg)',
+      }}
+    >
       {/* browser chrome */}
       <div style={{
         display: 'flex', alignItems: 'center', gap: 6,
@@ -109,7 +158,7 @@ function HeroMockup({ compact }: { compact: boolean }) {
           <div style={{ marginBottom: 12 }}>
             <Logo size={12} />
           </div>
-          {['Dashboard', 'Agendamentos', 'OS', 'Clientes', 'Veículos'].map((item, i) => (
+          {content.menu.map((item, i) => (
             <div key={item} style={{
               padding: '6px 8px', borderRadius: 6, fontSize: 10.5, fontWeight: i === 0 ? 600 : 400,
               color: i === 0 ? 'var(--cui-primary)' : 'var(--cui-secondary-color)',
@@ -123,12 +172,7 @@ function HeroMockup({ compact }: { compact: boolean }) {
         <div style={{ padding: compact ? 12 : 14, minWidth: 0 }}>
           <div style={{ fontSize: 12.5, fontWeight: 600, marginBottom: 10, color: 'var(--cui-body-color)' }}>Bom dia, Vini 👋</div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 10 }}>
-            {[
-              { label: 'OS abertas', value: '24' },
-              { label: 'Faturamento', value: 'R$ 18.4k' },
-              { label: 'Agendamentos', value: '47' },
-              { label: 'Ticket médio', value: 'R$ 386' },
-            ].map(kpi => (
+            {content.kpis.map(kpi => (
               <div key={kpi.label} style={{
                 padding: '10px 12px', borderRadius: 8,
                 border: '1px solid var(--cui-border-color)',
@@ -147,7 +191,7 @@ function HeroMockup({ compact }: { compact: boolean }) {
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: 11, color: 'var(--cui-secondary-color)',
           }}>
-            📈 Gráfico de faturamento
+            {content.chartLabel}
           </div>
         </div>
       </div>
@@ -160,6 +204,18 @@ function HeroMockup({ compact }: { compact: boolean }) {
 export function LandingPage() {
   const [faqOpen, setFaqOpen] = useState<number>(-1);
   const isMobile = useIsMobile();
+
+  const [heroVariant, setHeroVariant] = useState<HeroVariant>('workshop');
+  const heroPausedRef = useRef(false);
+
+  useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const id = setInterval(() => {
+      if (heroPausedRef.current) return;
+      setHeroVariant(v => (v === 'workshop' ? 'recycling' : 'workshop'));
+    }, 5000);
+    return () => clearInterval(id);
+  }, []);
 
   const containerPad = isMobile ? '0 18px' : '0 24px';
   const sectionMaxWidth = 1180;
@@ -206,19 +262,6 @@ export function LandingPage() {
         alignItems: 'center',
       }}>
         <div>
-          <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: 8,
-            padding: '4px 12px 4px 6px', border: '1px solid var(--cui-border-color)',
-            background: 'var(--cui-card-bg)', borderRadius: 999, fontSize: 12.5,
-            color: 'var(--cui-secondary-color)', marginBottom: isMobile ? 16 : 22,
-            maxWidth: '100%',
-          }}>
-            <span style={{ background: 'rgba(52,142,145,0.12)', color: 'var(--cui-primary)', fontWeight: 600, padding: '2px 8px', borderRadius: 999, fontSize: 11, flexShrink: 0 }}>Novo</span>
-            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              <strong style={{ color: 'var(--cui-body-color)' }}>Relatórios v2</strong> — ticket médio e funil
-            </span>
-          </div>
-
           <h1 style={{
             fontSize: 'clamp(30px, 7vw, 54px)',
             lineHeight: 1.05, letterSpacing: '-0.035em', fontWeight: 600,
@@ -234,7 +277,7 @@ export function LandingPage() {
             lineHeight: 1.55, color: 'var(--cui-secondary-color)',
             maxWidth: 520, margin: '0 0 24px',
           }}>
-            Plataforma feita para oficinas, clínicas e recicladoras. Agenda, ordens de serviço, clientes, estoque e relatórios — sem planilha, sem complicação.
+            Plataforma feita para oficinas e recicladoras. Agenda, ordens de serviço, compras, vendas, estoque e relatórios — sem planilha, sem complicação.
           </p>
 
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
@@ -260,7 +303,13 @@ export function LandingPage() {
             ))}
           </div>
         </div>
-        <HeroMockup compact={isMobile} />
+        {/* NOSONAR(rule:S6848) — wrapper detecta apenas hover para pausar o auto-swap; não há onClick/keyboard/touch porque é uma feature passiva (a interação ativa fica no HeroMockup interno, que já tem role="img" e aria-label). */}
+        <div
+          onMouseEnter={() => { heroPausedRef.current = true; }}
+          onMouseLeave={() => { heroPausedRef.current = false; }}
+        >
+          <HeroMockup compact={isMobile} variant={heroVariant} />
+        </div>
       </section>
 
       {/* ── SEGMENTS ─────────────────────────────────────────────────────── */}
@@ -347,7 +396,7 @@ export function LandingPage() {
             <em style={{ fontStyle: 'italic', fontFamily: "'Instrument Serif', serif", color: 'var(--cui-primary)', fontWeight: 400 }}>nada que você não</em>.
           </h2>
           <p style={{ color: 'var(--cui-secondary-color)', margin: 0, fontSize: isMobile ? 14 : 15 }}>
-            Um único sistema, seis superpoderes.
+            Um único sistema, sete superpoderes.
           </p>
         </div>
         <div style={{
@@ -357,10 +406,21 @@ export function LandingPage() {
         }}>
           {features.map(f => (
             <div key={f.title} style={{
+              position: 'relative',
               padding: isMobile ? 20 : 24, borderRadius: 14,
               border: '1px solid var(--cui-border-color)',
               background: 'var(--cui-card-bg)',
             }}>
+              {f.soon && (
+                <span style={{
+                  position: 'absolute', top: 12, right: 12,
+                  fontSize: 11, fontWeight: 600, padding: '2px 8px',
+                  borderRadius: 999, background: 'var(--cui-secondary-bg, #f4f5f5)',
+                  color: 'var(--cui-secondary-color)', border: '1px solid var(--cui-border-color)',
+                }}>
+                  Em breve
+                </span>
+              )}
               <div style={{
                 width: 36, height: 36, borderRadius: 10, fontSize: 18,
                 background: 'rgba(52,142,145,0.1)',
@@ -420,14 +480,43 @@ export function LandingPage() {
 
             <p style={{ margin: 0, fontSize: 14.5, color: 'var(--cui-secondary-color)', lineHeight: 1.5 }}>{plan.desc}</p>
 
-            <ul style={{ listStyle: 'none', padding: 0, margin: '4px 0', display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {plan.features.map(f => (
+            <ul style={{ listStyle: 'none', padding: 0, margin: '4px 0 0', display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {plan.universal.map(f => (
                 <li key={f} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', fontSize: 14 }}>
                   <span style={{ color: 'var(--cui-primary)', flexShrink: 0, marginTop: 1, fontWeight: 700 }}>✓</span>
                   <span>{f}</span>
                 </li>
               ))}
             </ul>
+
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
+              gap: isMobile ? 16 : 20,
+              marginTop: 4,
+              paddingTop: 16,
+              borderTop: '1px solid var(--cui-border-color)',
+            }}>
+              {(['workshop', 'recycling'] as const).map(seg => (
+                <div key={seg}>
+                  <div style={{
+                    fontSize: 11, fontWeight: 600, letterSpacing: '0.08em',
+                    textTransform: 'uppercase', color: 'var(--cui-secondary-color)',
+                    marginBottom: 8,
+                  }}>
+                    {seg === 'workshop' ? 'Para oficinas' : 'Para recicladoras'}
+                  </div>
+                  <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {plan[seg].map(item => (
+                      <li key={item} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', fontSize: 13.5, color: 'var(--cui-body-color)' }}>
+                        <span style={{ color: 'var(--cui-primary)', flexShrink: 0, marginTop: 1 }}>•</span>
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
 
             <CButton
               color="primary"

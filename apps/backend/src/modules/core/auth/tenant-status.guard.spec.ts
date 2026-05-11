@@ -1,38 +1,112 @@
 import { ExecutionContext, ForbiddenException } from '@nestjs/common';
+import { Test, TestingModule } from '@nestjs/testing';
+import { ConfigService } from '@nestjs/config';
+import { JwtService } from '@nestjs/jwt';
 import { TenantStatusGuard } from './tenant-status.guard';
 
-function makeCtx(user: any): ExecutionContext {
+function makeCtx(
+  url: string,
+  headers: Record<string, string> = {},
+): ExecutionContext {
   return {
-    switchToHttp: () => ({ getRequest: () => ({ user }) }),
+    switchToHttp: () => ({
+      getRequest: () => ({ url, headers }),
+    }),
   } as any;
+}
+
+function bearer(token = 'fake.token.here'): Record<string, string> {
+  return { authorization: `Bearer ${token}` };
 }
 
 describe('TenantStatusGuard', () => {
   let guard: TenantStatusGuard;
+  const mockJwtService = { verify: jest.fn() };
+  const mockConfig = { get: jest.fn().mockReturnValue('test-secret') };
 
-  beforeEach(() => {
-    guard = new TenantStatusGuard();
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        TenantStatusGuard,
+        { provide: JwtService, useValue: mockJwtService },
+        { provide: ConfigService, useValue: mockConfig },
+      ],
+    }).compile();
+    guard = module.get(TenantStatusGuard);
+    jest.clearAllMocks();
   });
 
-  it('should allow ACTIVE tenants', () => {
-    expect(guard.canActivate(makeCtx({ tenantStatus: 'ACTIVE' }))).toBe(true);
+  it('throws ForbiddenException for SUSPENDED token on non-whitelisted URL', () => {
+    mockJwtService.verify.mockReturnValue({ tenant_status: 'SUSPENDED' });
+    expect(() => guard.canActivate(makeCtx('/api/orders', bearer()))).toThrow(
+      ForbiddenException,
+    );
+    expect(() => guard.canActivate(makeCtx('/api/orders', bearer()))).toThrow(
+      /conta_suspensa/,
+    );
   });
 
-  it('should allow TRIAL tenants', () => {
-    expect(guard.canActivate(makeCtx({ tenantStatus: 'TRIAL' }))).toBe(true);
+  it('lets SUSPENDED tenant access /api/billing endpoints', () => {
+    mockJwtService.verify.mockReturnValue({ tenant_status: 'SUSPENDED' });
+    expect(guard.canActivate(makeCtx('/api/billing', bearer()))).toBe(true);
   });
 
-  it('should allow OVERDUE tenants (warning only, not blocked)', () => {
-    expect(guard.canActivate(makeCtx({ tenantStatus: 'OVERDUE' }))).toBe(true);
+  it('lets SUSPENDED tenant access /api/billing/invoices/open', () => {
+    mockJwtService.verify.mockReturnValue({ tenant_status: 'SUSPENDED' });
+    expect(
+      guard.canActivate(makeCtx('/api/billing/invoices/open', bearer())),
+    ).toBe(true);
   });
 
-  it('should throw ForbiddenException for SUSPENDED tenants', () => {
-    expect(() =>
-      guard.canActivate(makeCtx({ tenantStatus: 'SUSPENDED' })),
-    ).toThrow(ForbiddenException);
+  it('lets SUSPENDED tenant access /api/auth/refresh', () => {
+    mockJwtService.verify.mockReturnValue({ tenant_status: 'SUSPENDED' });
+    expect(guard.canActivate(makeCtx('/api/auth/refresh', bearer()))).toBe(
+      true,
+    );
   });
 
-  it('should allow requests without user (unauthenticated routes)', () => {
-    expect(guard.canActivate(makeCtx(undefined))).toBe(true);
+  it('blocks SUSPENDED tenant on /api/orders', () => {
+    mockJwtService.verify.mockReturnValueOnce({ tenant_status: 'SUSPENDED' });
+    expect(() => guard.canActivate(makeCtx('/api/orders', bearer()))).toThrow(
+      ForbiddenException,
+    );
+  });
+
+  it('allows ACTIVE tenant on /api/orders', () => {
+    mockJwtService.verify.mockReturnValueOnce({ tenant_status: 'ACTIVE' });
+    expect(guard.canActivate(makeCtx('/api/orders', bearer()))).toBe(true);
+  });
+
+  it('allows TRIAL tenant on /api/orders', () => {
+    mockJwtService.verify.mockReturnValueOnce({ tenant_status: 'TRIAL' });
+    expect(guard.canActivate(makeCtx('/api/orders', bearer()))).toBe(true);
+  });
+
+  it('allows OVERDUE tenant on /api/orders (warning only, not blocked)', () => {
+    mockJwtService.verify.mockReturnValueOnce({ tenant_status: 'OVERDUE' });
+    expect(guard.canActivate(makeCtx('/api/orders', bearer()))).toBe(true);
+  });
+
+  it('allows request without Authorization header (downstream handles auth)', () => {
+    expect(guard.canActivate(makeCtx('/api/orders'))).toBe(true);
+    expect(mockJwtService.verify).not.toHaveBeenCalled();
+  });
+
+  it('allows request when JWT verification fails (downstream handles 401)', () => {
+    mockJwtService.verify.mockImplementationOnce(() => {
+      throw new Error('invalid token');
+    });
+    expect(guard.canActivate(makeCtx('/api/orders', bearer('bad')))).toBe(
+      true,
+    );
+  });
+
+  it('allows whitelisted URL without verifying the token at all', () => {
+    expect(guard.canActivate(makeCtx('/api/billing', bearer()))).toBe(true);
+    expect(mockJwtService.verify).not.toHaveBeenCalled();
+  });
+
+  it('allows whitelisted URL with no auth header', () => {
+    expect(guard.canActivate(makeCtx('/api/auth/login'))).toBe(true);
   });
 });

@@ -31,6 +31,9 @@ export class CreatePurchaseDto {
   @IsUUID()
   supplierId: string;
 
+  @IsUUID()
+  priceTableId: string;
+
   @IsEnum(PaymentMethod)
   paymentMethod: PaymentMethod;
 

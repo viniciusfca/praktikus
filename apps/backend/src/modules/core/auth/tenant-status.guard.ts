@@ -4,20 +4,56 @@ import {
   ForbiddenException,
   Injectable,
 } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 import { TenantStatus } from '../tenancy/tenant.entity';
+
+// URLs que tenants SUSPENDED ainda podem acessar (com o prefixo global /api).
+const ALLOWED_PREFIXES = ['/api/billing', '/api/auth'];
+
+interface JwtPayload {
+  tenant_status?: string;
+  // outros campos do payload são ignorados aqui
+}
 
 @Injectable()
 export class TenantStatusGuard implements CanActivate {
+  constructor(
+    private readonly jwtService: JwtService,
+    private readonly config: ConfigService,
+  ) {}
+
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest();
-    const user = request.user;
+    const url: string = request.url ?? '';
 
-    if (!user) return true; // rota pública — deixar outros guards agirem
+    // Rotas whitelistadas (billing/auth) passam direto — SUSPENDED precisa pagar.
+    if (ALLOWED_PREFIXES.some((p) => url.startsWith(p))) return true;
 
-    if (user.tenantStatus === TenantStatus.SUSPENDED) {
-      throw new ForbiddenException('conta_suspensa');
+    // Sem Authorization header → deixar JwtAuthGuard rejeitar com 401 apropriado.
+    const authHeader = request.headers?.authorization;
+    if (!authHeader?.startsWith('Bearer ')) return true;
+    const token = authHeader.slice(7);
+
+    let payload: JwtPayload;
+    try {
+      payload = this.jwtService.verify<JwtPayload>(token, {
+        secret: this.config.get<string>('JWT_SECRET'),
+      });
+    } catch {
+      // Token inválido/expirado: JwtAuthGuard lida com isso (401).
+      return true;
     }
 
+    // Trade-off conhecido: tenant_status vem do payload do JWT (cache de até 15min,
+    // TTL do access token). Após webhook/cron mudar o status, tokens antigos
+    // continuam reportando o status antigo até refresh. Aceitamos esse stale
+    // porque (a) é janela curta, (b) DB lookup por request inviabilizaria custo,
+    // (c) o pior caso é cliente conseguir acessar o sistema por <15min após
+    // suspensão — não é vazamento de dados.
+    if (payload.tenant_status === TenantStatus.SUSPENDED) {
+      throw new ForbiddenException('conta_suspensa');
+    }
     return true;
   }
 }

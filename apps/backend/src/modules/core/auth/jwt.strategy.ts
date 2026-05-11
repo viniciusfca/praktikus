@@ -46,6 +46,14 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: JwtPayload): Promise<AuthUser> {
+    // Defense in depth: platform JWTs must be rejected by the tenant strategy.
+    if ((payload as any).is_platform_user === true) {
+      throw new UnauthorizedException();
+    }
+    if (!payload.tenant_id) {
+      throw new UnauthorizedException();
+    }
+
     const user = await this.userRepo.findOne({ where: { id: payload.sub } });
     if (!user) {
       throw new UnauthorizedException();

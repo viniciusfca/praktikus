@@ -528,6 +528,7 @@ code, pre, kbd, samp {
 /* ── Form rows — colapsam em 1 coluna no mobile ─────────────────────────── */
 @media (max-width: 520px) {
   .pk-form-row-2,
+  .pk-form-row-3,
   .pk-form-row-actions {
     grid-template-columns: 1fr !important;
   }

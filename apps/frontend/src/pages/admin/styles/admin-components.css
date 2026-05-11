@@ -1,0 +1,113 @@
+/* Admin DS — primitivos. Escopado em .adm-root. */
+
+.adm-root *,
+.adm-root *::before,
+.adm-root *::after {
+  box-sizing: border-box;
+}
+
+.adm-root {
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Card */
+.adm-card {
+  background: var(--adm-surface);
+  border: 1px solid var(--adm-border);
+  border-radius: var(--adm-radius-md);
+  box-shadow: var(--adm-shadow-xs);
+  padding: var(--adm-space-card);
+}
+.adm-card__title {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--adm-fg);
+  margin: 0 0 8px 0;
+}
+
+/* Badge */
+.adm-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: var(--adm-radius-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  background: var(--adm-bg-subtle);
+  color: var(--adm-fg-muted);
+}
+.adm-badge--success { background: var(--adm-success-bg); color: var(--adm-success); }
+.adm-badge--warning { background: var(--adm-warning-bg); color: var(--adm-warning); }
+.adm-badge--danger  { background: var(--adm-danger-bg);  color: var(--adm-danger); }
+.adm-badge--info    { background: var(--adm-info-bg);    color: var(--adm-info); }
+
+/* Button */
+.adm-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: var(--adm-radius-sm);
+  border: 1px solid var(--adm-border);
+  background: var(--adm-surface);
+  color: var(--adm-fg);
+  cursor: pointer;
+  transition: background .12s ease, border-color .12s ease;
+}
+.adm-btn:hover { background: var(--adm-bg-subtle); }
+.adm-btn--primary {
+  background: var(--adm-accent);
+  border-color: var(--adm-accent);
+  color: var(--adm-accent-fg);
+}
+.adm-btn--primary:hover { background: var(--adm-accent-hover); }
+.adm-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+/* Skeleton */
+@keyframes adm-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.adm-skeleton {
+  display: inline-block;
+  background: linear-gradient(
+    90deg,
+    var(--adm-bg-subtle) 0%,
+    var(--adm-bg-muted) 50%,
+    var(--adm-bg-subtle) 100%
+  );
+  background-size: 200% 100%;
+  animation: adm-shimmer 1.4s ease-in-out infinite;
+  border-radius: var(--adm-radius-xs);
+}
+
+/* Empty state */
+.adm-empty {
+  text-align: center;
+  padding: 32px 16px;
+  color: var(--adm-fg-muted);
+}
+.adm-empty__title { font-weight: 600; margin-bottom: 4px; }
+.adm-empty__msg { font-size: 13px; }
+
+/* Layout */
+.adm-shell { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
+.adm-shell__sidebar { background: var(--brand-950); color: #DCE6E6; }
+.adm-shell__main { display: flex; flex-direction: column; }
+.adm-topbar {
+  position: sticky; top: 0; z-index: 10;
+  background: var(--adm-surface);
+  border-bottom: 1px solid var(--adm-border);
+  height: 56px;
+  padding: 0 24px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.adm-content { padding: 24px; flex: 1; }

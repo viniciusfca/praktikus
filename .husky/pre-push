@@ -2,6 +2,14 @@
 . "$(dirname -- "$0")/_/husky.sh" 2>/dev/null || true
 set -e
 
+# Carrega nvm para garantir uso da versão correta de Node (definida em .nvmrc)
+export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
+# shellcheck source=/dev/null
+[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+if command -v nvm > /dev/null 2>&1; then
+  nvm use --silent 2>/dev/null || true
+fi
+
 # Carrega SONAR_TOKEN do apps/backend/.env, se existir
 if [ -f apps/backend/.env ]; then
   export $(grep -E '^SONAR_TOKEN=' apps/backend/.env | xargs) 2>/dev/null || true
