@@ -45,6 +45,12 @@ export class TenantStatusGuard implements CanActivate {
       return true;
     }
 
+    // Trade-off conhecido: tenant_status vem do payload do JWT (cache de até 15min,
+    // TTL do access token). Após webhook/cron mudar o status, tokens antigos
+    // continuam reportando o status antigo até refresh. Aceitamos esse stale
+    // porque (a) é janela curta, (b) DB lookup por request inviabilizaria custo,
+    // (c) o pior caso é cliente conseguir acessar o sistema por <15min após
+    // suspensão — não é vazamento de dados.
     if (payload.tenant_status === TenantStatus.SUSPENDED) {
       throw new ForbiddenException('conta_suspensa');
     }
