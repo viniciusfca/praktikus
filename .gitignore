@@ -14,3 +14,6 @@ Thumbs.db
 .worktrees/
 _design-reference/.scannerwork/
 _design-reference/
+
+# QA E2E run artifacts: keep markdown reports, ignore heavy screenshots
+docs/qa/runs/*/screenshots/
