@@ -6,6 +6,7 @@ import { UserEntity } from '../modules/core/auth/user.entity';
 import { RefreshTokenEntity } from '../modules/core/auth/refresh-token.entity';
 import { PasswordResetTokenEntity } from '../modules/core/auth/password-reset-token.entity';
 import { BillingEntity } from '../modules/core/billing/billing.entity';
+import { BillingInvoiceEntity } from '../modules/core/billing/billing-invoice.entity';
 import { CustomerEntity } from '../modules/workshop/customers/customer.entity';
 import { VehicleEntity } from '../modules/workshop/vehicles/vehicle.entity';
 import { CatalogServiceEntity } from '../modules/workshop/catalog/catalog-service.entity';
@@ -52,6 +53,7 @@ import { PlatformRefreshTokenEntity } from '../modules/core/admin/admin-auth/pla
           RefreshTokenEntity,
           PasswordResetTokenEntity,
           BillingEntity,
+          BillingInvoiceEntity,
           CustomerEntity,
           VehicleEntity,
           CatalogServiceEntity,
