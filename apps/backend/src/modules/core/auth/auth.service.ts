@@ -94,6 +94,7 @@ export class AuthService {
       tenant.id,
       dto.email,
       dto.nomeFantasia,
+      dto.cnpj,
     );
 
     return this.generateTokens(

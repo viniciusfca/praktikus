@@ -4,32 +4,36 @@ import { Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import { Cron } from '@nestjs/schedule';
 import { BillingEntity } from './billing.entity';
+import { BillingInvoiceEntity } from './billing-invoice.entity';
+import { AsaasClient } from './asaas.client';
 import { TenancyService } from '../tenancy/tenancy.service';
+import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class BillingService {
   private readonly logger = new Logger(BillingService.name);
-  readonly isMock: boolean;
 
   constructor(
     @InjectRepository(BillingEntity)
     private readonly billingRepo: Repository<BillingEntity>,
+    @InjectRepository(BillingInvoiceEntity)
+    private readonly invoiceRepo: Repository<BillingInvoiceEntity>, // NOSONAR(rule:S1068) — usado nas tasks 6-10 do plano de cobrança self-service
     private readonly config: ConfigService,
     private readonly tenancyService: TenancyService,
-  ) {
-    const apiKey = this.config.get<string>('ASAAS_API_KEY');
-    this.isMock = !apiKey || apiKey === 'mock';
-    if (this.isMock) {
-      this.logger.warn(
-        'Asaas em modo MOCK — nenhuma cobrança real será criada.',
-      );
-    }
+    private readonly asaas: AsaasClient,
+    private readonly mailService: MailService, // NOSONAR(rule:S1068) — usado nas tasks 9-10 do plano de cobrança self-service
+  ) {}
+
+  /** Getter (not captured) so tests can flip mockAsaasClient.isMock; in production AsaasClient.isMock is itself readonly. */
+  get isMock(): boolean {
+    return this.asaas.isMock;
   }
 
   async setupTrial(
     tenantId: string,
     email: string,
     name: string,
+    cnpj: string,
   ): Promise<void> {
     let asaasCustomerId: string;
     let asaasSubscriptionId: string;
@@ -38,89 +42,38 @@ export class BillingService {
       asaasCustomerId = `mock_customer_${tenantId}`;
       asaasSubscriptionId = `mock_subscription_${tenantId}`;
     } else {
-      const apiKey = this.config.get<string>('ASAAS_API_KEY')!;
-      const baseUrl = this.config.get<string>(
-        'ASAAS_API_URL',
-        'https://sandbox.asaas.com/api/v3',
-      );
       const planValue = parseFloat(
-        this.config.get<string>('ASAAS_PLAN_VALUE', '69.90'),
+        this.config.get<string>('ASAAS_PLAN_VALUE', '89.90'),
       );
 
-      let customerResponse: Response;
-      try {
-        customerResponse = await fetch(`${baseUrl}/customers`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', access_token: apiKey },
-          body: JSON.stringify({ name, email }),
-        });
-      } catch (err) {
-        throw new Error(
-          `Asaas network error on createCustomer: ${(err as Error).message}`,
-        );
-      }
-
-      if (!customerResponse.ok) {
-        const body = await customerResponse.text();
-        throw new Error(
-          `Asaas createCustomer failed: ${customerResponse.status} ${body}`,
-        );
-      }
-
-      const customer = (await customerResponse.json()) as { id?: string };
-      if (!customer.id) {
-        throw new Error('Asaas createCustomer returned no customer ID');
-      }
+      const customer = await this.asaas.post<{ id: string }>('/customers', {
+        name,
+        email,
+        cpfCnpj: cnpj,
+      });
       asaasCustomerId = customer.id;
 
       const dueDate = new Date();
       dueDate.setDate(dueDate.getDate() + 30);
       const dueDateStr = dueDate.toISOString().split('T')[0];
 
-      let subscriptionResponse: Response;
       try {
-        subscriptionResponse = await fetch(`${baseUrl}/subscriptions`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', access_token: apiKey },
-          body: JSON.stringify({
-            customer: asaasCustomerId,
-            billingType: 'CREDIT_CARD',
-            value: planValue,
-            nextDueDate: dueDateStr,
-            cycle: 'MONTHLY',
-            description: 'Plano Praktikus — R$69,90/mês',
-            trialPeriodDays: 30,
-          }),
+        const sub = await this.asaas.post<{ id: string }>('/subscriptions', {
+          customer: asaasCustomerId,
+          billingType: 'UNDEFINED',
+          value: planValue,
+          nextDueDate: dueDateStr,
+          cycle: 'MONTHLY',
+          description: `Plano Praktikus — R$${planValue.toFixed(2).replace('.', ',')}/mês`,
+          trialPeriodDays: 30,
         });
+        asaasSubscriptionId = sub.id;
       } catch (err) {
         this.logger.error(
-          `Asaas createSubscription network error. Orphaned customerId: ${asaasCustomerId}`,
+          `Asaas createSubscription failed. Orphaned customerId: ${asaasCustomerId}. Error: ${(err as Error).message}`,
         );
-        throw new Error(
-          `Asaas network error on createSubscription: ${(err as Error).message}`,
-        );
+        throw err;
       }
-
-      if (!subscriptionResponse.ok) {
-        const body = await subscriptionResponse.text();
-        this.logger.error(
-          `Asaas createSubscription failed. Orphaned customerId: ${asaasCustomerId}`,
-        );
-        throw new Error(
-          `Asaas createSubscription failed: ${subscriptionResponse.status} ${body}`,
-        );
-      }
-
-      const subscription = (await subscriptionResponse.json()) as {
-        id?: string;
-      };
-      if (!subscription.id) {
-        this.logger.error(
-          `Asaas createSubscription returned no ID. Orphaned customerId: ${asaasCustomerId}`,
-        );
-        throw new Error('Asaas createSubscription returned no subscription ID');
-      }
-      asaasSubscriptionId = subscription.id;
     }
 
     await this.billingRepo.save(
@@ -128,6 +81,7 @@ export class BillingService {
         tenantId,
         asaasCustomerId,
         asaasSubscriptionId,
+        billingType: null,
       }),
     );
   }
@@ -155,6 +109,7 @@ export class BillingService {
 
       const anchor = new Date(tenant.billingAnchorDate);
       if (anchor.getDate() !== todayDay) continue;
+      if (anchor.getMonth() + 1 !== todayMonth) continue;
 
       let ipcaRate: number;
       try {
@@ -167,7 +122,7 @@ export class BillingService {
       }
 
       const currentValue = parseFloat(
-        this.config.get<string>('ASAAS_PLAN_VALUE', '69.90'),
+        this.config.get<string>('ASAAS_PLAN_VALUE', '89.90'),
       );
       const newValue = parseFloat((currentValue * (1 + ipcaRate)).toFixed(2));
 
@@ -178,34 +133,14 @@ export class BillingService {
         continue;
       }
 
-      const apiKey = this.config.get<string>('ASAAS_API_KEY')!;
-      const baseUrl = this.config.get<string>(
-        'ASAAS_API_URL',
-        'https://sandbox.asaas.com/api/v3',
-      );
-
       try {
-        const patchRes = await fetch(
-          `${baseUrl}/subscriptions/${billing.asaasSubscriptionId}`,
-          {
-            method: 'PATCH',
-            headers: {
-              'Content-Type': 'application/json',
-              access_token: apiKey,
-            },
-            body: JSON.stringify({ value: newValue }),
-          },
+        await this.asaas.patch(
+          `/subscriptions/${billing.asaasSubscriptionId}`,
+          { value: newValue },
         );
-        if (!patchRes.ok) {
-          const body = await patchRes.text();
-          this.logger.error(
-            `Asaas PATCH failed for tenant ${billing.tenantId}: ${patchRes.status} ${body}`,
-          );
-        } else {
-          this.logger.log(
-            `Reajuste anual aplicado tenant ${billing.tenantId}: R$${currentValue} → R$${newValue}`,
-          );
-        }
+        this.logger.log(
+          `Reajuste anual aplicado tenant ${billing.tenantId}: R$${currentValue} → R$${newValue}`,
+        );
       } catch (err) {
         this.logger.error(
           `Asaas PATCH subscription failed for tenant ${billing.tenantId}: ${(err as Error).message}`,

@@ -4,17 +4,18 @@ import { BillingEntity } from './billing.entity';
 import { BillingInvoiceEntity } from './billing-invoice.entity';
 import { BillingController } from './billing.controller';
 import { BillingService } from './billing.service';
-// import { AsaasClient } from './asaas.client'; // NOSONAR(rule:S125) — wiring pendente da Task 4 do plano de cobrança self-service
+import { AsaasClient } from './asaas.client';
 import { TenancyModule } from '../tenancy/tenancy.module';
-// import { MailModule } from '../mail/mail.module'; // NOSONAR(rule:S125) — wiring pendente da Task 12 do plano de cobrança self-service
+import { MailModule } from '../mail/mail.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([BillingEntity, BillingInvoiceEntity]),
     TenancyModule,
+    MailModule,
   ],
   controllers: [BillingController],
-  providers: [BillingService],
+  providers: [BillingService, AsaasClient],
   exports: [BillingService],
 })
 export class BillingModule {}

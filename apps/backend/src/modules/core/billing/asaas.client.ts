@@ -28,7 +28,9 @@ export class AsaasClient {
       'https://sandbox.asaas.com/api/v3',
     );
     if (this.isMock) {
-      this.logger.warn('AsaasClient em modo MOCK — chamadas externas desabilitadas.');
+      this.logger.warn(
+        'AsaasClient em modo MOCK — chamadas externas desabilitadas.',
+      );
     }
   }
 

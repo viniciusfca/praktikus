@@ -63,7 +63,9 @@ describe('AsaasClient', () => {
   });
 
   it('throws on network error with descriptive message', async () => {
-    (global.fetch as jest.Mock).mockRejectedValueOnce(new Error('ECONNREFUSED'));
+    (global.fetch as jest.Mock).mockRejectedValueOnce(
+      new Error('ECONNREFUSED'),
+    );
     const client = new AsaasClient(mockConfig());
     await expect(client.post('/customers', {})).rejects.toThrow(
       /Asaas network error.*ECONNREFUSED/,
@@ -71,7 +73,10 @@ describe('AsaasClient', () => {
   });
 
   it('supports GET, PATCH, DELETE methods', async () => {
-    (global.fetch as jest.Mock).mockResolvedValue({ ok: true, text: async () => '{}' });
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      text: async () => '{}',
+    });
     const client = new AsaasClient(mockConfig());
     await client.get('/foo');
     await client.patch('/foo', { x: 1 });

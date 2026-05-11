@@ -17,7 +17,12 @@ export class BillingInvoiceEntity {
   @Column({ name: 'tenant_id', type: 'uuid' })
   tenantId: string;
 
-  @Column({ name: 'asaas_payment_id', type: 'varchar', length: 64, unique: true })
+  @Column({
+    name: 'asaas_payment_id',
+    type: 'varchar',
+    length: 64,
+    unique: true,
+  })
   asaasPaymentId: string;
 
   /** Stored as string to preserve numeric(10,2) precision; convert with parseFloat at use sites. */
