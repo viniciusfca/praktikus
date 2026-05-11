@@ -298,4 +298,138 @@ describe('BillingService', () => {
       expect((service as any).isMock).toBe(true);
     });
   });
+
+  describe('getCurrentBilling', () => {
+    it('returns trial summary with daysUntilTrialEnds when status TRIAL', async () => {
+      const trialEnd = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+      mockTenancyService.findById.mockResolvedValue({
+        id: 't1',
+        status: 'TRIAL',
+        trialEndsAt: trialEnd,
+        billingAnchorDate: null,
+      });
+      mockBillingRepo.findOne.mockResolvedValue({
+        tenantId: 't1',
+        billingType: null,
+        cardLast4: null,
+        cardBrand: null,
+        cardExpiry: null,
+        nextDueDate: null,
+        canceledAt: null,
+      });
+      mockConfig.get.mockImplementation((k: string, d?: any) =>
+        k === 'ASAAS_PLAN_VALUE' ? '89.90' : d,
+      );
+
+      const summary = await service.getCurrentBilling('t1');
+
+      expect(summary.status).toBe('TRIAL');
+      expect(summary.planValue).toBe(89.9);
+      expect(summary.daysUntilTrialEnds).toBe(7);
+      expect(summary.card).toBeNull();
+    });
+
+    it('returns card info when billingType is CREDIT_CARD', async () => {
+      mockTenancyService.findById.mockResolvedValue({
+        id: 't1',
+        status: 'ACTIVE',
+        trialEndsAt: null,
+        billingAnchorDate: new Date(),
+      });
+      mockBillingRepo.findOne.mockResolvedValue({
+        tenantId: 't1',
+        billingType: 'CREDIT_CARD',
+        cardLast4: '1234',
+        cardBrand: 'VISA',
+        cardExpiry: '12/29',
+        nextDueDate: new Date('2026-06-15'),
+        canceledAt: null,
+      });
+      mockConfig.get.mockImplementation((k: string, d?: any) =>
+        k === 'ASAAS_PLAN_VALUE' ? '89.90' : d,
+      );
+
+      const summary = await service.getCurrentBilling('t1');
+
+      expect(summary.card).toEqual({
+        last4: '1234',
+        brand: 'VISA',
+        expiry: '12/29',
+      });
+    });
+  });
+
+  describe('getOpenInvoice', () => {
+    it('returns null when no PENDING/OVERDUE invoice exists', async () => {
+      mockInvoiceRepo.findOne.mockResolvedValue(null);
+      expect(await service.getOpenInvoice('t1')).toBeNull();
+    });
+
+    it('returns invoice with cached PIX when valid', async () => {
+      mockInvoiceRepo.findOne.mockResolvedValue({
+        id: 'inv1',
+        asaasPaymentId: 'pay_1',
+        value: '89.90',
+        dueDate: new Date(),
+        status: 'PENDING',
+        billingType: 'PIX',
+        pixQrCode: 'BASE64',
+        pixCopyPaste: '00020126',
+        pixExpiresAt: new Date(Date.now() + 3600000),
+      });
+      const result = await service.getOpenInvoice('t1');
+      expect(result?.pix).toEqual({
+        qrCodeBase64: 'BASE64',
+        copyPaste: '00020126',
+      });
+    });
+
+    it('regenerates PIX when cache expired', async () => {
+      mockAsaasClient.isMock = false;
+      mockInvoiceRepo.findOne.mockResolvedValue({
+        id: 'inv1',
+        tenantId: 't1',
+        asaasPaymentId: 'pay_1',
+        value: '89.90',
+        dueDate: new Date(),
+        status: 'PENDING',
+        billingType: 'PIX',
+        pixQrCode: 'OLD',
+        pixCopyPaste: 'OLD',
+        pixExpiresAt: new Date(Date.now() - 1000),
+      });
+      mockAsaasClient.get.mockResolvedValue({
+        encodedImage: 'NEW64',
+        payload: '00020NEW',
+        expirationDate: new Date(Date.now() + 86400000).toISOString(),
+      });
+      mockInvoiceRepo.save.mockImplementation((x: any) => x);
+
+      const result = await service.getOpenInvoice('t1');
+      expect(result?.pix?.qrCodeBase64).toBe('NEW64');
+    });
+  });
+
+  describe('listPaidInvoices', () => {
+    it('returns last 12 CONFIRMED invoices ordered by paidAt DESC', async () => {
+      mockInvoiceRepo.find.mockResolvedValue([
+        {
+          id: 'a',
+          value: '89.90',
+          paidAt: new Date('2026-04-01'),
+          billingType: 'PIX',
+          status: 'CONFIRMED',
+          asaasPaymentId: 'p1',
+          dueDate: new Date(),
+        },
+      ]);
+      const list = await service.listPaidInvoices('t1', 12);
+      expect(mockInvoiceRepo.find).toHaveBeenCalledWith({
+        where: { tenantId: 't1', status: 'CONFIRMED' },
+        order: { paidAt: 'DESC' },
+        take: 12,
+      });
+      expect(list).toHaveLength(1);
+    });
+  });
 });

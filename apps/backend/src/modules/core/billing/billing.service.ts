@@ -1,13 +1,16 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import { Cron } from '@nestjs/schedule';
+import { InvoiceStatus, BillingType, TenantStatus } from '@praktikus/shared';
 import { BillingEntity } from './billing.entity';
 import { BillingInvoiceEntity } from './billing-invoice.entity';
 import { AsaasClient } from './asaas.client';
 import { TenancyService } from '../tenancy/tenancy.service';
 import { MailService } from '../mail/mail.service';
+import { BillingSummaryDto } from './dto/billing-summary.dto';
+import { OpenInvoiceDto } from './dto/open-invoice.dto';
 
 @Injectable()
 export class BillingService {
@@ -17,7 +20,7 @@ export class BillingService {
     @InjectRepository(BillingEntity)
     private readonly billingRepo: Repository<BillingEntity>,
     @InjectRepository(BillingInvoiceEntity)
-    private readonly invoiceRepo: Repository<BillingInvoiceEntity>, // NOSONAR(rule:S1068) — usado nas tasks 6-10 do plano de cobrança self-service
+    private readonly invoiceRepo: Repository<BillingInvoiceEntity>,
     private readonly config: ConfigService,
     private readonly tenancyService: TenancyService,
     private readonly asaas: AsaasClient,
@@ -147,6 +150,127 @@ export class BillingService {
         );
       }
     }
+  }
+
+  async getCurrentBilling(tenantId: string): Promise<BillingSummaryDto> {
+    const tenant = await this.tenancyService.findById(tenantId);
+    if (!tenant) throw new NotFoundException('Tenant not found');
+    const billing = await this.billingRepo.findOne({ where: { tenantId } });
+
+    const planValue = Number.parseFloat(
+      this.config.get<string>('ASAAS_PLAN_VALUE', '89.90'),
+    );
+    let daysUntilTrialEnds: number | null = null;
+    if (tenant.status === TenantStatus.TRIAL && tenant.trialEndsAt) {
+      const diff = new Date(tenant.trialEndsAt).getTime() - Date.now();
+      daysUntilTrialEnds = Math.max(
+        0,
+        Math.ceil(diff / (1000 * 60 * 60 * 24)),
+      );
+    }
+
+    return {
+      status: tenant.status,
+      planName: 'Plano Praktikus',
+      planValue,
+      billingType: billing?.billingType ?? null,
+      card: billing?.cardLast4 && billing.cardBrand && billing.cardExpiry
+        ? {
+            last4: billing.cardLast4,
+            brand: billing.cardBrand,
+            expiry: billing.cardExpiry,
+          }
+        : null,
+      nextDueDate: billing?.nextDueDate?.toISOString() ?? null,
+      trialEndsAt: tenant.trialEndsAt?.toISOString() ?? null,
+      daysUntilTrialEnds,
+      canceledAt: billing?.canceledAt?.toISOString() ?? null,
+    };
+  }
+
+  async getOpenInvoice(tenantId: string): Promise<OpenInvoiceDto | null> {
+    const invoice = await this.invoiceRepo.findOne({
+      where: [
+        { tenantId, status: InvoiceStatus.PENDING },
+        { tenantId, status: InvoiceStatus.OVERDUE },
+      ],
+      order: { dueDate: 'DESC' },
+    });
+    if (!invoice) return null;
+
+    let pix: { qrCodeBase64: string; copyPaste: string } | null = null;
+    if (invoice.billingType === BillingType.PIX) {
+      const expired =
+        !invoice.pixExpiresAt || invoice.pixExpiresAt.getTime() < Date.now();
+      if (!expired && invoice.pixQrCode && invoice.pixCopyPaste) {
+        pix = {
+          qrCodeBase64: invoice.pixQrCode,
+          copyPaste: invoice.pixCopyPaste,
+        };
+      } else {
+        pix = await this.generatePixForInvoice(invoice.id);
+      }
+    }
+
+    return {
+      id: invoice.id,
+      asaasPaymentId: invoice.asaasPaymentId,
+      value: Number.parseFloat(invoice.value),
+      dueDate: invoice.dueDate.toISOString().split('T')[0],
+      status: invoice.status,
+      billingType: invoice.billingType,
+      pix,
+    };
+  }
+
+  async generatePixForInvoice(
+    invoiceId: string,
+    tenantId?: string,
+  ): Promise<{ qrCodeBase64: string; copyPaste: string }> {
+    const invoice = await this.invoiceRepo.findOne({
+      where: { id: invoiceId },
+    });
+    if (!invoice) throw new NotFoundException('Invoice not found');
+    if (tenantId && invoice.tenantId !== tenantId) {
+      throw new NotFoundException('Invoice not found');
+    }
+
+    if (this.isMock) {
+      return { qrCodeBase64: 'MOCK_BASE64', copyPaste: 'MOCK_COPYPASTE' };
+    }
+
+    const res = await this.asaas.get<{
+      encodedImage: string;
+      payload: string;
+      expirationDate: string;
+    }>(`/payments/${invoice.asaasPaymentId}/pixQrCode`);
+
+    invoice.pixQrCode = res.encodedImage;
+    invoice.pixCopyPaste = res.payload;
+    invoice.pixExpiresAt = new Date(res.expirationDate);
+    await this.invoiceRepo.save(invoice);
+
+    return { qrCodeBase64: res.encodedImage, copyPaste: res.payload };
+  }
+
+  async listPaidInvoices(
+    tenantId: string,
+    limit = 12,
+  ): Promise<OpenInvoiceDto[]> {
+    const invoices = await this.invoiceRepo.find({
+      where: { tenantId, status: InvoiceStatus.CONFIRMED },
+      order: { paidAt: 'DESC' },
+      take: limit,
+    });
+    return invoices.map((i) => ({
+      id: i.id,
+      asaasPaymentId: i.asaasPaymentId,
+      value: Number.parseFloat(i.value),
+      dueDate: i.dueDate.toISOString().split('T')[0],
+      status: i.status,
+      billingType: i.billingType,
+      pix: null,
+    }));
   }
 
   private async fetchIpcaAccumulado12Months(): Promise<number> {
