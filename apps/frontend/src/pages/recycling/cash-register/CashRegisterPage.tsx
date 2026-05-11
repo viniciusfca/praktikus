@@ -273,6 +273,76 @@ function Card({
   );
 }
 
+// ── Open Cash Session Modal ─────────────────────────────────────────────────
+
+interface OpenModalProps {
+  open: boolean;
+  onClose: () => void;
+  onConfirm: (openingBalance: number) => Promise<void>;
+  submitting: boolean;
+}
+
+function OpenCashSessionModal({ open, onClose, onConfirm, submitting }: OpenModalProps) {
+  const [openingBalance, setOpeningBalance] = useState<number | null>(0);
+  const [localError, setLocalError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (open) {
+      setOpeningBalance(0);
+      setLocalError(null);
+    }
+  }, [open]);
+
+  const handleConfirm = async () => {
+    const value = openingBalance ?? 0;
+    if (value < 0) {
+      setLocalError('O saldo inicial não pode ser negativo.');
+      return;
+    }
+    if (value > 999999.99) {
+      setLocalError('O saldo inicial não pode exceder R$ 999.999,99.');
+      return;
+    }
+    setLocalError(null);
+    await onConfirm(value);
+  };
+
+  return (
+    <CModal visible={open} onClose={onClose} alignment="center" className="pk-modal-mobile">
+      <CModalHeader>
+        <CModalTitle>Abrir caixa</CModalTitle>
+      </CModalHeader>
+      <CModalBody>
+        <p style={{ fontSize: 13, color: 'var(--cui-secondary-color)', margin: '0 0 14px' }}>
+          Quantia em dinheiro físico no caixa neste momento (troco, sobra do dia anterior, etc).
+        </p>
+        <div>
+          <CFormLabel style={labelStyle}>Saldo inicial (R$)</CFormLabel>
+          <CurrencyInput
+            value={openingBalance}
+            onChange={(v) => {
+              setOpeningBalance(v);
+              if (localError) setLocalError(null);
+            }}
+            placeholder="0,00"
+            autoFocus
+            invalid={!!localError}
+          />
+          {localError && <CFormFeedback invalid>{localError}</CFormFeedback>}
+        </div>
+      </CModalBody>
+      <CModalFooter>
+        <CButton color="secondary" variant="outline" onClick={onClose} disabled={submitting}>
+          Cancelar
+        </CButton>
+        <CButton color="primary" onClick={handleConfirm} disabled={submitting}>
+          {submitting ? <CSpinner size="sm" /> : 'Abrir caixa'}
+        </CButton>
+      </CModalFooter>
+    </CModal>
+  );
+}
+
 // ── Transaction Modal ───────────────────────────────────────────────────────
 
 interface TxModalProps {
@@ -429,6 +499,7 @@ export function CashRegisterPage() {
   const [transactions, setTransactions] = useState<CashTransaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
+  const [openModalVisible, setOpenModalVisible] = useState(false);
   const [txModalOpen, setTxModalOpen] = useState(false);
   const [txModalType, setTxModalType] = useState<'IN' | 'OUT'>('IN');
   const [error, setError] = useState<string | null>(null);
@@ -457,15 +528,22 @@ export function CashRegisterPage() {
     loadCurrent();
   }, [loadCurrent]);
 
-  const handleOpen = async () => {
+  const handleOpenClick = () => {
+    setError(null);
+    setSuccess(null);
+    setOpenModalVisible(true);
+  };
+
+  const handleConfirmOpen = async (openingBalance: number) => {
     setActionLoading(true);
     setError(null);
     setSuccess(null);
     try {
-      const opened = await cashRegisterService.open();
+      const opened = await cashRegisterService.open(openingBalance);
       setSession(opened);
       setTransactions([]);
-      setSuccess('Caixa aberto com sucesso.');
+      setOpenModalVisible(false);
+      setSuccess(`Caixa aberto com saldo inicial de ${formatCurrency(opened.openingBalance)}.`);
     } catch (err: unknown) {
       const e = err as { response?: { data?: { message?: string } } };
       setError(e?.response?.data?.message ?? 'Erro ao abrir o caixa.');
@@ -662,7 +740,7 @@ export function CashRegisterPage() {
                 maxWidth: 360,
               }}
             >
-              O saldo de abertura é puxado automaticamente do fechamento da sessão anterior.
+              Informe o saldo inicial em dinheiro físico ao abrir uma nova sessão.
             </p>
           </div>
 
@@ -712,13 +790,20 @@ export function CashRegisterPage() {
           <CButton
             color="primary"
             size="lg"
-            onClick={handleOpen}
+            onClick={handleOpenClick}
             disabled={actionLoading}
             style={{ borderRadius: 8, minWidth: 180 }}
           >
             {actionLoading ? <CSpinner size="sm" /> : 'Abrir caixa'}
           </CButton>
         </div>
+
+        <OpenCashSessionModal
+          open={openModalVisible}
+          onClose={() => setOpenModalVisible(false)}
+          onConfirm={handleConfirmOpen}
+          submitting={actionLoading}
+        />
       </div>
     );
   }

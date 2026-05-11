@@ -12,6 +12,7 @@ import { JwtAuthGuard } from '../../core/auth/jwt-auth.guard';
 import { AuthUser } from '../../core/auth/jwt.strategy';
 import { CashRegisterService } from './cash-register.service';
 import { AddTransactionDto } from './dto/add-transaction.dto';
+import { OpenCashSessionDto } from './dto/open-cash-session.dto';
 
 interface RequestWithUser extends Request {
   user: AuthUser;
@@ -23,8 +24,15 @@ export class CashRegisterController {
   constructor(private readonly cashRegisterService: CashRegisterService) {}
 
   @Post('open')
-  open(@Request() req: RequestWithUser) {
-    return this.cashRegisterService.open(req.user.tenantId, req.user.userId);
+  open(
+    @Request() req: RequestWithUser,
+    @Body() dto: OpenCashSessionDto,
+  ) {
+    return this.cashRegisterService.open(
+      req.user.tenantId,
+      req.user.userId,
+      dto.openingBalance,
+    );
   }
 
   @Post('close')

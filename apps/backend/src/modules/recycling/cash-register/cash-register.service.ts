@@ -39,7 +39,11 @@ export class CashRegisterService {
     }
   }
 
-  async open(tenantId: string, operatorId: string): Promise<CashSessionEntity> {
+  async open(
+    tenantId: string,
+    operatorId: string,
+    openingBalance: number,
+  ): Promise<CashSessionEntity> {
     return this.withSchema(tenantId, async (manager) => {
       const sessionRepo = manager.getRepository(CashSessionEntity);
 
@@ -48,14 +52,6 @@ export class CashRegisterService {
       });
       if (existing)
         throw new BadRequestException('Já existe uma sessão de caixa aberta.');
-
-      const lastClosed = await sessionRepo.findOne({
-        where: { status: CashSessionStatus.CLOSED },
-
-        order: { closedAt: 'DESC' } as any,
-      });
-
-      const openingBalance = lastClosed?.closingBalance ?? 0;
 
       const session = sessionRepo.create({
         operatorId,
