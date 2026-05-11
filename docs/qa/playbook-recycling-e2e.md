@@ -145,13 +145,11 @@ Versão executável das 11 fases descritas em [docs/superpowers/specs/2026-05-11
    - Nome: `Cooperativa Reciclar`
    - CNPJ: gere via `qa:generate-data` (cada execução dá um novo CNPJ válido)
    - Telefone: `(11) 98765-4321`
-   - Contato: `Maria Silva`
 
    **Fornecedor 2**:
    - Nome: `EcoMaterial Comércio`
    - CNPJ: novo válido
    - Telefone: `(11) 91234-5678`
-   - Contato: `João Pereira`
 
 3. **Checkpoint**: ambos aparecem na tabela.
 4. **Screenshot ✓** (CP2).
@@ -165,13 +163,11 @@ Versão executável das 11 fases descritas em [docs/superpowers/specs/2026-05-11
    - Nome: `Indústria Verde Ltda`
    - CPF/CNPJ: gere CNPJ válido
    - Telefone: `(11) 99887-7665`
-   - Contato: `Ana Costa`
 
    **Comprador 2**:
    - Nome: `Fundição Sustentável`
    - CPF/CNPJ: gere CNPJ válido
    - Telefone: `(11) 92233-4455`
-   - Contato: `Carlos Mendes`
 
 3. **Checkpoint**: ambos aparecem na tabela.
 4. **Screenshot ✓** (CP3).
