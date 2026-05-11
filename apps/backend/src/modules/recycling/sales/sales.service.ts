@@ -58,6 +58,7 @@ export class SalesService {
       soldAt: string;
       buyerId: string;
       buyerName: string;
+      paymentMethod: string;
       total: number;
       itemCount: number;
       firstProductName: string | null;
@@ -77,6 +78,7 @@ export class SalesService {
           s.id,
           s.sold_at,
           s.buyer_id,
+          s.payment_method,
           s.notes,
           b.name as buyer_name,
           COALESCE(agg.total, 0) as total,
@@ -116,6 +118,7 @@ export class SalesService {
           soldAt: new Date(r.sold_at).toISOString(),
           buyerId: r.buyer_id,
           buyerName: r.buyer_name ?? '',
+          paymentMethod: r.payment_method,
           total: Number(r.total),
           itemCount: Number(r.item_count),
           firstProductName: r.first_product_name ?? null,

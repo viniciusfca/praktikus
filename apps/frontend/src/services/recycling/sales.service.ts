@@ -21,6 +21,7 @@ export interface SaleListItem {
   soldAt: string;
   buyerId: string;
   buyerName: string;
+  paymentMethod: PaymentMethod;
   total: number;
   itemCount: number;
   firstProductName: string | null;
