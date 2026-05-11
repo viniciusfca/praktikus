@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { CAlert, CSpinner } from '@coreui/react';
 import { Card, CardTitle } from './Card';
-import { useBillingStore } from '../../store/billing.store';
+import { useBillingStore, type BillingState } from '../../store/billing.store';
 import { billingService } from '../../services/billing.service';
 import { BillingStatusCard } from '../billing/BillingStatusCard';
 import { PaymentMethodCard } from '../billing/PaymentMethodCard';
@@ -12,24 +12,95 @@ import { AsaasCheckoutPopup } from '../billing/AsaasCheckoutPopup';
 
 export function SubscriptionTab() {
   const { summary, openInvoice, history, loading, error, refresh, popupOpen, setPopupOpen } = useBillingStore();
-  const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
   const [cancelOpen, setCancelOpen] = useState(false);
+  const popupRef = useRef<Window | null>(null);
+  const [successDetector, setSuccessDetector] = useState<((s: BillingState) => boolean) | null>(null);
 
   useEffect(() => { refresh(); }, [refresh]);
 
+  const resetPopupState = () => {
+    popupRef.current = null;
+    setPopupOpen(false);
+    setSuccessDetector(null);
+  };
+
   // SINCRONO em onClick (sem await): abre popup imediatamente, faz request em background
   const startCardCheckout = () => {
+    // 1. Open the window SYNCHRONOUSLY (response to click)
+    popupRef.current = window.open('about:blank', 'asaas-checkout', 'width=480,height=720,top=100,left=100');
+    if (!popupRef.current) {
+      alert('Permita popups para este site e tente novamente.');
+      return;
+    }
     setPopupOpen(true);
+
+    // 2. Capture the success criterion BEFORE the await
+    const initialBillingType = summary?.billingType ?? null;
+    const initialCardLast4 = summary?.card?.last4 ?? null;
+    setSuccessDetector(() => (current: BillingState) => {
+      const currentSummary = current.summary;
+      if (currentSummary?.billingType !== 'CREDIT_CARD') return false;
+      // Card was added (previously not CREDIT_CARD) or card last4 changed (replacement)
+      return (
+        initialBillingType !== 'CREDIT_CARD' ||
+        currentSummary?.card?.last4 !== initialCardLast4
+      );
+    });
+
+    // 3. Fetch URL and navigate the (already-open) popup to it
     billingService.startCardCheckout()
-      .then((s) => setCheckoutUrl(s.checkoutUrl))
-      .catch(() => { setPopupOpen(false); alert('Falha ao iniciar o checkout. Tente novamente.'); });
+      .then((session) => {
+        if (popupRef.current && !popupRef.current.closed) {
+          try {
+            popupRef.current.location.href = session.checkoutUrl;
+          } catch {
+            // cross-origin assignment — fall back to replacing
+            popupRef.current.location.replace(session.checkoutUrl);
+          }
+        }
+      })
+      .catch(() => {
+        try { popupRef.current?.close(); } catch { /* cross-origin */ }
+        resetPopupState();
+        alert('Falha ao iniciar o checkout. Tente novamente.');
+      });
   };
 
   const startInvoiceCheckout = (invoiceId: string) => {
+    popupRef.current = window.open('about:blank', 'asaas-checkout', 'width=480,height=720,top=100,left=100');
+    if (!popupRef.current) {
+      alert('Permita popups para este site e tente novamente.');
+      return;
+    }
     setPopupOpen(true);
+
+    // Snapshot the open invoice (to detect when it transitions to CONFIRMED / disappears)
+    const initialInvoiceId = openInvoice?.id;
+    const initialInvoiceStatus = openInvoice?.status;
+    setSuccessDetector(() => (current: BillingState) => {
+      if (!initialInvoiceId) return false;
+      const currentOpen = current.openInvoice;
+      if (!currentOpen) return true;
+      if (currentOpen.id !== initialInvoiceId) return true;
+      if (currentOpen.status !== initialInvoiceStatus && currentOpen.status === 'CONFIRMED') return true;
+      return false;
+    });
+
     billingService.startInvoiceCheckout(invoiceId)
-      .then((s) => setCheckoutUrl(s.checkoutUrl))
-      .catch(() => { setPopupOpen(false); alert('Falha ao iniciar o pagamento. Tente novamente.'); });
+      .then((session) => {
+        if (popupRef.current && !popupRef.current.closed) {
+          try {
+            popupRef.current.location.href = session.checkoutUrl;
+          } catch {
+            popupRef.current.location.replace(session.checkoutUrl);
+          }
+        }
+      })
+      .catch(() => {
+        try { popupRef.current?.close(); } catch { /* cross-origin */ }
+        resetPopupState();
+        alert('Falha ao iniciar o pagamento. Tente novamente.');
+      });
   };
 
   const removeCard = async () => {
@@ -88,9 +159,10 @@ export function SubscriptionTab() {
 
       <AsaasCheckoutPopup
         open={popupOpen}
-        checkoutUrl={checkoutUrl}
-        onClose={() => { setPopupOpen(false); setCheckoutUrl(null); }}
-        onSuccess={() => { setPopupOpen(false); setCheckoutUrl(null); refresh(); }}
+        popupRef={popupRef}
+        successDetector={successDetector}
+        onClose={() => { resetPopupState(); }}
+        onSuccess={() => { resetPopupState(); refresh(); }}
       />
     </div>
   );

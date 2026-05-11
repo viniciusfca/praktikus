@@ -5,7 +5,7 @@ import {
   type OpenInvoice,
 } from '../services/billing.service';
 
-interface BillingState {
+export interface BillingState {
   summary: BillingSummary | null;
   openInvoice: OpenInvoice | null;
   history: OpenInvoice[];
