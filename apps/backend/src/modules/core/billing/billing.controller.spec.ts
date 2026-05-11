@@ -83,11 +83,7 @@ describe('BillingController', () => {
     it('should throw ForbiddenException when signature header is missing', async () => {
       const rawBody = '{"event":"PAYMENT_RECEIVED"}';
       await expect(
-        controller.webhook(
-          undefined,
-          JSON.parse(rawBody),
-          makeRawReq(rawBody),
-        ),
+        controller.webhook(undefined, JSON.parse(rawBody), makeRawReq(rawBody)),
       ).rejects.toThrow(ForbiddenException);
     });
   });
@@ -547,9 +543,10 @@ describe('BillingController', () => {
         user: { tenantId: 't1', email: 'a@b.com' },
       } as any);
       expect(result.sessionId).toBe('sess-2');
-      expect(
-        mockBillingService.reactivateSubscription,
-      ).toHaveBeenCalledWith('t1', 'a@b.com');
+      expect(mockBillingService.reactivateSubscription).toHaveBeenCalledWith(
+        't1',
+        'a@b.com',
+      );
     });
   });
 });

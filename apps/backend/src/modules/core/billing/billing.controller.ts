@@ -164,7 +164,10 @@ export class BillingController {
 
     const sigBuf = Buffer.from(signature, 'hex');
     const expBuf = Buffer.from(expected, 'hex');
-    if (sigBuf.length !== expBuf.length || !crypto.timingSafeEqual(sigBuf, expBuf)) {
+    if (
+      sigBuf.length !== expBuf.length ||
+      !crypto.timingSafeEqual(sigBuf, expBuf)
+    ) {
       throw new ForbiddenException('Assinatura de webhook inválida');
     }
 
@@ -182,7 +185,9 @@ export class BillingController {
         payload?.payment?.subscription ?? payload?.subscription?.id;
       if (subscriptionId) {
         const tenantId =
-          await this.billingService.findTenantIdBySubscriptionId(subscriptionId);
+          await this.billingService.findTenantIdBySubscriptionId(
+            subscriptionId,
+          );
         if (tenantId) {
           const tenantBefore = await this.tenancyService.findById(tenantId);
           await this.tenancyService.updateStatus(tenantId, targetStatus);
@@ -194,7 +199,8 @@ export class BillingController {
             (tenantBefore.status === TenantStatus.SUSPENDED ||
               tenantBefore.status === TenantStatus.OVERDUE)
           ) {
-            const owner = await this.tenancyService.findOwnerByTenantId(tenantId);
+            const owner =
+              await this.tenancyService.findOwnerByTenantId(tenantId);
             if (owner) {
               try {
                 await this.mailService.sendAccountReactivated(
