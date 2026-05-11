@@ -2097,11 +2097,13 @@ git commit -m "feat(auth): whitelist /billing/* and /auth/* in TenantStatusGuard
 
 ---
 
-## Task 12: 5 templates novos no MailService
+## Task 12: 4 templates novos no MailService
 
 **Files:**
 - Modify: `apps/backend/src/modules/core/mail/mail.service.ts`
 - Modify: `apps/backend/src/modules/core/mail/mail.service.spec.ts`
+
+> **Nota:** `sendAccountReactivated` foi adicionado na Task 9 quando o webhook handler precisou — pular nesta task.
 
 - [ ] **Step 1: Testes**
 
@@ -2130,13 +2132,6 @@ describe('billing emails', () => {
     expect(sendSpy).toHaveBeenCalled();
   });
 
-  it('sendAccountReactivated sends email without CTA', async () => {
-    const sendSpy = jest.fn().mockResolvedValue({ data: {}, error: null });
-    (service as any).resend = { emails: { send: sendSpy } };
-    await service.sendAccountReactivated('a@b.com', 'Foo');
-    expect(sendSpy).toHaveBeenCalled();
-  });
-
   it('sendPaymentRefundIssue and sendTrialExpiringTomorrow are wired', async () => {
     const sendSpy = jest.fn().mockResolvedValue({ data: {}, error: null });
     (service as any).resend = { emails: { send: sendSpy } };
@@ -2152,7 +2147,7 @@ describe('billing emails', () => {
 Run: `pnpm --filter backend test -- mail.service.spec`
 Expected: 4 testes falham.
 
-- [ ] **Step 3: Implementar 5 métodos**
+- [ ] **Step 3: Implementar 4 métodos**
 
 Adicionar em `mail.service.ts` antes do `escapeHtml`:
 
@@ -2185,16 +2180,6 @@ async sendAccountSuspended(email: string, name: string, paymentUrl: string): Pro
       'Sua conta foi suspensa por inadimplência.',
       'Pague a fatura em aberto para reativar imediatamente seu acesso.',
       'Ver fatura e pagar', paymentUrl,
-    ),
-  );
-}
-
-async sendAccountReactivated(email: string, name: string): Promise<void> {
-  await this.send(email, 'Conta reativada — Praktikus',
-    this.billingHtml(name,
-      'Sua conta foi reativada.',
-      'Obrigado pelo pagamento. Você já pode usar o Praktikus normalmente.',
-      null, null,
     ),
   );
 }

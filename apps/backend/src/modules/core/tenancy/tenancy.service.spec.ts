@@ -3,6 +3,7 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 import { TenancyService } from './tenancy.service';
 import { TenantEntity, TenantStatus } from './tenant.entity';
+import { UserEntity, UserRole } from '../auth/user.entity';
 
 const mockQueryRunner = {
   connect: jest.fn(),
@@ -20,6 +21,10 @@ const mockTenantRepo = {
   findOne: jest.fn(),
 };
 
+const mockUserRepo = {
+  findOne: jest.fn(),
+};
+
 describe('TenancyService', () => {
   let service: TenancyService;
 
@@ -28,6 +33,7 @@ describe('TenancyService', () => {
       providers: [
         TenancyService,
         { provide: getRepositoryToken(TenantEntity), useValue: mockTenantRepo },
+        { provide: getRepositoryToken(UserEntity), useValue: mockUserRepo },
         { provide: DataSource, useValue: mockDataSource },
       ],
     }).compile();
@@ -210,6 +216,31 @@ describe('TenancyService', () => {
     it('should return null when CNPJ not found', async () => {
       mockTenantRepo.findOne.mockResolvedValue(null);
       const result = await service.findByCnpj('00000000000000');
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('findOwnerByTenantId', () => {
+    it('should return the OWNER user for the tenant', async () => {
+      const owner = {
+        id: 'u-1',
+        tenantId: 't-1',
+        email: 'owner@example.com',
+        name: 'Owner Foo',
+        role: UserRole.OWNER,
+      };
+      mockUserRepo.findOne.mockResolvedValue(owner);
+
+      const result = await service.findOwnerByTenantId('t-1');
+      expect(result).toEqual(owner);
+      expect(mockUserRepo.findOne).toHaveBeenCalledWith({
+        where: { tenantId: 't-1', role: UserRole.OWNER },
+      });
+    });
+
+    it('should return null when no owner exists for tenant', async () => {
+      mockUserRepo.findOne.mockResolvedValue(null);
+      const result = await service.findOwnerByTenantId('t-missing');
       expect(result).toBeNull();
     });
   });

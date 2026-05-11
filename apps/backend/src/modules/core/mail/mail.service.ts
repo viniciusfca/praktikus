@@ -71,6 +71,44 @@ export class MailService {
     }
   }
 
+  async sendAccountReactivated(email: string, name: string): Promise<void> {
+    if (!this.resend) {
+      console.log(`[mail dev] account reactivated for ${email} (${name})`);
+      return;
+    }
+    try {
+      const { error } = await this.resend.emails.send({
+        from: this.from,
+        to: email,
+        subject: 'Sua conta foi reativada — Praktikus',
+        html: this.accountReactivatedHtml(name),
+      });
+      if (error) {
+        this.logger.warn(
+          `Resend error sending reactivation to ${email}: ${error.message}`,
+        );
+      }
+    } catch (err) {
+      this.logger.warn(
+        `Exception sending reactivation to ${email}: ${(err as Error).message}`,
+      );
+    }
+  }
+
+  private accountReactivatedHtml(name: string): string {
+    return `<!DOCTYPE html>
+<html lang="pt-BR">
+<body style="font-family: -apple-system, system-ui, sans-serif; background:#f7f8f8; padding:32px; color:#0c1010;">
+  <div style="max-width:520px; margin:0 auto; background:#fff; border-radius:12px; padding:32px; border:1px solid #e3e7e7;">
+    <h1 style="margin:0 0 16px; font-size:20px; color:#0c1010;">Praktikus</h1>
+    <p>Olá, ${escapeHtml(name)}.</p>
+    <p>Boa notícia! Recebemos seu pagamento e sua conta foi reativada.</p>
+    <p>Você já pode acessar normalmente todos os recursos do Praktikus.</p>
+  </div>
+</body>
+</html>`;
+  }
+
   private passwordResetHtml(name: string, resetUrl: string): string {
     return `<!DOCTYPE html>
 <html lang="pt-BR">
