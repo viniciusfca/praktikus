@@ -577,4 +577,243 @@ describe('BillingService', () => {
       ).rejects.toThrow(/not found/i);
     });
   });
+
+  describe('removeCard', () => {
+    it('PATCHes Asaas subscription to PIX and clears card fields', async () => {
+      mockAsaasClient.isMock = false;
+      mockBillingRepo.findOne.mockResolvedValue({
+        tenantId: 't1',
+        asaasSubscriptionId: 'sub_1',
+        cardLast4: '1234',
+        cardBrand: 'VISA',
+        cardExpiry: '12/29',
+        billingType: 'CREDIT_CARD',
+      });
+      mockAsaasClient.patch.mockResolvedValue({});
+      mockBillingRepo.save.mockImplementation((x: any) => x);
+
+      await service.removeCard('t1');
+
+      expect(mockAsaasClient.patch).toHaveBeenCalledWith(
+        '/subscriptions/sub_1',
+        { billingType: 'PIX' },
+      );
+      expect(mockBillingRepo.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          cardLast4: null,
+          cardBrand: null,
+          cardExpiry: null,
+          billingType: 'PIX',
+        }),
+      );
+    });
+  });
+
+  describe('cancelSubscription', () => {
+    it('POSTs cancel and sets canceledAt', async () => {
+      mockAsaasClient.isMock = false;
+      mockBillingRepo.findOne.mockResolvedValue({
+        tenantId: 't1',
+        asaasSubscriptionId: 'sub_1',
+        canceledAt: null,
+      });
+      mockAsaasClient.post.mockResolvedValue({});
+      mockBillingRepo.save.mockImplementation((x: any) => x);
+
+      await service.cancelSubscription('t1');
+
+      expect(mockAsaasClient.post).toHaveBeenCalledWith(
+        '/subscriptions/sub_1/cancel',
+        {},
+      );
+      expect(mockBillingRepo.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          canceledAt: expect.any(Date),
+        }),
+      );
+    });
+
+    it('throws if already canceled', async () => {
+      mockBillingRepo.findOne.mockResolvedValue({
+        tenantId: 't1',
+        canceledAt: new Date(),
+      });
+      await expect(service.cancelSubscription('t1')).rejects.toThrow(
+        /already canceled/i,
+      );
+    });
+  });
+
+  describe('syncInvoiceFromWebhook', () => {
+    it('upserts invoice on PAYMENT_CREATED', async () => {
+      mockBillingRepo.findOne.mockResolvedValue({
+        tenantId: 't1',
+        asaasSubscriptionId: 'sub_1',
+      });
+      mockInvoiceRepo.findOne.mockResolvedValue(null);
+      mockInvoiceRepo.create.mockImplementation((x: any) => x);
+      mockInvoiceRepo.save.mockImplementation((x: any) => x);
+
+      await service.syncInvoiceFromWebhook({
+        event: 'PAYMENT_CREATED',
+        payment: {
+          id: 'pay_1',
+          subscription: 'sub_1',
+          value: 89.9,
+          dueDate: '2026-06-15',
+          status: 'PENDING',
+          billingType: 'PIX',
+        },
+      });
+
+      expect(mockInvoiceRepo.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          asaasPaymentId: 'pay_1',
+          value: '89.9',
+          status: 'PENDING',
+          billingType: 'PIX',
+        }),
+      );
+    });
+
+    it('updates existing invoice on PAYMENT_CONFIRMED', async () => {
+      mockBillingRepo.findOne.mockResolvedValue({
+        tenantId: 't1',
+        asaasSubscriptionId: 'sub_1',
+      });
+      const existing = {
+        id: 'inv1',
+        asaasPaymentId: 'pay_1',
+        status: 'PENDING',
+        tenantId: 't1',
+        value: '89.90',
+        dueDate: new Date(),
+        billingType: 'PIX',
+      };
+      mockInvoiceRepo.findOne.mockResolvedValue(existing);
+      mockInvoiceRepo.save.mockImplementation((x: any) => x);
+
+      await service.syncInvoiceFromWebhook({
+        event: 'PAYMENT_CONFIRMED',
+        payment: {
+          id: 'pay_1',
+          subscription: 'sub_1',
+          status: 'CONFIRMED',
+          confirmedDate: '2026-06-15',
+        },
+      });
+
+      expect(mockInvoiceRepo.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          status: 'CONFIRMED',
+          paidAt: expect.any(Date),
+        }),
+      );
+    });
+  });
+
+  describe('syncCardFromWebhook', () => {
+    it('persists card details when CHECKOUT_PAID with creditCard', async () => {
+      mockAsaasClient.isMock = false;
+      mockBillingRepo.findOne.mockResolvedValue({
+        tenantId: 't1',
+        asaasSubscriptionId: 'old_sub',
+      });
+      mockBillingRepo.save.mockImplementation((x: any) => x);
+      mockAsaasClient.post.mockResolvedValue({}); // cancel old sub
+
+      await service.syncCardFromWebhook({
+        event: 'CHECKOUT_PAID',
+        checkout: {
+          externalReference: 'tenant_t1',
+          subscription: { id: 'new_sub' },
+          creditCard: {
+            creditCardNumber: '1234',
+            creditCardBrand: 'VISA',
+            expirationDate: '12/29',
+          },
+        },
+      });
+
+      expect(mockBillingRepo.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          asaasSubscriptionId: 'new_sub',
+          cardLast4: '1234',
+          cardBrand: 'VISA',
+          cardExpiry: '12/29',
+          billingType: 'CREDIT_CARD',
+        }),
+      );
+    });
+  });
+
+  describe('reactivateSubscription', () => {
+    it('throws NotFoundException when no billing', async () => {
+      mockBillingRepo.findOne.mockResolvedValue(null);
+      await expect(
+        service.reactivateSubscription('t1', 'a@b.com'),
+      ).rejects.toThrow(/billing not found/i);
+    });
+
+    it('throws BadRequestException when not previously canceled', async () => {
+      mockBillingRepo.findOne.mockResolvedValue({
+        tenantId: 't1',
+        canceledAt: null,
+        asaasCustomerId: 'cus_1',
+      });
+      await expect(
+        service.reactivateSubscription('t1', 'a@b.com'),
+      ).rejects.toThrow(/not canceled/i);
+    });
+  });
+
+  describe('syncInvoiceFromWebhook unmapped event', () => {
+    it('logs warning and returns without persisting for unknown event', async () => {
+      const loggerWarnSpy = jest
+        .spyOn((service as any).logger, 'warn')
+        .mockImplementation();
+      mockBillingRepo.findOne.mockResolvedValue({ tenantId: 't1' });
+
+      await service.syncInvoiceFromWebhook({
+        event: 'PAYMENT_CHARGEBACK_REQUESTED',
+        payment: { id: 'pay_x', subscription: 'sub_x', value: 50 },
+      });
+
+      expect(loggerWarnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('PAYMENT_CHARGEBACK_REQUESTED'),
+      );
+      expect(mockInvoiceRepo.save).not.toHaveBeenCalled();
+      loggerWarnSpy.mockRestore();
+    });
+  });
+
+  describe('syncCardFromWebhook cardLast4 truncation', () => {
+    it('truncates masked PAN to last 4 digits', async () => {
+      mockBillingRepo.findOne.mockResolvedValue({
+        tenantId: 't1',
+        asaasSubscriptionId: 'old_sub',
+        canceledAt: null,
+      });
+      mockBillingRepo.save.mockImplementation((x: any) => x);
+      mockAsaasClient.post.mockResolvedValue({});
+      mockAsaasClient.isMock = false;
+
+      await service.syncCardFromWebhook({
+        event: 'CHECKOUT_PAID',
+        checkout: {
+          externalReference: 'tenant_t1',
+          subscription: { id: 'new_sub' },
+          creditCard: {
+            creditCardNumber: '************1234',
+            creditCardBrand: 'VISA',
+            expirationDate: '12/29',
+          },
+        },
+      });
+
+      expect(mockBillingRepo.save).toHaveBeenCalledWith(
+        expect.objectContaining({ cardLast4: '1234' }),
+      );
+    });
+  });
 });

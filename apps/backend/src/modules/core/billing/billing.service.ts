@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   Logger,
@@ -375,6 +376,174 @@ export class BillingService {
       {},
     );
     return { checkoutUrl: res.link, sessionId: invoice.asaasPaymentId };
+  }
+
+  async removeCard(tenantId: string): Promise<void> {
+    const billing = await this.billingRepo.findOne({ where: { tenantId } });
+    if (!billing?.asaasSubscriptionId) {
+      throw new NotFoundException('Billing not found');
+    }
+    if (!this.isMock) {
+      await this.asaas.patch(
+        `/subscriptions/${billing.asaasSubscriptionId}`,
+        { billingType: 'PIX' },
+      );
+    }
+    billing.cardLast4 = null;
+    billing.cardBrand = null;
+    billing.cardExpiry = null;
+    billing.billingType = 'PIX';
+    await this.billingRepo.save(billing);
+  }
+
+  async cancelSubscription(tenantId: string): Promise<void> {
+    const billing = await this.billingRepo.findOne({ where: { tenantId } });
+    if (!billing) throw new NotFoundException('Billing not found');
+    if (billing.canceledAt) {
+      throw new BadRequestException('Subscription already canceled');
+    }
+    if (!this.isMock && billing.asaasSubscriptionId) {
+      await this.asaas.post(
+        `/subscriptions/${billing.asaasSubscriptionId}/cancel`,
+        {},
+      );
+    }
+    billing.canceledAt = new Date();
+    await this.billingRepo.save(billing);
+  }
+
+  async reactivateSubscription(
+    tenantId: string,
+    email: string,
+  ): Promise<CheckoutSessionDto> {
+    const billing = await this.billingRepo.findOne({ where: { tenantId } });
+    if (!billing) throw new NotFoundException('Billing not found');
+    if (!billing.canceledAt) {
+      throw new BadRequestException('Subscription not canceled');
+    }
+    // Cria o checkout primeiro; só limpa canceledAt se obtiver sucesso (evita estado inconsistente).
+    // createCheckoutSessionForCard exige status TRIAL ou ACTIVE — um tenant SUSPENDED precisa
+    // quitar a fatura aberta antes de reativar (ConflictException é o comportamento esperado).
+    const session = await this.createCheckoutSessionForCard(tenantId, email);
+    billing.canceledAt = null;
+    await this.billingRepo.save(billing);
+    return session;
+  }
+
+  async syncInvoiceFromWebhook(payload: any): Promise<void> {
+    const event = payload.event as string;
+    const payment = payload.payment;
+    if (!payment?.id) return;
+
+    const subscriptionId =
+      payment.subscription ?? payload.subscription?.id ?? null;
+
+    let tenantId: string | null = null;
+    if (subscriptionId) {
+      tenantId = await this.findTenantIdBySubscriptionId(subscriptionId);
+    }
+    if (!tenantId) {
+      this.logger.warn(
+        `Webhook ${event} for payment ${payment.id} without resolvable tenant`,
+      );
+      return;
+    }
+
+    const newStatus = this.mapPaymentStatus(event);
+    if (newStatus === null) {
+      return; // unmapped event already logged by mapPaymentStatus
+    }
+
+    let invoice = await this.invoiceRepo.findOne({
+      where: { asaasPaymentId: payment.id },
+    });
+
+    if (invoice) {
+      invoice.status = newStatus;
+    } else {
+      invoice = this.invoiceRepo.create({
+        tenantId,
+        asaasPaymentId: payment.id,
+        value: String(payment.value ?? 0),
+        dueDate: payment.dueDate ? new Date(payment.dueDate) : new Date(),
+        status: newStatus,
+        billingType: (payment.billingType ?? 'UNDEFINED') as BillingType,
+      });
+    }
+
+    if (event === 'PAYMENT_CONFIRMED' || event === 'PAYMENT_RECEIVED') {
+      invoice.paidAt = payment.confirmedDate
+        ? new Date(payment.confirmedDate)
+        : new Date();
+    }
+
+    await this.invoiceRepo.save(invoice);
+  }
+
+  async syncCardFromWebhook(payload: any): Promise<void> {
+    const externalRef: string | undefined =
+      payload.checkout?.externalReference ?? payload.payment?.externalReference;
+    const tenantId = externalRef?.replace(/^tenant_/, '');
+    if (!tenantId) {
+      this.logger.warn('CHECKOUT_PAID without externalReference; ignoring');
+      return;
+    }
+    const billing = await this.billingRepo.findOne({ where: { tenantId } });
+    if (!billing) return;
+
+    const newSubId = payload.checkout?.subscription?.id;
+    const card = payload.checkout?.creditCard ?? payload.payment?.creditCard;
+
+    if (
+      newSubId &&
+      billing.asaasSubscriptionId &&
+      newSubId !== billing.asaasSubscriptionId
+    ) {
+      if (!this.isMock) {
+        try {
+          await this.asaas.post(
+            `/subscriptions/${billing.asaasSubscriptionId}/cancel`,
+            {},
+          );
+        } catch (err) {
+          this.logger.error(
+            `Failed to cancel old sub ${billing.asaasSubscriptionId}: ${(err as Error).message}`,
+          );
+        }
+      }
+      billing.asaasSubscriptionId = newSubId;
+    }
+
+    if (card) {
+      const last4 = String(card.creditCardNumber ?? '').slice(-4);
+      billing.cardLast4 = last4 || null;
+      billing.cardBrand = card.creditCardBrand ?? null;
+      billing.cardExpiry = card.expirationDate
+        ? String(card.expirationDate).slice(0, 5)
+        : null;
+      billing.billingType = 'CREDIT_CARD';
+    }
+
+    await this.billingRepo.save(billing);
+  }
+
+  private mapPaymentStatus(event: string): InvoiceStatus | null {
+    switch (event) {
+      case 'PAYMENT_CONFIRMED':
+      case 'PAYMENT_RECEIVED':
+        return InvoiceStatus.CONFIRMED;
+      case 'PAYMENT_OVERDUE':
+        return InvoiceStatus.OVERDUE;
+      case 'PAYMENT_REFUNDED':
+        return InvoiceStatus.REFUNDED;
+      case 'PAYMENT_DELETED':
+        return InvoiceStatus.DELETED;
+      case 'PAYMENT_CREATED':
+        return InvoiceStatus.PENDING;
+      default:
+        this.logger.warn(`Unmapped Asaas event: ${event}`);
+        return null;
+    }
   }
 
   private async fetchIpcaAccumulado12Months(): Promise<number> {
