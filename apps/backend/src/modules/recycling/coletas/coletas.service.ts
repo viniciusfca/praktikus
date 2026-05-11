@@ -95,6 +95,7 @@ export class ColetasService {
       return repo
         .createQueryBuilder('c')
         .where('c.status = :status', { status: ColetaStatus.AGENDADA })
+        .andWhere('c.scheduledAt >= NOW()')
         .orderBy('c.scheduledAt', 'ASC')
         .limit(Math.max(1, Math.min(50, Math.floor(limit))))
         .getMany();

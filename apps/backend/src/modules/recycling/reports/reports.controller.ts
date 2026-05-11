@@ -19,6 +19,11 @@ export class ReportsController {
     return this.reportsService.getDashboardSummary(req.user.tenantId);
   }
 
+  @Get('dashboard-stats')
+  getDashboardStats(@Request() req: RequestWithUser) {
+    return this.reportsService.getDashboardStats(req.user.tenantId);
+  }
+
   @Get('purchases')
   getPurchasesByPeriod(
     @Request() req: RequestWithUser,
@@ -31,12 +36,36 @@ export class ReportsController {
     );
   }
 
+  @Get('sales')
+  getSalesByPeriod(
+    @Request() req: RequestWithUser,
+    @Query() query: PeriodQueryDto,
+  ) {
+    return this.reportsService.getSalesByPeriod(
+      req.user.tenantId,
+      query.startDate,
+      query.endDate,
+    );
+  }
+
   @Get('top-materials')
   getTopMaterials(
     @Request() req: RequestWithUser,
     @Query() query: TopMaterialsQueryDto,
   ) {
     return this.reportsService.getTopMaterials(
+      req.user.tenantId,
+      query.month,
+      query.limit,
+    );
+  }
+
+  @Get('top-materials-ranking')
+  getTopMaterialsRanking(
+    @Request() req: RequestWithUser,
+    @Query() query: TopMaterialsQueryDto,
+  ) {
+    return this.reportsService.getTopMaterialsRanking(
       req.user.tenantId,
       query.month,
       query.limit,
