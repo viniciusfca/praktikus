@@ -23,7 +23,8 @@
     "migration:revert": "node --require ts-node/register/transpile-only node_modules/typeorm/cli.js -d src/database/data-source.ts migration:revert",
     "migration:create": "node --require ts-node/register/transpile-only node_modules/typeorm/cli.js migration:create src/database/migrations/Migration",
     "seed:admin-dev": "ts-node -r tsconfig-paths/register src/scripts/seed-admin-dev.ts",
-    "qa:generate-data": "ts-node -r tsconfig-paths/register src/scripts/generate-test-data.ts"
+    "qa:generate-data": "ts-node -r tsconfig-paths/register src/scripts/generate-test-data.ts",
+    "qa:reset-db": "ts-node -r tsconfig-paths/register src/scripts/reset-recycling-db.ts"
   },
   "dependencies": {
     "@nestjs/axios": "^4.0.1",
