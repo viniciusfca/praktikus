@@ -121,7 +121,7 @@ export class RecyclingReportsService {
       const rows = await qr.query(
         `
         SELECT
-          DATE(purchased_at) as date,
+          DATE(purchased_at)::text as date,
           SUM(total_amount) as total,
           COUNT(*) as count
         FROM "${schemaName}".purchases
