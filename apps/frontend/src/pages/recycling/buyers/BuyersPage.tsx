@@ -28,6 +28,7 @@ import { Controller } from 'react-hook-form';
 import { isValidCpf, isValidCnpj } from '@praktikus/shared';
 import { DocumentInput, PhoneInput } from '../../../components/inputs';
 import { formatDocument } from '../../../utils/masks';
+import { formatPhoneBr } from '../../../utils/format';
 import { useBuyers } from '../../../hooks/recycling/useBuyers';
 import { buyersService, type Buyer } from '../../../services/recycling/buyers.service';
 
@@ -443,7 +444,7 @@ export function BuyersPage() {
                     {b.document && b.documentType ? formatDocument(b.document, b.documentType) : '—'}
                   </CTableDataCell>
                   <CTableDataCell style={{ color: 'var(--cui-body-color)', fontSize: 13 }}>
-                    {b.phone ?? '—'}
+                    {formatPhoneBr(b.phone)}
                   </CTableDataCell>
                   <CTableDataCell style={{ color: 'var(--cui-secondary-color)', fontSize: 13 }}>
                     {b.contactName ?? '—'}
