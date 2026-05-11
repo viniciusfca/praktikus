@@ -144,22 +144,19 @@ export class BillingController {
     );
   }
 
-  @Post('webhook')
-  @HttpCode(HttpStatus.NO_CONTENT)
-  async webhook(
-    @Headers('asaas-signature') signature: string | undefined,
-    @Body() payload: any,
-    @Req() req: RawBodyRequest<Request>,
-  ): Promise<void> {
+  private verifyWebhookSignature(
+    signature: string | undefined,
+    rawBody: Buffer | undefined,
+  ): void {
     const secret = this.config.get<string>('ASAAS_WEBHOOK_TOKEN', '');
 
-    if (!secret || !signature || !req.rawBody) {
+    if (!secret || !signature || !rawBody) {
       throw new ForbiddenException('Assinatura de webhook inválida');
     }
 
     const expected = crypto
       .createHmac('sha256', secret)
-      .update(req.rawBody)
+      .update(rawBody)
       .digest('hex');
 
     const sigBuf = Buffer.from(signature, 'hex');
@@ -170,65 +167,83 @@ export class BillingController {
     ) {
       throw new ForbiddenException('Assinatura de webhook inválida');
     }
+  }
+
+  private async maybeSendReactivationEmail(
+    tenantId: string,
+    previousStatus: TenantStatus | undefined,
+    targetStatus: TenantStatus,
+  ): Promise<void> {
+    const wasSuspendedOrOverdue =
+      previousStatus === TenantStatus.SUSPENDED ||
+      previousStatus === TenantStatus.OVERDUE;
+    if (targetStatus !== TenantStatus.ACTIVE || !wasSuspendedOrOverdue) return;
+
+    const owner = await this.tenancyService.findOwnerByTenantId(tenantId);
+    if (!owner) return;
+
+    try {
+      await this.mailService.sendAccountReactivated(owner.email, owner.name);
+    } catch (err) {
+      this.logger.warn(
+        `Failed to send reactivation email for tenant ${tenantId}: ${(err as Error).message}`,
+      );
+    }
+  }
+
+  private async handleStatusEvent(
+    event: string,
+    payload: any,
+    targetStatus: TenantStatus,
+  ): Promise<void> {
+    const subscriptionId: string | undefined =
+      payload?.payment?.subscription ?? payload?.subscription?.id;
+
+    if (!subscriptionId) {
+      this.logger.warn(`Asaas event ${event} has no subscriptionId`);
+      return;
+    }
+
+    const tenantId =
+      await this.billingService.findTenantIdBySubscriptionId(subscriptionId);
+    if (!tenantId) {
+      this.logger.warn(`No tenant found for subscriptionId: ${subscriptionId}`);
+      return;
+    }
+
+    const tenantBefore = await this.tenancyService.findById(tenantId);
+    await this.tenancyService.updateStatus(tenantId, targetStatus);
+    await this.maybeSendReactivationEmail(
+      tenantId,
+      tenantBefore?.status,
+      targetStatus,
+    );
+
+    this.logger.log(
+      `Tenant ${tenantId} status updated to ${targetStatus} via ${event}`,
+    );
+  }
+
+  @Post('webhook')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async webhook(
+    @Headers('asaas-signature') signature: string | undefined,
+    @Body() payload: any,
+    @Req() req: RawBodyRequest<Request>,
+  ): Promise<void> {
+    this.verifyWebhookSignature(signature, req.rawBody);
 
     const event: string = payload?.event ?? '';
 
-    // Eventos relacionados a invoice (sync local table)
     if (INVOICE_EVENTS.has(event)) {
       await this.billingService.syncInvoiceFromWebhook(payload);
     }
 
-    // Eventos que atualizam tenant_status
     const targetStatus = EVENT_STATUS_MAP[event];
     if (targetStatus) {
-      const subscriptionId: string | undefined =
-        payload?.payment?.subscription ?? payload?.subscription?.id;
-      if (subscriptionId) {
-        const tenantId =
-          await this.billingService.findTenantIdBySubscriptionId(
-            subscriptionId,
-          );
-        if (tenantId) {
-          const tenantBefore = await this.tenancyService.findById(tenantId);
-          await this.tenancyService.updateStatus(tenantId, targetStatus);
-
-          // Email de reativação se tenant saiu de SUSPENDED/OVERDUE → ACTIVE
-          if (
-            targetStatus === TenantStatus.ACTIVE &&
-            tenantBefore &&
-            (tenantBefore.status === TenantStatus.SUSPENDED ||
-              tenantBefore.status === TenantStatus.OVERDUE)
-          ) {
-            const owner =
-              await this.tenancyService.findOwnerByTenantId(tenantId);
-            if (owner) {
-              try {
-                await this.mailService.sendAccountReactivated(
-                  owner.email,
-                  owner.name,
-                );
-              } catch (err) {
-                this.logger.warn(
-                  `Failed to send reactivation email for tenant ${tenantId}: ${(err as Error).message}`,
-                );
-              }
-            }
-          }
-
-          this.logger.log(
-            `Tenant ${tenantId} status updated to ${targetStatus} via ${event}`,
-          );
-        } else {
-          this.logger.warn(
-            `No tenant found for subscriptionId: ${subscriptionId}`,
-          );
-        }
-      } else {
-        this.logger.warn(`Asaas event ${event} has no subscriptionId`);
-      }
+      await this.handleStatusEvent(event, payload, targetStatus);
     }
 
-    // Checkout
     if (event === 'CHECKOUT_PAID') {
       await this.billingService.syncCardFromWebhook(payload);
     }

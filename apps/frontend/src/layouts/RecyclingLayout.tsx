@@ -77,9 +77,21 @@ function TenantBanner({ status, trialEndsAt, basePath }: { status?: string; tria
     return (
       <div style={{ background: '#dc2626', color: '#fff', padding: '8px 16px', textAlign: 'center', fontSize: 14 }}>
         Sua assinatura está em atraso. Pague agora para evitar a suspensão.{' '}
-        <a onClick={() => navigate(`${basePath}/settings`)} style={{ color: '#fff', textDecoration: 'underline', cursor: 'pointer' }}>
+        <button
+          type="button"
+          onClick={() => navigate(`${basePath}/settings`)}
+          style={{
+            color: '#fff',
+            textDecoration: 'underline',
+            cursor: 'pointer',
+            background: 'none',
+            border: 'none',
+            padding: 0,
+            font: 'inherit',
+          }}
+        >
           Pagar agora
-        </a>
+        </button>
       </div>
     );
   }
@@ -91,9 +103,21 @@ function TenantBanner({ status, trialEndsAt, basePath }: { status?: string; tria
       return (
         <div style={{ background: '#fef3c7', color: '#92400e', padding: '8px 16px', textAlign: 'center', fontSize: 14 }}>
           Seu trial termina em <strong>{diffDays} {diffDays === 1 ? 'dia' : 'dias'}</strong>. Cadastre uma forma de pagamento.{' '}
-          <a onClick={() => navigate(`${basePath}/settings`)} style={{ color: '#92400e', textDecoration: 'underline', cursor: 'pointer' }}>
+          <button
+            type="button"
+            onClick={() => navigate(`${basePath}/settings`)}
+            style={{
+              color: '#92400e',
+              textDecoration: 'underline',
+              cursor: 'pointer',
+              background: 'none',
+              border: 'none',
+              padding: 0,
+              font: 'inherit',
+            }}
+          >
             Cadastrar agora
-          </a>
+          </button>
         </div>
       );
     }

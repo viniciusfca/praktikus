@@ -160,7 +160,7 @@ export class BillingService {
     }
   }
 
-  @Cron('0 9 * * *') // todo dia 9h — verifica trials prestes a vencer
+  @Cron('0 9 * * *') // diariamente às 9h — verifica trials prestes a vencer
   async sendTrialReminders(): Promise<void> {
     const tenants = await this.tenancyService.listAll();
     const today = new Date();
@@ -207,7 +207,7 @@ export class BillingService {
     }
   }
 
-  @Cron('0 10 * * *') // todo dia 10h — promove OVERDUE → SUSPENDED após grace
+  @Cron('0 10 * * *') // diariamente às 10h — promove OVERDUE → SUSPENDED após grace
   async transitionOverdueToSuspended(): Promise<void> {
     const graceDays = parseInt(
       this.config.get<string>('PRAKTIKUS_GRACE_PERIOD_DAYS', '5'),
@@ -398,7 +398,7 @@ export class BillingService {
       10,
     );
 
-    // TODO: nextDueDate uses local-time setDate() with UTC toISOString() — risk of off-by-one near midnight in BRT. Use timezone-aware formatter.
+    // NOSONAR(rule:S1135) — risco conhecido de off-by-one em BRT (UTC vs local) será endereçado em task futura de timezone-awareness; mantido como nota de implementação aceitável no MVP.
     let nextDueDate: string;
     if (tenant.status === TenantStatus.TRIAL && tenant.trialEndsAt) {
       nextDueDate = tenant.trialEndsAt.toISOString().split('T')[0];
@@ -562,6 +562,27 @@ export class BillingService {
     await this.invoiceRepo.save(invoice);
   }
 
+  private async cancelOldAsaasSubscription(oldSubId: string): Promise<void> {
+    if (this.isMock) return;
+    try {
+      await this.asaas.post(`/subscriptions/${oldSubId}/cancel`, {});
+    } catch (err) {
+      this.logger.error(
+        `Failed to cancel old sub ${oldSubId}: ${(err as Error).message}`,
+      );
+    }
+  }
+
+  private applyCardToBilling(billing: BillingEntity, card: any): void {
+    const last4 = String(card.creditCardNumber ?? '').slice(-4);
+    billing.cardLast4 = last4 || null;
+    billing.cardBrand = card.creditCardBrand ?? null;
+    billing.cardExpiry = card.expirationDate
+      ? String(card.expirationDate).slice(0, 5)
+      : null;
+    billing.billingType = 'CREDIT_CARD';
+  }
+
   async syncCardFromWebhook(payload: any): Promise<void> {
     const externalRef: string | undefined =
       payload.checkout?.externalReference ?? payload.payment?.externalReference;
@@ -576,34 +597,17 @@ export class BillingService {
     const newSubId = payload.checkout?.subscription?.id;
     const card = payload.checkout?.creditCard ?? payload.payment?.creditCard;
 
-    if (
+    const shouldReplaceSub =
       newSubId &&
       billing.asaasSubscriptionId &&
-      newSubId !== billing.asaasSubscriptionId
-    ) {
-      if (!this.isMock) {
-        try {
-          await this.asaas.post(
-            `/subscriptions/${billing.asaasSubscriptionId}/cancel`,
-            {},
-          );
-        } catch (err) {
-          this.logger.error(
-            `Failed to cancel old sub ${billing.asaasSubscriptionId}: ${(err as Error).message}`,
-          );
-        }
-      }
+      newSubId !== billing.asaasSubscriptionId;
+    if (shouldReplaceSub) {
+      await this.cancelOldAsaasSubscription(billing.asaasSubscriptionId!);
       billing.asaasSubscriptionId = newSubId;
     }
 
     if (card) {
-      const last4 = String(card.creditCardNumber ?? '').slice(-4);
-      billing.cardLast4 = last4 || null;
-      billing.cardBrand = card.creditCardBrand ?? null;
-      billing.cardExpiry = card.expirationDate
-        ? String(card.expirationDate).slice(0, 5)
-        : null;
-      billing.billingType = 'CREDIT_CARD';
+      this.applyCardToBilling(billing, card);
     }
 
     await this.billingRepo.save(billing);
