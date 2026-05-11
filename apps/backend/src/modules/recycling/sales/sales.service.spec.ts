@@ -77,6 +77,7 @@ describe('SalesService', () => {
               id: 'sale1',
               sold_at: new Date('2026-04-18T10:42:00Z'),
               buyer_id: 'buyer1',
+              payment_method: PaymentMethod.PIX,
               notes: null,
               buyer_name: 'MGLU Recicla',
               total: '680.00',
@@ -96,6 +97,7 @@ describe('SalesService', () => {
         id: 'sale1',
         buyerId: 'buyer1',
         buyerName: 'MGLU Recicla',
+        paymentMethod: PaymentMethod.PIX,
         total: 680,
         itemCount: 1,
         totalKg: 80,
@@ -126,6 +128,33 @@ describe('SalesService', () => {
           items: [{ productId: 'p1', quantity: 10, unitPrice: 1.5 }],
         }),
       ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should allow selling exactly the available stock', async () => {
+      mockQueryRunner.query.mockImplementation(async (sql: string) => {
+        if (sql.includes('SET LOCAL')) return undefined;
+        if (sql.includes('stock_movements')) return [{ balance: '10.0000' }];
+        return undefined;
+      });
+
+      const sale = { id: 'sale1' };
+      mockSaleRepo.create.mockReturnValue(sale);
+      mockSaleRepo.save.mockResolvedValue(sale);
+      mockItemRepo.create.mockReturnValue({});
+      mockItemRepo.save.mockResolvedValue({});
+      mockMovementRepo.create.mockReturnValue({});
+      mockMovementRepo.save.mockResolvedValue({});
+
+      const result = await service.create(TENANT, OPERATOR, {
+        buyerId: 'b1',
+        paymentMethod: PaymentMethod.CASH,
+        items: [{ productId: 'p1', quantity: 10, unitPrice: 1.5 }],
+      });
+
+      expect(result).toEqual(sale);
+      expect(mockMovementRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'OUT', quantity: 10 }),
+      );
     });
 
     it('should create sale with stock OUT movements when stock is sufficient', async () => {

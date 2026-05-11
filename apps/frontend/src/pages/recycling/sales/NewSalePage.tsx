@@ -202,6 +202,16 @@ export function NewSalePage() {
     return b ? b.balance : null;
   };
 
+  // Apenas produtos com saldo positivo podem ser vendidos. Mantemos o produto
+  // já selecionado na linha (mesmo que o saldo zere durante a edição) para não
+  // sumir com a seleção do usuário.
+  const sellableProducts = (currentProductId: string | undefined): Product[] => {
+    return products.filter((p) => {
+      const balance = getBalance(p.id);
+      return p.id === currentProductId || (balance !== null && balance > 0);
+    });
+  };
+
   const totals = watchedItems.reduce(
     (acc, item) => {
       const qty = Number(item.quantity) || 0;
@@ -424,7 +434,7 @@ export function NewSalePage() {
                                   size="sm"
                                 >
                                   <option value="">Selecione...</option>
-                                  {products.map((p) => (
+                                  {sellableProducts(f.value).map((p) => (
                                     <option key={p.id} value={p.id}>
                                       {p.name}
                                     </option>
