@@ -191,6 +191,30 @@ export class BillingController {
     }
   }
 
+  private async maybeSendRefundEmail(
+    event: string,
+    tenantId: string,
+  ): Promise<void> {
+    if (event !== 'PAYMENT_REFUNDED') return;
+    const owner = await this.tenancyService.findOwnerByTenantId(tenantId);
+    if (!owner) return;
+
+    const paymentUrl =
+      (this.config.get<string>('FRONTEND_URL') ??
+        'https://app.praktikus.com.br') + '/workshop/settings';
+    try {
+      await this.mailService.sendPaymentRefundIssue(
+        owner.email,
+        owner.name,
+        paymentUrl,
+      );
+    } catch (err) {
+      this.logger.warn(
+        `Failed to send refund email for tenant ${tenantId}: ${(err as Error).message}`,
+      );
+    }
+  }
+
   private async handleStatusEvent(
     event: string,
     payload: any,
@@ -218,6 +242,7 @@ export class BillingController {
       tenantBefore?.status,
       targetStatus,
     );
+    await this.maybeSendRefundEmail(event, tenantId);
 
     this.logger.log(
       `Tenant ${tenantId} status updated to ${targetStatus} via ${event}`,

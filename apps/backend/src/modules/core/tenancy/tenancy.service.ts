@@ -136,7 +136,22 @@ export class TenancyService {
   }
 
   async updateStatus(tenantId: string, status: TenantStatus): Promise<void> {
-    await this.tenantRepo.update({ id: tenantId }, { status });
+    const updates: Partial<TenantEntity> = { status };
+    if (status === TenantStatus.OVERDUE) {
+      // Só define overdueAt se ainda não estiver definido — preserva o timestamp original
+      // de entrada em OVERDUE (importante para o grace period).
+      const tenant = await this.tenantRepo.findOne({ where: { id: tenantId } });
+      if (tenant && !tenant.overdueAt) {
+        updates.overdueAt = new Date();
+      }
+    } else if (
+      status === TenantStatus.ACTIVE ||
+      status === TenantStatus.TRIAL
+    ) {
+      // Saiu de OVERDUE → limpa overdueAt. SUSPENDED preserva (cron já agiu sobre ele).
+      updates.overdueAt = null;
+    }
+    await this.tenantRepo.update({ id: tenantId }, updates);
   }
 
   async findOwnerByTenantId(tenantId: string): Promise<UserEntity | null> {

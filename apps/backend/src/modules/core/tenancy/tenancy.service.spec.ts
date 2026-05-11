@@ -20,6 +20,7 @@ const mockTenantRepo = {
   save: jest.fn(),
   findOne: jest.fn(),
   find: jest.fn(),
+  update: jest.fn(),
 };
 
 const mockUserRepo = {
@@ -238,6 +239,75 @@ describe('TenancyService', () => {
       mockTenantRepo.find.mockResolvedValue([]);
       const result = await service.listAll();
       expect(result).toEqual([]);
+    });
+  });
+
+  describe('updateStatus', () => {
+    it('sets overdueAt when transitioning ACTIVE → OVERDUE (tenant has no overdueAt yet)', async () => {
+      mockTenantRepo.findOne.mockResolvedValue({
+        id: 't1',
+        status: TenantStatus.ACTIVE,
+        overdueAt: null,
+      });
+      mockTenantRepo.update.mockResolvedValue({} as any);
+
+      await service.updateStatus('t1', TenantStatus.OVERDUE);
+
+      expect(mockTenantRepo.update).toHaveBeenCalledWith(
+        { id: 't1' },
+        expect.objectContaining({
+          status: TenantStatus.OVERDUE,
+          overdueAt: expect.any(Date),
+        }),
+      );
+    });
+
+    it('preserves existing overdueAt on OVERDUE → OVERDUE (idempotent webhook)', async () => {
+      const existing = new Date('2026-05-01T00:00:00Z');
+      mockTenantRepo.findOne.mockResolvedValue({
+        id: 't1',
+        status: TenantStatus.OVERDUE,
+        overdueAt: existing,
+      });
+      mockTenantRepo.update.mockResolvedValue({} as any);
+
+      await service.updateStatus('t1', TenantStatus.OVERDUE);
+
+      const call = mockTenantRepo.update.mock.calls[0][1];
+      expect(call.status).toBe(TenantStatus.OVERDUE);
+      expect(call.overdueAt).toBeUndefined();
+    });
+
+    it('clears overdueAt when transitioning OVERDUE → ACTIVE', async () => {
+      mockTenantRepo.update.mockResolvedValue({} as any);
+
+      await service.updateStatus('t1', TenantStatus.ACTIVE);
+
+      expect(mockTenantRepo.update).toHaveBeenCalledWith(
+        { id: 't1' },
+        { status: TenantStatus.ACTIVE, overdueAt: null },
+      );
+    });
+
+    it('clears overdueAt when transitioning to TRIAL', async () => {
+      mockTenantRepo.update.mockResolvedValue({} as any);
+
+      await service.updateStatus('t1', TenantStatus.TRIAL);
+
+      expect(mockTenantRepo.update).toHaveBeenCalledWith(
+        { id: 't1' },
+        { status: TenantStatus.TRIAL, overdueAt: null },
+      );
+    });
+
+    it('preserves overdueAt when transitioning OVERDUE → SUSPENDED (cron acted on it)', async () => {
+      mockTenantRepo.update.mockResolvedValue({} as any);
+
+      await service.updateStatus('t1', TenantStatus.SUSPENDED);
+
+      const call = mockTenantRepo.update.mock.calls[0][1];
+      expect(call.status).toBe(TenantStatus.SUSPENDED);
+      expect(call.overdueAt).toBeUndefined();
     });
   });
 

@@ -225,7 +225,9 @@ export class BillingService {
     for (const tenant of tenants) {
       try {
         if (tenant.status !== TenantStatus.OVERDUE) continue;
-        if (!tenant.updatedAt || tenant.updatedAt > cutoff) continue;
+        // Usa overdueAt (timestamp explícito de entrada em OVERDUE), não updatedAt
+        // (que avança em qualquer write no tenant e zeraria o grace period).
+        if (!tenant.overdueAt || tenant.overdueAt > cutoff) continue;
 
         await this.tenancyService.updateStatus(tenant.id, TenantStatus.SUSPENDED);
         const owner = await this.tenancyService.findOwnerByTenantId(tenant.id);
@@ -289,7 +291,12 @@ export class BillingService {
     if (!invoice) return null;
 
     let pix: { qrCodeBase64: string; copyPaste: string } | null = null;
-    if (invoice.billingType === BillingType.PIX) {
+    // UNDEFINED é o billingType padrão das primeiras faturas de assinaturas em TRIAL —
+    // Asaas gera PIX por padrão nesse caso, então também devemos expor o QR/copy-paste.
+    if (
+      invoice.billingType === BillingType.PIX ||
+      invoice.billingType === BillingType.UNDEFINED
+    ) {
       const expired =
         !invoice.pixExpiresAt || invoice.pixExpiresAt.getTime() < Date.now();
       if (!expired && invoice.pixQrCode && invoice.pixCopyPaste) {
@@ -503,13 +510,12 @@ export class BillingService {
     if (!billing.canceledAt) {
       throw new BadRequestException('Subscription not canceled');
     }
-    // Cria o checkout primeiro; só limpa canceledAt se obtiver sucesso (evita estado inconsistente).
+    // NÃO limpamos canceledAt aqui — só limpamos quando o pagamento de fato confirmar
+    // (via webhook CHECKOUT_PAID em syncCardFromWebhook). Se o cliente abrir o checkout
+    // mas não pagar, o tenant continua oficialmente cancelado (consistente com Asaas).
     // createCheckoutSessionForCard exige status TRIAL ou ACTIVE — um tenant SUSPENDED precisa
     // quitar a fatura aberta antes de reativar (ConflictException é o comportamento esperado).
-    const session = await this.createCheckoutSessionForCard(tenantId, email);
-    billing.canceledAt = null;
-    await this.billingRepo.save(billing);
-    return session;
+    return this.createCheckoutSessionForCard(tenantId, email);
   }
 
   async syncInvoiceFromWebhook(payload: any): Promise<void> {
@@ -541,7 +547,18 @@ export class BillingService {
     });
 
     if (invoice) {
-      invoice.status = newStatus;
+      // Guard de precedência contra webhooks fora de ordem (Asaas pode entregar PAYMENT_OVERDUE
+      // depois de PAYMENT_CONFIRMED por delay de fila). Só aceita transição se newStatus >= status atual.
+      if (
+        this.statusPrecedence(newStatus) >=
+        this.statusPrecedence(invoice.status)
+      ) {
+        invoice.status = newStatus;
+      } else {
+        this.logger.warn(
+          `Ignoring out-of-order webhook: ${invoice.status} → ${newStatus} for invoice ${invoice.asaasPaymentId}`,
+        );
+      }
     } else {
       invoice = this.invoiceRepo.create({
         tenantId,
@@ -562,6 +579,29 @@ export class BillingService {
     await this.invoiceRepo.save(invoice);
   }
 
+  /**
+   * Precedência para resolver webhooks fora de ordem em syncInvoiceFromWebhook.
+   * Permite transições "para frente": PENDING→OVERDUE, PENDING/OVERDUE→CONFIRMED,
+   * CONFIRMED→REFUNDED (chargeback), qualquer→DELETED.
+   * Bloqueia regressões: CONFIRMED→PENDING/OVERDUE, REFUNDED→CONFIRMED.
+   */
+  private statusPrecedence(status: InvoiceStatus): number {
+    switch (status) {
+      case InvoiceStatus.PENDING:
+        return 1;
+      case InvoiceStatus.OVERDUE:
+        return 2;
+      case InvoiceStatus.CONFIRMED:
+        return 3;
+      case InvoiceStatus.REFUNDED:
+        return 4;
+      case InvoiceStatus.DELETED:
+        return 5;
+      default:
+        return 0;
+    }
+  }
+
   private async cancelOldAsaasSubscription(oldSubId: string): Promise<void> {
     if (this.isMock) return;
     try {
@@ -577,10 +617,28 @@ export class BillingService {
     const last4 = String(card.creditCardNumber ?? '').slice(-4);
     billing.cardLast4 = last4 || null;
     billing.cardBrand = card.creditCardBrand ?? null;
-    billing.cardExpiry = card.expirationDate
-      ? String(card.expirationDate).slice(0, 5)
-      : null;
+    billing.cardExpiry = this.parseCardExpiry(card);
     billing.billingType = 'CREDIT_CARD';
+  }
+
+  /**
+   * Normaliza o formato de validade do cartão para "MM/YY" (5 chars, cabe em VARCHAR(5)).
+   * Asaas pode enviar `expirationMonth`+`expirationYear`, `expirationDate` em "MM/YY",
+   * "MM/YYYY" ou "YYYY-MM"; fallback trunca para 5 caracteres.
+   */
+  private parseCardExpiry(card: any): string | null {
+    if (card.expirationMonth && card.expirationYear) {
+      const month = String(card.expirationMonth).padStart(2, '0');
+      const year = String(card.expirationYear).slice(-2);
+      return `${month}/${year}`;
+    }
+    const raw = card.expirationDate ?? card.expiryDate;
+    if (!raw) return null;
+    const s = String(raw);
+    if (/^\d{2}\/\d{4}$/.test(s)) return `${s.slice(0, 3)}${s.slice(5)}`;
+    if (/^\d{2}\/\d{2}$/.test(s)) return s;
+    if (/^\d{4}-\d{2}$/.test(s)) return `${s.slice(5)}/${s.slice(2, 4)}`;
+    return s.slice(0, 5);
   }
 
   async syncCardFromWebhook(payload: any): Promise<void> {
@@ -608,6 +666,12 @@ export class BillingService {
 
     if (card) {
       this.applyCardToBilling(billing, card);
+    }
+
+    // CHECKOUT_PAID após reativação: limpa canceledAt agora que o pagamento confirmou
+    // (reactivateSubscription deixa canceledAt setado até este momento — ver Fix #11).
+    if (billing.canceledAt) {
+      billing.canceledAt = null;
     }
 
     await this.billingRepo.save(billing);

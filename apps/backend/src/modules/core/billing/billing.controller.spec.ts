@@ -31,6 +31,7 @@ const mockTenancyService = {
 };
 const mockMailService = {
   sendAccountReactivated: jest.fn(),
+  sendPaymentRefundIssue: jest.fn(),
 };
 const mockConfigService = {
   get: jest.fn().mockImplementation((key: string, fallback?: string) => {
@@ -371,6 +372,36 @@ describe('BillingController', () => {
       await controller.webhook(sig, payload, makeRawReq(rawBody));
 
       expect(mockMailService.sendAccountReactivated).toHaveBeenCalled();
+    });
+
+    it('sends refund email when PAYMENT_REFUNDED arrives for known tenant', async () => {
+      mockBillingService.findTenantIdBySubscriptionId.mockResolvedValue('t1');
+      mockTenancyService.findById.mockResolvedValue({
+        id: 't1',
+        status: TenantStatus.ACTIVE,
+      });
+      mockTenancyService.findOwnerByTenantId.mockResolvedValue({
+        email: 'owner@example.com',
+        name: 'Owner Foo',
+      });
+      const payload = {
+        event: 'PAYMENT_REFUNDED',
+        payment: { id: 'pay-1', subscription: 'sub-1' },
+      };
+      const rawBody = JSON.stringify(payload);
+      const sig = makeSignature(rawBody, WEBHOOK_SECRET);
+
+      await controller.webhook(sig, payload, makeRawReq(rawBody));
+
+      expect(mockTenancyService.updateStatus).toHaveBeenCalledWith(
+        't1',
+        TenantStatus.OVERDUE,
+      );
+      expect(mockMailService.sendPaymentRefundIssue).toHaveBeenCalledWith(
+        'owner@example.com',
+        'Owner Foo',
+        expect.stringContaining('/workshop/settings'),
+      );
     });
 
     it('does NOT send reactivation email when tenant was already ACTIVE', async () => {

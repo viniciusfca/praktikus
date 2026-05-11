@@ -63,6 +63,9 @@ export class TenantEntity {
   @Column({ name: 'trial_ends_at', type: 'timestamptz', nullable: true })
   trialEndsAt: Date | null;
 
+  @Column({ name: 'overdue_at', type: 'timestamptz', nullable: true })
+  overdueAt: Date | null;
+
   @Column({ name: 'billing_anchor_date', type: 'date', nullable: true })
   billingAnchorDate: Date | null;
 
