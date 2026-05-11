@@ -168,7 +168,7 @@ export function RecyclingLayout() {
     navigate('/login');
   }, [logout, navigate]);
 
-  const { minutes, seconds, isWarning } = useSessionCountdown(user?.exp);
+  const { display: sessionDisplay, isWarning } = useSessionCountdown(user?.exp);
 
   const sidebarNav = useMemo(
     () =>
@@ -286,8 +286,7 @@ export function RecyclingLayout() {
                     fontVariantNumeric: 'tabular-nums',
                   }}
                 >
-                  {String(minutes).padStart(2, '0')}:
-                  {String(seconds).padStart(2, '0')}
+                  {sessionDisplay}
                 </small>
               )}
 
