@@ -2015,67 +2015,113 @@ git commit -m "feat(billing): add trial reminders and overdue→suspended cron j
 - Modify: `apps/backend/src/modules/core/auth/tenant-status.guard.ts`
 - Modify: `apps/backend/src/modules/core/auth/tenant-status.guard.spec.ts`
 
+> **LIÇÃO APRENDIDA (review final):** A implementação original do guard dependia
+> de `request.user.tenantStatus`, populado pelo `JwtAuthGuard` (Passport). Mas o
+> guard está registrado como `APP_GUARD` em `app.module.ts`, e **guards globais
+> rodam ANTES dos guards de rota** no NestJS. Resultado: `request.user` é sempre
+> `undefined` quando o guard executa, e o early-return `if (!user) return true`
+> deixava TUDO passar — inclusive tenants SUSPENDED. O guard era dead code em
+> produção.
+>
+> **Solução aplicada:** o guard agora se auto-decodifica o JWT (lê o header
+> `Authorization`, valida via `JwtService.verify` com `JWT_SECRET`, e lê
+> `tenant_status` direto do payload). Sem dependência da ordem dos guards.
+>
+> **Segundo bug corrigido na mesma task:** `main.ts` define
+> `app.setGlobalPrefix('api')`, então todas as URLs começam com `/api/...`. As
+> entradas da whitelist (`/billing`, `/auth`) nunca casavam. Corrigido para
+> `/api/billing` e `/api/auth`.
+>
+> **Por que Option A (auto-decode) e não route-level (`@UseGuards`):**
+> - Mantém a abstração de guard global (menor blast radius).
+> - Não precisa atualizar 10+ controllers (e correr risco de esquecer novos).
+> - JWT é decodificado 2x por request (aqui + JwtAuthGuard depois), custo
+>   desprezível.
+
 - [ ] **Step 1: Testes**
 
-Em `tenant-status.guard.spec.ts`, adicionar:
+Em `tenant-status.guard.spec.ts`, refatorar para mockar `JwtService.verify` e
+construir o request com `Authorization: Bearer <token>`. URLs devem usar
+prefixo `/api`:
 
 ```typescript
-function makeCtxWithUrl(user: any, url: string) {
+function makeCtx(url: string, headers: Record<string, string> = {}) {
   return {
     switchToHttp: () => ({
-      getRequest: () => ({ user, url }),
+      getRequest: () => ({ url, headers }),
     }),
   } as any;
 }
 
-it('lets SUSPENDED tenant access /billing endpoints', () => {
-  expect(
-    guard.canActivate(makeCtxWithUrl({ tenantStatus: 'SUSPENDED' }, '/billing')),
-  ).toBe(true);
-  expect(
-    guard.canActivate(makeCtxWithUrl({ tenantStatus: 'SUSPENDED' }, '/billing/invoices/open')),
-  ).toBe(true);
+// Setup com providers mockados:
+const mockJwtService = { verify: jest.fn() };
+const mockConfig = { get: jest.fn().mockReturnValue('test-secret') };
+
+beforeEach(async () => {
+  const module: TestingModule = await Test.createTestingModule({
+    providers: [
+      TenantStatusGuard,
+      { provide: JwtService, useValue: mockJwtService },
+      { provide: ConfigService, useValue: mockConfig },
+    ],
+  }).compile();
+  guard = module.get(TenantStatusGuard);
 });
 
-it('lets SUSPENDED tenant access /auth endpoints', () => {
-  expect(
-    guard.canActivate(makeCtxWithUrl({ tenantStatus: 'SUSPENDED' }, '/auth/refresh')),
-  ).toBe(true);
-});
-
-it('blocks SUSPENDED tenant on other paths', () => {
-  expect(() =>
-    guard.canActivate(makeCtxWithUrl({ tenantStatus: 'SUSPENDED' }, '/orders')),
-  ).toThrow(/conta_suspensa/);
-});
+// Casos:
+// - SUSPENDED + /api/orders → throws ForbiddenException('conta_suspensa')
+// - SUSPENDED + /api/billing → passa
+// - SUSPENDED + /api/billing/invoices/open → passa
+// - SUSPENDED + /api/auth/refresh → passa
+// - ACTIVE/TRIAL/OVERDUE + /api/orders → passa
+// - Sem header → passa (downstream lida)
+// - Token inválido (verify lança) → passa (JwtAuthGuard devolve 401)
 ```
 
-- [ ] **Step 2: Falhar**
-
-Run: `pnpm --filter backend test -- tenant-status.guard.spec`
-Expected: novos testes falham.
-
-- [ ] **Step 3: Implementar whitelist**
+- [ ] **Step 2: Implementar (Option A — auto-decode)**
 
 ```typescript
 // tenant-status.guard.ts
 import {
   CanActivate, ExecutionContext, ForbiddenException, Injectable,
 } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 import { TenantStatus } from '../tenancy/tenant.entity';
 
-const ALLOWED_PREFIXES = ['/billing', '/auth'];
+const ALLOWED_PREFIXES = ['/api/billing', '/api/auth'];
+
+interface JwtPayload {
+  tenant_status?: string;
+}
 
 @Injectable()
 export class TenantStatusGuard implements CanActivate {
+  constructor(
+    private readonly jwtService: JwtService,
+    private readonly config: ConfigService,
+  ) {}
+
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest();
-    const user = request.user;
     const url: string = request.url ?? '';
 
-    if (!user) return true;
     if (ALLOWED_PREFIXES.some((p) => url.startsWith(p))) return true;
-    if (user.tenantStatus === TenantStatus.SUSPENDED) {
+
+    const authHeader = request.headers?.authorization;
+    if (!authHeader?.startsWith('Bearer ')) return true;
+    const token = authHeader.slice(7);
+
+    let payload: JwtPayload;
+    try {
+      payload = this.jwtService.verify<JwtPayload>(token, {
+        secret: this.config.get<string>('JWT_SECRET'),
+      });
+    } catch {
+      return true; // deixa JwtAuthGuard devolver 401
+    }
+
+    if (payload.tenant_status === TenantStatus.SUSPENDED) {
       throw new ForbiddenException('conta_suspensa');
     }
     return true;
@@ -2083,16 +2129,24 @@ export class TenantStatusGuard implements CanActivate {
 }
 ```
 
+- [ ] **Step 3: Wiring**
+
+`AuthModule` já exporta `JwtModule` (via `exports: [JwtModule]`), e `AppModule`
+importa `AuthModule`. `JwtService` é resolvível para o `APP_GUARD` provider
+em `app.module.ts`. Não foi preciso tornar o `JwtModule` global (cuidado: o
+`AdminModule` tem outro `JwtModule.registerAsync` com `PLATFORM_JWT_SECRET` —
+tornar um deles global causa conflito de secret).
+
 - [ ] **Step 4: Rodar testes**
 
-Run: `pnpm --filter backend test -- tenant-status.guard.spec`
-Expected: PASS.
+Run: `pnpm --filter backend test`
+Expected: PASS em todos os specs (incluindo a suíte completa, 422+ testes).
 
 - [ ] **Step 5: Commit**
 
 ```bash
 git add apps/backend/src/modules/core/auth/
-git commit -m "feat(auth): whitelist /billing/* and /auth/* in TenantStatusGuard"
+git commit -m "fix(auth): make TenantStatusGuard self-decode JWT and use /api-prefixed whitelist"
 ```
 
 ---
