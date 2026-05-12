@@ -5,6 +5,7 @@ import {
   buildPriceTablesSeedSql,
   buildPurchasesPriceTableSetupSql,
 } from './price-tables.sql';
+import { buildUnitsSeedSql } from './units-seed.sql';
 
 /**
  * Gera as instruções SQL para criar as tabelas de um novo tenant.
@@ -250,8 +251,10 @@ export function createTenantTablesSql(
   if (segment === TenantSegment.RECYCLING) {
     const priceTables = buildPriceTablesSql(schemaName);
     const priceTablesSeed = buildPriceTablesSeedSql(schemaName);
+    const unitsSeed = buildUnitsSeedSql(schemaName);
     return [
       ...recyclingTables,
+      ...unitsSeed,
       ...priceTables,
       ...priceTablesSeed,
       ...buildPurchasesPriceTableSetupSql(schemaName),

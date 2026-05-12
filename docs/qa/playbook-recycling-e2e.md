@@ -78,12 +78,16 @@ Versão executável das 11 fases descritas em [docs/superpowers/specs/2026-05-11
 ### 2.2 Aba Unidades de Medida
 
 1. Clique na aba "Unidades de Medida".
-2. Crie 3 unidades em sequência:
-   - Sigla: `kg`, Descrição: `Quilograma`
-   - Sigla: `ton`, Descrição: `Tonelada`
-   - Sigla: `un`, Descrição: `Unidade`
-3. **Checkpoint**: cada unidade aparece na listagem após salvar.
-4. **Screenshot ✓** (CP4) — 3 unidades listadas.
+2. **Checkpoint**: deve listar 2 unidades pré-cadastradas:
+   - `Quilograma` / `kg`
+   - `Unidade` / `unid`
+
+   (Seed automático ao criar tenant Recycling — não é necessário criar manualmente.)
+3. **Screenshot ✓** (CP4a) — listagem com as 2 unidades padrão.
+4. (Opcional) Crie uma terceira unidade pra exercitar o fluxo de criação:
+   - Nome: `Tonelada`, Sigla: `ton`.
+5. **Checkpoint**: 3 unidades listadas.
+6. **Screenshot ✓** (CP4b).
 
 ### 2.3 Aba Minha Conta
 
