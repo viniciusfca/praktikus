@@ -492,6 +492,147 @@ function TransactionModal({ open, defaultType, onClose, onSubmit, submitting }: 
   );
 }
 
+// ── Close Cash Session Modal ────────────────────────────────────────────────
+
+interface CloseModalProps {
+  open: boolean;
+  onClose: () => void;
+  onConfirm: (countedBalance: number, notes?: string) => Promise<void>;
+  submitting: boolean;
+  openingBalance: number;
+  cashInSum: number;
+  cashOutSum: number;
+  expectedFinal: number;
+}
+
+function CloseCashSessionModal({
+  open,
+  onClose,
+  onConfirm,
+  submitting,
+  openingBalance,
+  cashInSum,
+  cashOutSum,
+  expectedFinal,
+}: CloseModalProps) {
+  const [countedBalance, setCountedBalance] = useState<number | null>(expectedFinal);
+  const [notes, setNotes] = useState('');
+
+  useEffect(() => {
+    if (open) {
+      setCountedBalance(expectedFinal);
+      setNotes('');
+    }
+  }, [open, expectedFinal]);
+
+  const handleConfirm = async () => {
+    const value = countedBalance ?? 0;
+    await onConfirm(value, notes.trim() || undefined);
+  };
+
+  const difference = (countedBalance ?? 0) - expectedFinal;
+  const diffColor = difference === 0 ? 'var(--cui-secondary-color)' : difference > 0 ? '#15803d' : '#b91c1c';
+
+  return (
+    <CModal visible={open} onClose={onClose} alignment="center" className="pk-modal-mobile">
+      <CModalHeader>
+        <CModalTitle>Fechar caixa</CModalTitle>
+      </CModalHeader>
+      <CModalBody>
+        <p style={{ fontSize: 13, color: 'var(--cui-secondary-color)', margin: '0 0 14px' }}>
+          Confira o saldo físico antes de encerrar a sessão.
+        </p>
+
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: 12,
+            marginBottom: 18,
+            padding: 14,
+            background: 'var(--cui-card-cap-bg)',
+            border: '1px solid var(--cui-border-color)',
+            borderRadius: 10,
+          }}
+        >
+          <div>
+            <small style={{ color: 'var(--cui-secondary-color)' }}>Saldo inicial</small>
+            <div style={{ fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>{formatCurrency(openingBalance)}</div>
+          </div>
+          <div>
+            <small style={{ color: 'var(--cui-secondary-color)' }}>Entradas em dinheiro</small>
+            <div style={{ fontWeight: 600, fontVariantNumeric: 'tabular-nums', color: '#15803d' }}>
+              + {formatCurrency(cashInSum)}
+            </div>
+          </div>
+          <div>
+            <small style={{ color: 'var(--cui-secondary-color)' }}>Saídas em dinheiro</small>
+            <div style={{ fontWeight: 600, fontVariantNumeric: 'tabular-nums', color: '#b91c1c' }}>
+              − {formatCurrency(cashOutSum)}
+            </div>
+          </div>
+          <div>
+            <small style={{ color: 'var(--cui-secondary-color)' }}>Saldo final esperado</small>
+            <div style={{ fontWeight: 700, fontSize: 18, fontVariantNumeric: 'tabular-nums' }}>
+              {formatCurrency(expectedFinal)}
+            </div>
+          </div>
+        </div>
+
+        <div style={{ marginBottom: 14 }}>
+          <CFormLabel style={labelStyle}>Saldo físico contado (R$)</CFormLabel>
+          <CurrencyInput
+            value={countedBalance}
+            onChange={(v) => setCountedBalance(v)}
+            placeholder="0,00"
+            autoFocus
+          />
+          <small style={{ color: 'var(--cui-secondary-color)' }}>
+            Conte o dinheiro físico no caixa e confirme o valor. Diferenças serão registradas como observação.
+          </small>
+        </div>
+
+        {countedBalance !== null && (
+          <div
+            style={{
+              padding: '8px 12px',
+              borderRadius: 8,
+              background: difference === 0 ? 'transparent' : 'var(--cui-card-cap-bg)',
+              border: difference === 0 ? 'none' : '1px solid var(--cui-border-color)',
+              marginBottom: 14,
+              fontSize: 13,
+              color: diffColor,
+              fontVariantNumeric: 'tabular-nums',
+            }}
+          >
+            {difference === 0
+              ? 'Sem diferença — o valor contado bate com o esperado.'
+              : `Diferença: ${difference > 0 ? '+' : ''}${formatCurrency(difference)}`}
+          </div>
+        )}
+
+        <div>
+          <CFormLabel style={labelStyle}>Observação (opcional)</CFormLabel>
+          <CFormInput
+            type="text"
+            placeholder="Ex.: Sobra de troco, registro de divergência"
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+          />
+        </div>
+      </CModalBody>
+      <CModalFooter>
+        <CButton color="secondary" variant="outline" onClick={onClose} disabled={submitting}>
+          Cancelar
+        </CButton>
+        <CButton color="primary" onClick={handleConfirm} disabled={submitting}>
+          {submitting ? <CSpinner size="sm" /> : 'Confirmar fechamento'}
+        </CButton>
+      </CModalFooter>
+    </CModal>
+  );
+}
+
 // ── Main page ───────────────────────────────────────────────────────────────
 
 export function CashRegisterPage() {
@@ -500,6 +641,7 @@ export function CashRegisterPage() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [openModalVisible, setOpenModalVisible] = useState(false);
+  const [closeModalVisible, setCloseModalVisible] = useState(false);
   const [txModalOpen, setTxModalOpen] = useState(false);
   const [txModalType, setTxModalType] = useState<'IN' | 'OUT'>('IN');
   const [error, setError] = useState<string | null>(null);
@@ -552,19 +694,24 @@ export function CashRegisterPage() {
     }
   };
 
-  const handleClose = async () => {
-    if (
-      !confirm(
-        'Fechar o caixa agora? O saldo físico será calculado com base nas transações em dinheiro.',
-      )
-    )
-      return;
+  const handleCloseClick = () => {
+    setError(null);
+    setSuccess(null);
+    setCloseModalVisible(true);
+  };
+
+  const handleConfirmClose = async (_countedBalance: number, _notes?: string) => {
+    // Versão mínima do fechamento: o backend continua calculando o
+    // closingBalance a partir das transações; o saldo físico contado e a
+    // observação ficam apenas no modal (UX). Quando a entidade ganhar
+    // colunas dedicadas, o payload aqui pode ser estendido.
     setActionLoading(true);
     setError(null);
     setSuccess(null);
     try {
       const closed = await cashRegisterService.close();
       setSession(closed);
+      setCloseModalVisible(false);
       setSuccess(`Caixa fechado. Saldo final: ${formatCurrency(closed.closingBalance)}`);
     } catch (err: unknown) {
       const e = err as { response?: { data?: { message?: string } } };
@@ -619,7 +766,7 @@ export function CashRegisterPage() {
       }
     }
     const physical = Number(session?.openingBalance ?? 0) + cashInSum - cashOutSum;
-    return { inSum, outSum, inCount, outCount, physical };
+    return { inSum, outSum, inCount, outCount, physical, cashInSum, cashOutSum };
   }, [transactions, session?.openingBalance]);
 
   const isOpen = session?.status === 'OPEN';
@@ -962,7 +1109,7 @@ export function CashRegisterPage() {
               color="danger"
               variant="outline"
               size="sm"
-              onClick={handleClose}
+              onClick={handleCloseClick}
               disabled={actionLoading}
               style={{ borderRadius: 8, display: 'inline-flex', alignItems: 'center', gap: 6 }}
             >
@@ -1085,6 +1232,17 @@ export function CashRegisterPage() {
         onClose={() => setTxModalOpen(false)}
         onSubmit={handleAddTransaction}
         submitting={actionLoading}
+      />
+
+      <CloseCashSessionModal
+        open={closeModalVisible}
+        onClose={() => setCloseModalVisible(false)}
+        onConfirm={handleConfirmClose}
+        submitting={actionLoading}
+        openingBalance={Number(session!.openingBalance ?? 0)}
+        cashInSum={totals.cashInSum}
+        cashOutSum={totals.cashOutSum}
+        expectedFinal={totals.physical}
       />
     </div>
   );
