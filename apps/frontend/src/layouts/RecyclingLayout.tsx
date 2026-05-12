@@ -38,23 +38,34 @@ import {
   cilSpeech,
 } from '@coreui/icons';
 import { useAuthStore } from '../store/auth.store';
+import { usePermissionsStore } from '../store/permissions.store';
 import { useThemeMode } from '../theme/ThemeProvider';
 import { useSessionCountdown } from '../hooks/useSessionCountdown';
 import { Logo } from '../components/Logo';
+import type { EmployeePermissions } from '../services/recycling/employees.service';
 
 const STORAGE_KEY = 'recycling_sidebar_open';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: use IconType from @coreui/icons when properly exported
-const navItems: Array<{ label: string; icon: any; path: string; ownerOnly: boolean; requiredFeature?: 'whatsapp' }> = [
+type NavItem = {
+  label: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: use IconType from @coreui/icons when properly exported
+  icon: any;
+  path: string;
+  ownerOnly: boolean;
+  requiredFeature?: 'whatsapp';
+  requiresPermission?: keyof EmployeePermissions;
+};
+
+const navItems: NavItem[] = [
   { label: 'Dashboard', icon: cilSpeedometer, path: '/recycling/dashboard', ownerOnly: false },
-  { label: 'Caixa', icon: cilCash, path: '/recycling/cash-register', ownerOnly: false },
-  { label: 'Compras', icon: cilBasket, path: '/recycling/purchases', ownerOnly: false },
-  { label: 'Estoque', icon: cilLayers, path: '/recycling/stock', ownerOnly: false },
-  { label: 'Vendas', icon: cilCart, path: '/recycling/sales', ownerOnly: false },
-  { label: 'Coletas', icon: cilTruck, path: '/recycling/coletas', ownerOnly: false },
-  { label: 'Fornecedores', icon: cilPeople, path: '/recycling/suppliers', ownerOnly: false },
-  { label: 'Compradores', icon: cilFactory, path: '/recycling/buyers', ownerOnly: false },
-  { label: 'Produtos', icon: cilList, path: '/recycling/products', ownerOnly: false },
+  { label: 'Caixa', icon: cilCash, path: '/recycling/cash-register', ownerOnly: false, requiresPermission: 'canOpenCloseCash' },
+  { label: 'Compras', icon: cilBasket, path: '/recycling/purchases', ownerOnly: false, requiresPermission: 'canRegisterPurchases' },
+  { label: 'Estoque', icon: cilLayers, path: '/recycling/stock', ownerOnly: false, requiresPermission: 'canViewStock' },
+  { label: 'Vendas', icon: cilCart, path: '/recycling/sales', ownerOnly: false, requiresPermission: 'canRegisterSales' },
+  { label: 'Coletas', icon: cilTruck, path: '/recycling/coletas', ownerOnly: false, requiresPermission: 'canManageColetas' },
+  { label: 'Fornecedores', icon: cilPeople, path: '/recycling/suppliers', ownerOnly: false, requiresPermission: 'canManageSuppliers' },
+  { label: 'Compradores', icon: cilFactory, path: '/recycling/buyers', ownerOnly: false, requiresPermission: 'canManageBuyers' },
+  { label: 'Produtos', icon: cilList, path: '/recycling/products', ownerOnly: false, requiresPermission: 'canManageProducts' },
   { label: 'WhatsApp', icon: cilSpeech, path: '/whatsapp', ownerOnly: false, requiredFeature: 'whatsapp' },
   { label: 'Funcionários', icon: cilGroup, path: '/recycling/employees', ownerOnly: true },
   { label: 'Configurações', icon: cilSettings, path: '/recycling/settings', ownerOnly: true },
@@ -139,7 +150,18 @@ export function RecyclingLayout() {
   const location = useLocation();
   const logout = useAuthStore((s) => s.logout);
   const user = useAuthStore((s) => s.user);
+  const permissions = usePermissionsStore((s) => s.permissions);
+  const fetchPermissions = usePermissionsStore((s) => s.fetch);
   const { mode, toggleTheme } = useThemeMode();
+
+  // Carrega as permissões granulares do usuário logado quando entrar no layout
+  // do recycling. OWNER faz bypass no backend, mas continuamos chamando para
+  // manter o estado consistente caso o user troque de tenant/sessão.
+  useEffect(() => {
+    if (user?.sub && user.tenant_segment === 'RECYCLING') {
+      void fetchPermissions();
+    }
+  }, [user?.sub, user?.tenant_segment, fetchPermissions]);
 
   // Detect mobile (< 768px)
   const [isMobile, setIsMobile] = useState(() =>
@@ -184,6 +206,13 @@ export function RecyclingLayout() {
         .filter((item) => {
           if (item.ownerOnly && user?.role !== 'OWNER') return false;
           if (item.requiredFeature === 'whatsapp' && !user?.whatsapp_enabled) return false;
+          if (item.requiresPermission) {
+            // OWNER tem acesso total — bypass.
+            if (user?.role === 'OWNER') return true;
+            // Sem permissões carregadas: esconder por segurança.
+            if (!permissions) return false;
+            return permissions[item.requiresPermission];
+          }
           return true;
         })
         .map((item) => {
@@ -217,7 +246,7 @@ export function RecyclingLayout() {
 
           return navItem;
         }),
-    [location.pathname, sidebarOpen, isMobile, user?.role, user?.whatsapp_enabled]
+    [location.pathname, sidebarOpen, isMobile, user?.role, user?.whatsapp_enabled, permissions]
   );
 
   return (

@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { jwtDecode } from 'jwt-decode';
 import { authService } from '../services/auth.service';
+import { usePermissionsStore } from './permissions.store';
 
 // Fields decoded from the access token via jwtDecode (no signature verification).
 // name and email are DISPLAY-ONLY — treat as untrusted strings; never use for
@@ -48,6 +49,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       }
     }
     authService.clearTokens();
+    usePermissionsStore.getState().clear();
     set({ user: null, isAuthenticated: false });
   },
 

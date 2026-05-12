@@ -9,7 +9,7 @@ export interface Employee {
 }
 
 export interface EmployeePermissions {
-  userId: string;
+  userId?: string;
   canManageSuppliers: boolean;
   canManageBuyers: boolean;
   canManageProducts: boolean;
@@ -18,6 +18,7 @@ export interface EmployeePermissions {
   canViewReports: boolean;
   canRegisterPurchases: boolean;
   canRegisterSales: boolean;
+  canManageColetas: boolean;
 }
 
 export const employeesService = {
@@ -42,6 +43,11 @@ export const employeesService = {
 
   async updatePermissions(id: string, perms: Partial<EmployeePermissions>): Promise<EmployeePermissions> {
     const { data } = await api.patch<EmployeePermissions>(`/recycling/employees/${id}/permissions`, perms);
+    return data;
+  },
+
+  async getMyPermissions(): Promise<EmployeePermissions> {
+    const { data } = await api.get<EmployeePermissions>('/recycling/employees/me/permissions');
     return data;
   },
 };
