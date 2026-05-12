@@ -1,5 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
-import { reportsService, type DashboardSummary, type PurchasePeriodEntry, type TopMaterial, type SalesSummary, type PurchasesSummary } from '../../services/recycling/reports.service';
+import {
+  reportsService,
+  type DashboardSummary,
+  type DashboardStats,
+  type PurchasePeriodEntry,
+  type SalesPeriodEntry,
+  type TopMaterial,
+  type TopMaterialRanking,
+  type SalesSummary,
+  type PurchasesSummary,
+} from '../../services/recycling/reports.service';
 
 export function useDashboardSummary() {
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
@@ -35,6 +45,73 @@ export function usePurchasesByPeriod() {
       setLoading(false);
     }
   }, []);
+
+  return { rows, loading, error, searched, fetch };
+}
+
+export function useSalesByPeriod() {
+  const [rows, setRows] = useState<SalesPeriodEntry[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [searched, setSearched] = useState(false);
+
+  const fetch = useCallback(async (startDate: string, endDate: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await reportsService.getSalesByPeriod(startDate, endDate);
+      setRows(result);
+      setSearched(true);
+    } catch {
+      setError('Erro ao carregar relatório de vendas');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  return { rows, loading, error, searched, fetch };
+}
+
+export function useDashboardStats() {
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const refetch = useCallback(() => {
+    setLoading(true);
+    setError(null);
+    reportsService.getDashboardStats()
+      .then(setStats)
+      .catch(() => setError('Erro ao carregar estatísticas do dashboard'))
+      .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => { refetch(); }, [refetch]);
+
+  return { stats, loading, error, refetch };
+}
+
+export function useTopMaterialsRanking(month?: string, limit = 10) {
+  const [rows, setRows] = useState<TopMaterialRanking[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [searched, setSearched] = useState(false);
+
+  const fetch = useCallback(async (m?: string, l = limit) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await reportsService.getTopMaterialsRanking(m, l);
+      setRows(result);
+      setSearched(true);
+    } catch {
+      setError('Erro ao carregar top materiais');
+    } finally {
+      setLoading(false);
+    }
+  }, [limit]);
+
+  useEffect(() => { fetch(month, limit); }, [fetch, month, limit]);
 
   return { rows, loading, error, searched, fetch };
 }

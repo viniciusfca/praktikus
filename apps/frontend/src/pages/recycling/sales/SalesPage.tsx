@@ -17,6 +17,16 @@ import { cilPlus, cilSearch, cilCart, cilArrowTop } from '@coreui/icons';
 import { useSales } from '../../../hooks/recycling/useSales';
 import { useSalesSummary } from '../../../hooks/recycling/useReports';
 import { SaleDetailModal } from './SaleDetailModal';
+import { PaymentBadge } from '../../../components/recycling/PaymentBadge';
+
+type PaymentFilter = 'all' | 'CASH' | 'PIX' | 'CARD';
+
+const PAYMENT_FILTERS: { value: PaymentFilter; label: string }[] = [
+  { value: 'all', label: 'Todas' },
+  { value: 'CASH', label: 'Dinheiro' },
+  { value: 'PIX', label: 'PIX' },
+  { value: 'CARD', label: 'Cartão' },
+];
 
 function formatCurrency(value: number): string {
   return Number(value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -105,16 +115,20 @@ export function SalesPage() {
   const { sales, total, loading, error } = useSales(page, limit);
   const { summary, loading: summaryLoading } = useSalesSummary();
   const [search, setSearch] = useState('');
+  const [paymentFilter, setPaymentFilter] = useState<PaymentFilter>('all');
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return sales;
     return sales.filter((s) => {
-      const hay = `${s.id} ${s.buyerName} ${s.notes ?? ''}`.toLowerCase();
-      return hay.includes(q);
+      if (paymentFilter !== 'all' && s.paymentMethod !== paymentFilter) return false;
+      if (q) {
+        const hay = `${s.id} ${s.buyerName} ${s.notes ?? ''}`.toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
     });
-  }, [sales, search]);
+  }, [sales, paymentFilter, search]);
 
   const totalPages = Math.ceil(total / limit) || 1;
   const shownFrom = total === 0 ? 0 : (page - 1) * limit + 1;
@@ -191,7 +205,7 @@ export function SalesPage() {
 
       {/* ── Table card ───────────────────────────────────────────── */}
       <div className="pk-table-card">
-        <div className="pk-table-toolbar">
+        <div className="pk-table-toolbar" style={{ flexWrap: 'wrap' }}>
           <div style={{ position: 'relative', flex: 1, minWidth: 240, maxWidth: 360 }}>
             <CIcon
               icon={cilSearch}
@@ -215,6 +229,65 @@ export function SalesPage() {
               aria-label="Buscar vendas"
             />
           </div>
+
+          <div
+            style={{
+              display: 'inline-flex',
+              gap: 2,
+              padding: 3,
+              background: 'var(--cui-card-cap-bg)',
+              border: '1px solid var(--cui-border-color)',
+              borderRadius: 10,
+              flexWrap: 'wrap',
+            }}
+          >
+            {PAYMENT_FILTERS.map((f) => {
+              const active = paymentFilter === f.value;
+              const count =
+                f.value === 'all'
+                  ? sales.length
+                  : sales.filter((s) => s.paymentMethod === f.value).length;
+              return (
+                <button
+                  key={f.value}
+                  type="button"
+                  onClick={() => setPaymentFilter(f.value)}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    padding: '4px 10px',
+                    border: 0,
+                    borderRadius: 7,
+                    background: active ? 'var(--cui-card-bg)' : 'transparent',
+                    color: active ? 'var(--cui-body-color)' : 'var(--cui-secondary-color)',
+                    fontSize: 12.5,
+                    fontWeight: active ? 600 : 500,
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                    boxShadow: active ? '0 1px 2px rgba(10,12,13,0.06)' : 'none',
+                    transition: 'all 0.12s',
+                  }}
+                >
+                  {f.label}
+                  {count > 0 && (
+                    <span
+                      style={{
+                        fontSize: 10.5,
+                        padding: '1px 5px',
+                        borderRadius: 999,
+                        fontWeight: 700,
+                        background: active ? 'rgba(52,142,145,0.12)' : 'rgba(107,114,128,0.12)',
+                        color: active ? 'var(--cui-primary)' : 'var(--cui-secondary-color)',
+                      }}
+                    >
+                      {count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         <CTable hover responsive className="mb-0">
@@ -224,19 +297,20 @@ export function SalesPage() {
               <CTableHeaderCell>Data</CTableHeaderCell>
               <CTableHeaderCell>Comprador</CTableHeaderCell>
               <CTableHeaderCell>Material</CTableHeaderCell>
+              <CTableHeaderCell>Pagamento</CTableHeaderCell>
               <CTableHeaderCell style={{ textAlign: 'right' }}>Total</CTableHeaderCell>
             </CTableRow>
           </CTableHead>
           <CTableBody>
             {loading ? (
               <CTableRow>
-                <CTableDataCell colSpan={5} className="text-center py-4">
+                <CTableDataCell colSpan={6} className="text-center py-4">
                   <CSpinner size="sm" color="primary" />
                 </CTableDataCell>
               </CTableRow>
             ) : filtered.length === 0 ? (
               <CTableRow>
-                <CTableDataCell colSpan={5} className="text-center py-5">
+                <CTableDataCell colSpan={6} className="text-center py-5">
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
                     <div style={{
                       width: 44, height: 44, borderRadius: 12,
@@ -251,7 +325,7 @@ export function SalesPage() {
                     <div style={{ fontSize: 13, color: 'var(--cui-secondary-color)' }}>
                       {sales.length === 0
                         ? 'Registre a primeira venda para começar.'
-                        : 'Tente ajustar a busca.'}
+                        : 'Tente ajustar a busca ou o filtro.'}
                     </div>
                   </div>
                 </CTableDataCell>
@@ -290,6 +364,9 @@ export function SalesPage() {
                     <span style={{ fontSize: 13, color: 'var(--cui-body-color)' }}>
                       {materialSummary(s)}
                     </span>
+                  </CTableDataCell>
+                  <CTableDataCell>
+                    <PaymentBadge method={s.paymentMethod} />
                   </CTableDataCell>
                   <CTableDataCell style={{
                     textAlign: 'right',

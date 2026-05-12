@@ -88,7 +88,9 @@ export function ColetasPage() {
     const q = search.trim().toLowerCase();
     if (!q) return coletas;
     return coletas.filter((c) =>
-      (c.notes ?? '').toLowerCase().includes(q) || (c.status ?? '').toLowerCase().includes(q),
+      (c.notes ?? '').toLowerCase().includes(q)
+      || (c.status ?? '').toLowerCase().includes(q)
+      || (c.supplierName ?? '').toLowerCase().includes(q),
     );
   }, [coletas, search]);
 
@@ -221,6 +223,7 @@ export function ColetasPage() {
             <CTableHead>
               <CTableRow>
                 <CTableHeaderCell>Data / Hora</CTableHeaderCell>
+                <CTableHeaderCell>Fornecedor</CTableHeaderCell>
                 <CTableHeaderCell>Observações</CTableHeaderCell>
                 <CTableHeaderCell>Status</CTableHeaderCell>
                 <CTableHeaderCell style={{ textAlign: 'right' }}>Ações</CTableHeaderCell>
@@ -229,7 +232,7 @@ export function ColetasPage() {
             <CTableBody>
               {filteredList.length === 0 && (
                 <CTableRow>
-                  <CTableDataCell colSpan={4} style={{ textAlign: 'center', color: 'var(--cui-secondary-color)' }}>
+                  <CTableDataCell colSpan={5} style={{ textAlign: 'center', color: 'var(--cui-secondary-color)' }}>
                     Nenhuma coleta nessa semana.
                   </CTableDataCell>
                 </CTableRow>
@@ -241,6 +244,13 @@ export function ColetasPage() {
                     <CTableDataCell>
                       <div style={{ fontWeight: 600 }}>{d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}</div>
                       <div style={{ fontSize: 12, color: 'var(--cui-secondary-color)' }}>{d.toTimeString().slice(0, 5)}</div>
+                    </CTableDataCell>
+                    <CTableDataCell>
+                      {c.supplierName ? (
+                        <span style={{ fontWeight: 500, color: 'var(--cui-body-color)' }}>{c.supplierName}</span>
+                      ) : (
+                        <span style={{ color: 'var(--cui-secondary-color)' }}>—</span>
+                      )}
                     </CTableDataCell>
                     <CTableDataCell>{c.notes ?? '—'}</CTableDataCell>
                     <CTableDataCell><StatusPill status={c.status} /></CTableDataCell>

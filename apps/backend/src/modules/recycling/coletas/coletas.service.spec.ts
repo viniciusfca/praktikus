@@ -212,6 +212,36 @@ describe('ColetasService', () => {
     });
   });
 
+  describe('list', () => {
+    it('returns coletas enriched with supplierName from join', async () => {
+      const qb = {
+        leftJoin: jest.fn().mockReturnThis(),
+        addSelect: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        getRawAndEntities: jest.fn().mockResolvedValue({
+          entities: [
+            {
+              id: 'c1',
+              supplierId: 'sup1',
+              employeeId: null,
+              scheduledAt: new Date(),
+              status: ColetaStatus.AGENDADA,
+              notes: null,
+            },
+          ],
+          raw: [{ supplier_name: 'Sucata Sul' }],
+        }),
+      };
+      coletaRepo.createQueryBuilder.mockReturnValue(qb);
+
+      const result = await service.list(TENANT, {} as any);
+      expect(result).toHaveLength(1);
+      expect(result[0].supplierName).toBe('Sucata Sul');
+      expect(result[0].id).toBe('c1');
+    });
+  });
+
   describe('upcoming', () => {
     it('returns AGENDADA coletas ordered by scheduledAt ASC with limit', async () => {
       const qb = {

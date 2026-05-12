@@ -106,6 +106,12 @@ export class BillingService {
     return billing?.tenantId ?? null;
   }
 
+  async getInvoiceById(
+    invoiceId: string,
+  ): Promise<BillingInvoiceEntity | null> {
+    return this.invoiceRepo.findOne({ where: { id: invoiceId } });
+  }
+
   @Cron('0 9 1 * *') // dia 1 de cada mês às 9h
   async applyAnnualAdjustment(): Promise<void> {
     const today = new Date();
@@ -166,14 +172,13 @@ export class BillingService {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const paymentUrl =
-      this.config.get<string>(
-        'FRONTEND_URL',
-        'https://app.praktikus.com.br',
-      ) + '/workshop/settings';
+      this.config.get<string>('FRONTEND_URL', 'https://app.praktikus.com.br') +
+      '/workshop/settings';
 
     for (const tenant of tenants) {
       try {
-        if (tenant.status !== TenantStatus.TRIAL || !tenant.trialEndsAt) continue;
+        if (tenant.status !== TenantStatus.TRIAL || !tenant.trialEndsAt)
+          continue;
         const end = new Date(tenant.trialEndsAt);
         end.setHours(0, 0, 0, 0);
         const daysLeft = Math.ceil(
@@ -216,10 +221,8 @@ export class BillingService {
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - graceDays);
     const paymentUrl =
-      this.config.get<string>(
-        'FRONTEND_URL',
-        'https://app.praktikus.com.br',
-      ) + '/workshop/settings';
+      this.config.get<string>('FRONTEND_URL', 'https://app.praktikus.com.br') +
+      '/workshop/settings';
 
     const tenants = await this.tenancyService.listAll();
     for (const tenant of tenants) {
@@ -229,7 +232,10 @@ export class BillingService {
         // (que avança em qualquer write no tenant e zeraria o grace period).
         if (!tenant.overdueAt || tenant.overdueAt > cutoff) continue;
 
-        await this.tenancyService.updateStatus(tenant.id, TenantStatus.SUSPENDED);
+        await this.tenancyService.updateStatus(
+          tenant.id,
+          TenantStatus.SUSPENDED,
+        );
         const owner = await this.tenancyService.findOwnerByTenantId(tenant.id);
         if (owner) {
           await this.mailService.sendAccountSuspended(
@@ -382,8 +388,12 @@ export class BillingService {
     }
 
     if (this.isMock) {
+      const frontendUrl = this.config.get<string>(
+        'FRONTEND_URL',
+        'http://localhost:8080',
+      );
       return {
-        checkoutUrl: `https://mock-checkout.local/${tenantId}`,
+        checkoutUrl: `${frontendUrl}/dev/mock-checkout?tenantId=${tenantId}&type=card`,
         sessionId: `mock_chk_${tenantId}_${Date.now()}`,
       };
     }
@@ -455,8 +465,12 @@ export class BillingService {
     }
 
     if (this.isMock) {
+      const frontendUrl = this.config.get<string>(
+        'FRONTEND_URL',
+        'http://localhost:8080',
+      );
       return {
-        checkoutUrl: `https://mock-checkout.local/inv/${invoiceId}`,
+        checkoutUrl: `${frontendUrl}/dev/mock-checkout?invoiceId=${invoiceId}&type=invoice`,
         sessionId: `mock_chk_inv_${invoiceId}`,
       };
     }
@@ -523,52 +537,18 @@ export class BillingService {
     const payment = payload.payment;
     if (!payment?.id) return;
 
-    const subscriptionId =
-      payment.subscription ?? payload.subscription?.id ?? null;
-
-    let tenantId: string | null = null;
-    if (subscriptionId) {
-      tenantId = await this.findTenantIdBySubscriptionId(subscriptionId);
-    }
-    if (!tenantId) {
-      this.logger.warn(
-        `Webhook ${event} for payment ${payment.id} without resolvable tenant`,
-      );
-      return;
-    }
+    const tenantId = await this.resolveTenantIdFromPayload(event, payload);
+    if (!tenantId) return;
 
     const newStatus = this.mapPaymentStatus(event);
-    if (newStatus === null) {
-      return; // unmapped event already logged by mapPaymentStatus
-    }
+    if (newStatus === null) return; // unmapped event already logged
 
-    let invoice = await this.invoiceRepo.findOne({
-      where: { asaasPaymentId: payment.id },
-    });
-
-    if (invoice) {
-      // Guard de precedência contra webhooks fora de ordem (Asaas pode entregar PAYMENT_OVERDUE
-      // depois de PAYMENT_CONFIRMED por delay de fila). Só aceita transição se newStatus >= status atual.
-      if (
-        this.statusPrecedence(newStatus) >=
-        this.statusPrecedence(invoice.status)
-      ) {
-        invoice.status = newStatus;
-      } else {
-        this.logger.warn(
-          `Ignoring out-of-order webhook: ${invoice.status} → ${newStatus} for invoice ${invoice.asaasPaymentId}`,
-        );
-      }
-    } else {
-      invoice = this.invoiceRepo.create({
-        tenantId,
-        asaasPaymentId: payment.id,
-        value: String(payment.value ?? 0),
-        dueDate: payment.dueDate ? new Date(payment.dueDate) : new Date(),
-        status: newStatus,
-        billingType: (payment.billingType ?? 'UNDEFINED') as BillingType,
-      });
-    }
+    const invoice = await this.upsertInvoice(
+      tenantId,
+      payment,
+      newStatus,
+    );
+    if (!invoice) return; // out-of-order webhook ignored
 
     if (event === 'PAYMENT_CONFIRMED' || event === 'PAYMENT_RECEIVED') {
       invoice.paidAt = payment.confirmedDate
@@ -577,6 +557,59 @@ export class BillingService {
     }
 
     await this.invoiceRepo.save(invoice);
+  }
+
+  private async resolveTenantIdFromPayload(
+    event: string,
+    payload: any,
+  ): Promise<string | null> {
+    const subscriptionId =
+      payload.payment?.subscription ?? payload.subscription?.id ?? null;
+    let tenantId: string | null = null;
+    if (subscriptionId) {
+      tenantId = await this.findTenantIdBySubscriptionId(subscriptionId);
+    }
+    if (!tenantId) {
+      this.logger.warn(
+        `Webhook ${event} for payment ${payload.payment?.id} without resolvable tenant`,
+      );
+    }
+    return tenantId;
+  }
+
+  private async upsertInvoice(
+    tenantId: string,
+    payment: any,
+    newStatus: InvoiceStatus,
+  ): Promise<BillingInvoiceEntity | null> {
+    const existing = await this.invoiceRepo.findOne({
+      where: { asaasPaymentId: payment.id },
+    });
+
+    if (existing) {
+      // Guard de precedência contra webhooks fora de ordem (Asaas pode entregar PAYMENT_OVERDUE
+      // depois de PAYMENT_CONFIRMED por delay de fila). Só aceita transição se newStatus >= status atual.
+      if (
+        this.statusPrecedence(newStatus) >=
+        this.statusPrecedence(existing.status)
+      ) {
+        existing.status = newStatus;
+        return existing;
+      }
+      this.logger.warn(
+        `Ignoring out-of-order webhook: ${existing.status} → ${newStatus} for invoice ${existing.asaasPaymentId}`,
+      );
+      return null;
+    }
+
+    return this.invoiceRepo.create({
+      tenantId,
+      asaasPaymentId: payment.id,
+      value: String(payment.value ?? 0),
+      dueDate: payment.dueDate ? new Date(payment.dueDate) : new Date(),
+      status: newStatus,
+      billingType: (payment.billingType ?? 'UNDEFINED') as BillingType,
+    });
   }
 
   /**

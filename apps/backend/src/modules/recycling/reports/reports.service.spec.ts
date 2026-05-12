@@ -186,6 +186,149 @@ describe('RecyclingReportsService', () => {
     });
   });
 
+  describe('getSalesByPeriod', () => {
+    it('should throw on invalid tenantId', async () => {
+      await expect(
+        service.getSalesByPeriod('bad-id', '2026-04-01', '2026-04-30'),
+      ).rejects.toThrow('Invalid tenantId');
+    });
+
+    it('should return sale totals grouped by day with date as text', async () => {
+      const queries: string[] = [];
+      mockQueryRunner.query.mockImplementation(async (sql: string) => {
+        queries.push(sql);
+        if (sql.includes('SET LOCAL')) return undefined;
+        return [{ date: '2026-04-07', total: '320.00', count: '2' }];
+      });
+
+      const result = await service.getSalesByPeriod(
+        TENANT,
+        '2026-04-01',
+        '2026-04-07',
+      );
+      expect(result).toHaveLength(1);
+      expect(result[0]).toEqual({ date: '2026-04-07', total: 320, count: 2 });
+      // Ensure the date is cast to ::text so frontend doesn't get raw Date
+      const dataQuery = queries.find((q) => q.includes('sale_items'));
+      expect(dataQuery).toMatch(/DATE\(s\.sold_at\)::text/);
+    });
+  });
+
+  describe('getDashboardStats', () => {
+    it('should throw on invalid tenantId', async () => {
+      await expect(service.getDashboardStats('bad-id')).rejects.toThrow(
+        'Invalid tenantId',
+      );
+    });
+
+    it('should return sales today, stock total kg and upcoming coletas', async () => {
+      mockQueryRunner.query.mockImplementation(async (sql: string) => {
+        if (sql.includes('SET LOCAL')) return undefined;
+        if (sql.includes('sale_items') && sql.includes('CURRENT_DATE')) {
+          return [{ total: '24.00' }];
+        }
+        if (sql.includes('stock_movements')) {
+          return [{ total: '30.5' }];
+        }
+        if (sql.includes('coletas') && sql.includes('AGENDADA')) {
+          return [
+            {
+              id: 'col1',
+              scheduled_at: new Date('2026-05-12T13:00:00.000Z'),
+              status: 'AGENDADA',
+              supplier_id: 'sup1',
+              supplier_name: 'EcoMaterial',
+              notes: null,
+            },
+          ];
+        }
+        return [];
+      });
+
+      const result = await service.getDashboardStats(TENANT);
+      expect(result.salesToday).toBe(24);
+      expect(result.stockTotalKg).toBe(30.5);
+      expect(result.upcomingColetas).toHaveLength(1);
+      expect(result.upcomingColetas[0]).toMatchObject({
+        id: 'col1',
+        supplierId: 'sup1',
+        supplierName: 'EcoMaterial',
+        status: 'AGENDADA',
+      });
+      expect(result.upcomingColetas[0].scheduledAt).toMatch(/^2026-05-12T/);
+    });
+
+    it('should return zeros and empty list when no data', async () => {
+      mockQueryRunner.query.mockImplementation(async (sql: string) => {
+        if (sql.includes('SET LOCAL')) return undefined;
+        if (sql.includes('coletas')) return [];
+        return [{ total: '0' }];
+      });
+
+      const result = await service.getDashboardStats(TENANT);
+      expect(result.salesToday).toBe(0);
+      expect(result.stockTotalKg).toBe(0);
+      expect(result.upcomingColetas).toEqual([]);
+    });
+  });
+
+  describe('getTopMaterialsRanking', () => {
+    it('should throw on invalid tenantId', async () => {
+      await expect(service.getTopMaterialsRanking('bad-id')).rejects.toThrow(
+        'Invalid tenantId',
+      );
+    });
+
+    it('should return materials ranked by total quantity', async () => {
+      mockQueryRunner.query.mockImplementation(async (sql: string) => {
+        if (sql.includes('SET LOCAL')) return undefined;
+        return [
+          {
+            product_id: 'p1',
+            product_name: 'Alumínio',
+            total_qty: '820.5',
+            total_value: '6970.25',
+            purchase_count: '12',
+          },
+          {
+            product_id: 'p2',
+            product_name: 'PET',
+            total_qty: '640.0',
+            total_value: '1408.00',
+            purchase_count: '8',
+          },
+        ];
+      });
+
+      const result = await service.getTopMaterialsRanking(TENANT, '2026-05', 10);
+      expect(result).toHaveLength(2);
+      expect(result[0]).toEqual({
+        productId: 'p1',
+        productName: 'Alumínio',
+        totalQty: 820.5,
+        totalValue: 6970.25,
+        purchaseCount: 12,
+      });
+      expect(result[1].productName).toBe('PET');
+    });
+
+    it('should default month to current and clamp limit', async () => {
+      const queries: string[] = [];
+      mockQueryRunner.query.mockImplementation(async (sql: string) => {
+        queries.push(sql);
+        if (sql.includes('SET LOCAL')) return undefined;
+        return [];
+      });
+
+      await service.getTopMaterialsRanking(TENANT, undefined, 100);
+      const dataQuery = queries.find((q) => q.includes('purchase_items'));
+      expect(dataQuery).toBeDefined();
+      expect(dataQuery).toContain("date_trunc('month', CURRENT_DATE)");
+      // Limit clamped to 50
+      expect(dataQuery).toContain('LIMIT 50');
+    });
+  });
+
   describe('getTopMaterials', () => {
     it('should throw on invalid tenantId', async () => {
       await expect(service.getTopMaterials('bad-id')).rejects.toThrow(

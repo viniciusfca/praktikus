@@ -11,6 +11,7 @@ import {
 } from '../../../services/recycling/coletas.service';
 import { suppliersService, type Supplier } from '../../../services/recycling/suppliers.service';
 import { employeesService, type Employee } from '../../../services/recycling/employees.service';
+import { formatPhoneBr } from '../../../utils/format';
 
 const STATUS_STYLES: Record<ColetaStatus, { bg: string; text: string; label: string; border: string }> = {
   [ColetaStatus.AGENDADA]: { bg: 'rgba(52,142,145,0.12)', text: 'var(--cui-primary)', border: 'var(--cui-primary)', label: 'Agendada' },
@@ -116,7 +117,7 @@ export function ColetaDrawer({
 
             <Field label="Fornecedor" value={supplier?.name ?? '—'} />
             <Field label="Endereço" value={formatAddress(supplier)} />
-            <Field label="Telefone" value={supplier?.phone ?? '—'} />
+            <Field label="Telefone" value={formatPhoneBr(supplier?.phone)} />
             <Field label="Motorista" value={employee?.name ?? '—'} />
             <Field label="Data/Hora" value={new Date(coleta.scheduledAt).toLocaleString('pt-BR')} />
             {coleta.notes && <Field label="Observações" value={coleta.notes} />}

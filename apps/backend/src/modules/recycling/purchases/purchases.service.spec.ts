@@ -143,11 +143,34 @@ describe('PurchasesService', () => {
       ],
     };
 
-    it('should throw BadRequestException when no open cash session', async () => {
+    it('should throw BadRequestException when no open cash session for CASH purchase', async () => {
       mockSessionRepo.findOne.mockResolvedValue(null);
       await expect(service.create(TENANT, OPERATOR, dto)).rejects.toThrow(
         BadRequestException,
       );
+    });
+
+    it('should allow PIX purchase without open cash session', async () => {
+      const pixDto = { ...dto, paymentMethod: PaymentMethod.PIX };
+      mockSessionRepo.findOne.mockResolvedValue(null);
+
+      const savedPurchase = { id: 'purchase-1', totalAmount: 35 };
+      mockPurchaseRepo.create.mockReturnValue(savedPurchase);
+      mockPurchaseRepo.save.mockResolvedValue(savedPurchase);
+      mockItemRepo.create.mockImplementation((v) => v);
+      mockItemRepo.save.mockResolvedValue({});
+      mockMovementRepo.create.mockImplementation((v) => v);
+      mockMovementRepo.save.mockResolvedValue({});
+      mockTxRepo.create.mockImplementation((v) => v);
+      mockTxRepo.save.mockResolvedValue({});
+
+      await expect(
+        service.create(TENANT, OPERATOR, pixDto),
+      ).resolves.toBeDefined();
+
+      // No cash transaction should be created for PIX
+      expect(mockTxRepo.save).not.toHaveBeenCalled();
+      expect(mockTxRepo.create).not.toHaveBeenCalled();
     });
 
     it('should correctly calculate totalAmount as sum of quantity × unitPrice', async () => {
@@ -218,7 +241,7 @@ describe('PurchasesService', () => {
       );
     });
 
-    it('should create cash_transaction with PIX paymentMethod when PIX is used', async () => {
+    it('should NOT create cash_transaction for PIX purchase', async () => {
       const pixDto = { ...dto, paymentMethod: PaymentMethod.PIX };
       const session = { id: 'session-1', status: CashSessionStatus.OPEN };
       mockSessionRepo.findOne.mockResolvedValue(session);
@@ -236,9 +259,79 @@ describe('PurchasesService', () => {
 
       await service.create(TENANT, OPERATOR, pixDto);
 
+      expect(mockTxRepo.create).not.toHaveBeenCalled();
+      expect(mockTxRepo.save).not.toHaveBeenCalled();
+    });
+
+    it('should NOT create cash_transaction for CARD purchase', async () => {
+      const cardDto = { ...dto, paymentMethod: PaymentMethod.CARD };
+      const session = { id: 'session-1', status: CashSessionStatus.OPEN };
+      mockSessionRepo.findOne.mockResolvedValue(session);
+
+      const savedPurchase = { id: 'purchase-1', totalAmount: 35 };
+      mockPurchaseRepo.create.mockReturnValue(savedPurchase);
+      mockPurchaseRepo.save.mockResolvedValue(savedPurchase);
+
+      mockItemRepo.create.mockImplementation((v) => v);
+      mockItemRepo.save.mockResolvedValue({});
+      mockMovementRepo.create.mockImplementation((v) => v);
+      mockMovementRepo.save.mockResolvedValue({});
+      mockTxRepo.create.mockImplementation((v) => v);
+      mockTxRepo.save.mockResolvedValue({});
+
+      await service.create(TENANT, OPERATOR, cardDto);
+
+      expect(mockTxRepo.create).not.toHaveBeenCalled();
+      expect(mockTxRepo.save).not.toHaveBeenCalled();
+    });
+
+    it('should NOT create cash_transaction for ON_CREDIT purchase', async () => {
+      const onCreditDto = { ...dto, paymentMethod: PaymentMethod.ON_CREDIT };
+      const session = { id: 'session-1', status: CashSessionStatus.OPEN };
+      mockSessionRepo.findOne.mockResolvedValue(session);
+
+      const savedPurchase = { id: 'purchase-1', totalAmount: 35 };
+      mockPurchaseRepo.create.mockReturnValue(savedPurchase);
+      mockPurchaseRepo.save.mockResolvedValue(savedPurchase);
+
+      mockItemRepo.create.mockImplementation((v) => v);
+      mockItemRepo.save.mockResolvedValue({});
+      mockMovementRepo.create.mockImplementation((v) => v);
+      mockMovementRepo.save.mockResolvedValue({});
+      mockTxRepo.create.mockImplementation((v) => v);
+      mockTxRepo.save.mockResolvedValue({});
+
+      await service.create(TENANT, OPERATOR, onCreditDto);
+
+      expect(mockTxRepo.create).not.toHaveBeenCalled();
+      expect(mockTxRepo.save).not.toHaveBeenCalled();
+    });
+
+    it('should create cash_transaction with paymentMethod CASH for CASH purchase', async () => {
+      const session = { id: 'session-1', status: CashSessionStatus.OPEN };
+      mockSessionRepo.findOne.mockResolvedValue(session);
+
+      const savedPurchase = { id: 'purchase-1', totalAmount: 35 };
+      mockPurchaseRepo.create.mockReturnValue(savedPurchase);
+      mockPurchaseRepo.save.mockResolvedValue(savedPurchase);
+
+      mockItemRepo.create.mockImplementation((v) => v);
+      mockItemRepo.save.mockResolvedValue({});
+      mockMovementRepo.create.mockImplementation((v) => v);
+      mockMovementRepo.save.mockResolvedValue({});
+      mockTxRepo.create.mockImplementation((v) => v);
+      mockTxRepo.save.mockResolvedValue({});
+
+      await service.create(TENANT, OPERATOR, dto);
+
       expect(mockTxRepo.create).toHaveBeenCalledWith(
-        expect.objectContaining({ paymentMethod: PaymentMethod.PIX }),
+        expect.objectContaining({
+          paymentMethod: PaymentMethod.CASH,
+          type: TransactionType.OUT,
+          amount: 35,
+        }),
       );
+      expect(mockTxRepo.save).toHaveBeenCalled();
     });
   });
 

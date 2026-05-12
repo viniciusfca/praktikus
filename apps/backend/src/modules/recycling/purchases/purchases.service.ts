@@ -4,7 +4,11 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { DataSource, EntityManager } from 'typeorm';
-import { CashSessionStatus, TransactionType } from '@praktikus/shared';
+import {
+  CashSessionStatus,
+  PaymentMethod,
+  TransactionType,
+} from '@praktikus/shared';
 import { PurchaseEntity } from './purchase.entity';
 import { PurchaseItemEntity } from './purchase-item.entity';
 import { StockMovementEntity, MovementType } from './stock-movement.entity';
@@ -151,14 +155,17 @@ export class PurchasesService {
       const movementRepo = manager.getRepository(StockMovementEntity);
       const txRepo = manager.getRepository(CashTransactionEntity);
 
-      // 1. Validate open cash session
+      // 1. Fetch open cash session (required for CASH purchases only).
+      //    PIX/CARD/ON_CREDIT don't move physical cash, so they don't need
+      //    an open session and don't generate a cash_transaction.
       const session = await sessionRepo.findOne({
         where: { status: CashSessionStatus.OPEN },
       });
-      if (!session)
+      if (dto.paymentMethod === PaymentMethod.CASH && !session) {
         throw new BadRequestException(
-          'Abra o caixa antes de registrar uma compra.',
+          'Abra o caixa antes de registrar compras em dinheiro.',
         );
+      }
 
       // 2. Calculate total
       const totalAmount =
@@ -174,7 +181,7 @@ export class PurchasesService {
         supplierId: dto.supplierId,
         priceTableId: dto.priceTableId,
         operatorId,
-        cashSessionId: session.id,
+        cashSessionId: session?.id ?? null,
         paymentMethod: dto.paymentMethod,
         totalAmount,
         notes: dto.notes ?? null,
@@ -206,18 +213,21 @@ export class PurchasesService {
         );
       }
 
-      // 5. Create cash transaction (OUT — company pays supplier)
-      await txRepo.save(
-        txRepo.create({
-          cashSessionId: session.id,
-          type: TransactionType.OUT,
-          paymentMethod: dto.paymentMethod,
-          amount: totalAmount,
-          description: 'Compra de materiais',
-          referenceId: savedPurchase.id,
-          referenceType: 'PURCHASE',
-        }),
-      );
+      // 5. Create cash transaction (OUT) — only for CASH purchases.
+      //    PIX/CARD/ON_CREDIT don't affect the physical cash drawer.
+      if (dto.paymentMethod === PaymentMethod.CASH && session) {
+        await txRepo.save(
+          txRepo.create({
+            cashSessionId: session.id,
+            type: TransactionType.OUT,
+            paymentMethod: PaymentMethod.CASH,
+            amount: totalAmount,
+            description: 'Compra de materiais',
+            referenceId: savedPurchase.id,
+            referenceType: 'PURCHASE',
+          }),
+        );
+      }
 
       return savedPurchase;
     });

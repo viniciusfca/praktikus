@@ -28,6 +28,7 @@ import CIcon from '@coreui/icons-react';
 import { cilPlus, cilPen, cilTrash, cilSearch, cilPeople } from '@coreui/icons';
 import { suppliersService, type Supplier } from '../../../services/recycling/suppliers.service';
 import { AddressFields } from '../../../components/forms/AddressFields';
+import { formatPhoneBr } from '../../../utils/format';
 
 // ── Schema ──────────────────────────────────────────────────────────────────
 const schema = z
@@ -536,7 +537,7 @@ export function SuppliersPage() {
                     {formatDocument(s.document, s.documentType)}
                   </CTableDataCell>
                   <CTableDataCell style={{ color: 'var(--cui-body-color)', fontSize: 13 }}>
-                    {s.phone ?? '—'}
+                    {formatPhoneBr(s.phone)}
                   </CTableDataCell>
                   <CTableDataCell style={{ color: 'var(--cui-secondary-color)', fontSize: 13 }}>
                     {s.address?.city

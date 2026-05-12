@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
@@ -14,6 +14,7 @@ import CIcon from '@coreui/icons-react';
 import { cilCloudUpload } from '@coreui/icons';
 import { Card, CardTitle, labelStyle } from './Card';
 import { AddressFields } from '../forms/AddressFields';
+import { PhoneInput } from '../inputs';
 import {
   companyService,
   type CompanyProfile,
@@ -201,7 +202,17 @@ export function CompanyTab() {
             </div>
             <div>
               <CFormLabel style={labelStyle}>Telefone</CFormLabel>
-              <CFormInput {...register('telefone')} placeholder="(11) 3333-4444" />
+              <Controller
+                control={control}
+                name="telefone"
+                render={({ field }) => (
+                  <PhoneInput
+                    value={field.value ?? ''}
+                    onChange={field.onChange}
+                    placeholder="(00) 00000-0000"
+                  />
+                )}
+              />
             </div>
           </div>
         </Card>

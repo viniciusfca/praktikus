@@ -265,7 +265,10 @@ export class AuthService {
       trial_ends_at: trialEndsAt?.toISOString() ?? null,
     };
 
-    const accessToken = this.jwtService.sign(payload, { expiresIn: '15m' });
+    const expiresIn = this.config.get<string>('JWT_EXPIRES_IN', '8h');
+    const accessToken = this.jwtService.sign(payload, {
+      expiresIn: expiresIn as `${number}${'s' | 'm' | 'h' | 'd'}`,
+    });
 
     const refreshToken = crypto.randomBytes(40).toString('hex');
     const tokenHash = crypto

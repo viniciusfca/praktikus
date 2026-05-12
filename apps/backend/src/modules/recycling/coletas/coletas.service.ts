@@ -67,16 +67,25 @@ export class ColetasService {
   async list(
     tenantId: string,
     query: ListColetasQueryDto,
-  ): Promise<ColetaEntity[]> {
+  ): Promise<Array<ColetaEntity & { supplierName: string | null }>> {
     return this.withSchema(tenantId, async (qr) => {
       const repo = qr.manager.getRepository(ColetaEntity);
-      const qb = repo.createQueryBuilder('c').orderBy('c.scheduledAt', 'ASC');
+      const qb = repo
+        .createQueryBuilder('c')
+        .leftJoin(SupplierEntity, 's', 's.id = c.supplier_id')
+        .addSelect('s.name', 'supplier_name')
+        .orderBy('c.scheduledAt', 'ASC');
       if (query.start)
         qb.andWhere('c.scheduledAt >= :start', { start: query.start });
       if (query.end) qb.andWhere('c.scheduledAt <= :end', { end: query.end });
       if (query.status)
         qb.andWhere('c.status = :status', { status: query.status });
-      return qb.getMany();
+
+      const { entities, raw } = await qb.getRawAndEntities();
+      return entities.map((entity, index) => ({
+        ...entity,
+        supplierName: raw[index]?.supplier_name ?? null,
+      }));
     });
   }
 
@@ -86,6 +95,7 @@ export class ColetasService {
       return repo
         .createQueryBuilder('c')
         .where('c.status = :status', { status: ColetaStatus.AGENDADA })
+        .andWhere('c.scheduledAt >= NOW()')
         .orderBy('c.scheduledAt', 'ASC')
         .limit(Math.max(1, Math.min(50, Math.floor(limit))))
         .getMany();

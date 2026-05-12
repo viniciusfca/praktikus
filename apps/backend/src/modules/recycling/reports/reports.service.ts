@@ -121,7 +121,7 @@ export class RecyclingReportsService {
       const rows = await qr.query(
         `
         SELECT
-          DATE(purchased_at) as date,
+          DATE(purchased_at)::text as date,
           SUM(total_amount) as total,
           COUNT(*) as count
         FROM "${schemaName}".purchases
@@ -136,6 +136,160 @@ export class RecyclingReportsService {
         date: r.date,
         total: Number(r.total),
         count: Number(r.count),
+      }));
+    });
+  }
+
+  async getSalesByPeriod(
+    tenantId: string,
+    startDate: string,
+    endDate: string,
+  ): Promise<Array<{ date: string; total: number; count: number }>> {
+    const schemaName = this.getSchemaName(tenantId);
+    return this.withQueryRunner(tenantId, async (qr) => {
+      const rows = await qr.query(
+        `
+        SELECT
+          DATE(s.sold_at)::text as date,
+          COALESCE(SUM(si.subtotal), 0) as total,
+          COUNT(DISTINCT s.id) as count
+        FROM "${schemaName}".sales s
+        JOIN "${schemaName}".sale_items si ON si.sale_id = s.id
+        WHERE DATE(s.sold_at) BETWEEN $1 AND $2
+        GROUP BY DATE(s.sold_at)
+        ORDER BY date ASC
+      `,
+        [startDate, endDate],
+      );
+
+      return rows.map((r: any) => ({
+        date: r.date,
+        total: Number(r.total),
+        count: Number(r.count),
+      }));
+    });
+  }
+
+  async getDashboardStats(tenantId: string): Promise<{
+    salesToday: number;
+    stockTotalKg: number;
+    upcomingColetas: Array<{
+      id: string;
+      scheduledAt: string;
+      status: string;
+      supplierId: string;
+      supplierName: string | null;
+      notes: string | null;
+    }>;
+  }> {
+    const schemaName = this.getSchemaName(tenantId);
+    return this.withQueryRunner(tenantId, async (qr) => {
+      const [salesRow] = await qr.query(`
+        SELECT COALESCE(SUM(si.subtotal), 0) as total
+        FROM "${schemaName}".sales s
+        JOIN "${schemaName}".sale_items si ON si.sale_id = s.id
+        WHERE DATE(s.sold_at) = CURRENT_DATE
+      `);
+
+      const [stockRow] = await qr.query(`
+        SELECT COALESCE(SUM(balance), 0) as total
+        FROM (
+          SELECT
+            sm.product_id,
+            SUM(CASE WHEN sm.type = 'IN' THEN sm.quantity ELSE -sm.quantity END) as balance
+          FROM "${schemaName}".stock_movements sm
+          GROUP BY sm.product_id
+        ) sub
+        WHERE balance > 0
+      `);
+
+      const coletas = await qr.query(`
+        SELECT
+          c.id,
+          c.scheduled_at,
+          c.status,
+          c.supplier_id,
+          c.notes,
+          s.name as supplier_name
+        FROM "${schemaName}".coletas c
+        LEFT JOIN "${schemaName}".suppliers s ON s.id = c.supplier_id
+        WHERE c.status = 'AGENDADA'
+          AND c.scheduled_at >= CURRENT_TIMESTAMP
+        ORDER BY c.scheduled_at ASC
+        LIMIT 5
+      `);
+
+      return {
+        salesToday: Number(salesRow.total),
+        stockTotalKg: Number(stockRow.total),
+        upcomingColetas: coletas.map((c: any) => ({
+          id: c.id,
+          scheduledAt:
+            c.scheduled_at instanceof Date
+              ? c.scheduled_at.toISOString()
+              : String(c.scheduled_at),
+          status: c.status,
+          supplierId: c.supplier_id,
+          supplierName: c.supplier_name ?? null,
+          notes: c.notes ?? null,
+        })),
+      };
+    });
+  }
+
+  async getTopMaterialsRanking(
+    tenantId: string,
+    month?: string,
+    limit: number = 10,
+  ): Promise<
+    Array<{
+      productId: string;
+      productName: string;
+      totalQty: number;
+      totalValue: number;
+      purchaseCount: number;
+    }>
+  > {
+    const schemaName = this.getSchemaName(tenantId);
+    return this.withQueryRunner(tenantId, async (qr) => {
+      const safeLimit = Math.max(1, Math.min(50, Math.floor(limit)));
+
+      const monthStartExpr = month
+        ? `'${month}-01'::date`
+        : `date_trunc('month', CURRENT_DATE)`;
+      const monthEndExpr = month
+        ? `('${month}-01'::date + interval '1 month')`
+        : `(date_trunc('month', CURRENT_DATE) + interval '1 month')`;
+
+      const rows: Array<{
+        product_id: string;
+        product_name: string;
+        total_qty: string;
+        total_value: string;
+        purchase_count: string;
+      }> = await qr.query(`
+        SELECT
+          p.id as product_id,
+          p.name as product_name,
+          SUM(pi.quantity) as total_qty,
+          SUM(pi.subtotal) as total_value,
+          COUNT(DISTINCT pi.purchase_id) as purchase_count
+        FROM "${schemaName}".purchase_items pi
+        JOIN "${schemaName}".purchases pu ON pu.id = pi.purchase_id
+        JOIN "${schemaName}".products p ON p.id = pi.product_id
+        WHERE pu.purchased_at >= ${monthStartExpr}
+          AND pu.purchased_at < ${monthEndExpr}
+        GROUP BY p.id, p.name
+        ORDER BY total_qty DESC
+        LIMIT ${safeLimit}
+      `);
+
+      return rows.map((r) => ({
+        productId: r.product_id,
+        productName: r.product_name,
+        totalQty: Number(r.total_qty),
+        totalValue: Number(r.total_value),
+        purchaseCount: Number(r.purchase_count),
       }));
     });
   }

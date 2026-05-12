@@ -1,6 +1,10 @@
 import { Controller, Get, Query, Request, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../../core/auth/jwt-auth.guard';
 import { AuthUser } from '../../core/auth/jwt.strategy';
+import {
+  EmployeePermissionsGuard,
+  RequirePermission,
+} from '../employees/employee-permissions.guard';
 import { RecyclingReportsService } from './reports.service';
 import { PeriodQueryDto } from './dto/period-query.dto';
 import { TopMaterialsQueryDto } from './dto/top-materials-query.dto';
@@ -10,13 +14,19 @@ interface RequestWithUser extends Request {
 }
 
 @Controller('recycling/reports')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, EmployeePermissionsGuard)
+@RequirePermission('canViewReports')
 export class ReportsController {
   constructor(private readonly reportsService: RecyclingReportsService) {}
 
   @Get('dashboard')
   getDashboardSummary(@Request() req: RequestWithUser) {
     return this.reportsService.getDashboardSummary(req.user.tenantId);
+  }
+
+  @Get('dashboard-stats')
+  getDashboardStats(@Request() req: RequestWithUser) {
+    return this.reportsService.getDashboardStats(req.user.tenantId);
   }
 
   @Get('purchases')
@@ -31,12 +41,36 @@ export class ReportsController {
     );
   }
 
+  @Get('sales')
+  getSalesByPeriod(
+    @Request() req: RequestWithUser,
+    @Query() query: PeriodQueryDto,
+  ) {
+    return this.reportsService.getSalesByPeriod(
+      req.user.tenantId,
+      query.startDate,
+      query.endDate,
+    );
+  }
+
   @Get('top-materials')
   getTopMaterials(
     @Request() req: RequestWithUser,
     @Query() query: TopMaterialsQueryDto,
   ) {
     return this.reportsService.getTopMaterials(
+      req.user.tenantId,
+      query.month,
+      query.limit,
+    );
+  }
+
+  @Get('top-materials-ranking')
+  getTopMaterialsRanking(
+    @Request() req: RequestWithUser,
+    @Query() query: TopMaterialsQueryDto,
+  ) {
+    return this.reportsService.getTopMaterialsRanking(
       req.user.tenantId,
       query.month,
       query.limit,

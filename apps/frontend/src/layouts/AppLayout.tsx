@@ -92,11 +92,19 @@ function TenantBanner({ status, trialEndsAt, basePath }: { status?: string; tria
 
   if (status === 'TRIAL' && trialEndsAt) {
     const diffDays = Math.ceil((new Date(trialEndsAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-    const warnAtDays = 7;
-    if (diffDays <= warnAtDays && diffDays >= 0) {
+    if (diffDays >= 0) {
+      const isUrgent = diffDays <= 7;
       return (
-        <div style={{ background: '#fef3c7', color: '#92400e', padding: '8px 16px', textAlign: 'center', fontSize: 14 }}>
-          Seu trial termina em <strong>{diffDays} {diffDays === 1 ? 'dia' : 'dias'}</strong>. Cadastre uma forma de pagamento.{' '}
+        <div
+          style={{
+            background: isUrgent ? '#fde68a' : '#fef3c7',
+            color: '#92400e',
+            padding: '8px 16px',
+            textAlign: 'center',
+            fontSize: 14,
+          }}
+        >
+          {isUrgent ? '⚠️ ' : ''}Seu trial termina em <strong>{diffDays} {diffDays === 1 ? 'dia' : 'dias'}</strong>. Cadastre uma forma de pagamento.{' '}
           <button
             type="button"
             onClick={() => navigate(`${basePath}/settings`)}
@@ -162,7 +170,7 @@ export function AppLayout() {
     navigate('/login');
   }, [logout, navigate]);
 
-  const { minutes, seconds, isWarning } = useSessionCountdown(user?.exp);
+  const { display: sessionDisplay, isWarning } = useSessionCountdown(user?.exp);
 
   const sidebarNav = useMemo(
     () =>
@@ -280,8 +288,7 @@ export function AppLayout() {
                     fontVariantNumeric: 'tabular-nums',
                   }}
                 >
-                  {String(minutes).padStart(2, '0')}:
-                  {String(seconds).padStart(2, '0')}
+                  {sessionDisplay}
                 </small>
               )}
 

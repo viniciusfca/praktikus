@@ -8,7 +8,6 @@ import {
   PaymentMethod,
 } from '@praktikus/shared';
 import { CashSessionEntity } from './cash-session.entity';
-import { CashTransactionEntity } from './cash-transaction.entity';
 
 const mockSessionRepo = {
   findOne: jest.fn(),
@@ -57,20 +56,38 @@ describe('CashRegisterService', () => {
   });
 
   describe('open', () => {
-    it('should open session with opening_balance = 0 when no previous session', async () => {
-      mockSessionRepo.findOne
-        .mockResolvedValueOnce(null) // no open session
-        .mockResolvedValueOnce(null); // no last closed session
+    it('should open cash session with the provided openingBalance', async () => {
+      mockSessionRepo.findOne.mockResolvedValueOnce(null); // no open session
       const newSession = {
         id: 's1',
+        openingBalance: 150.5,
+        status: CashSessionStatus.OPEN,
+      };
+      mockSessionRepo.create.mockReturnValue(newSession);
+      mockSessionRepo.save.mockResolvedValue(newSession);
+
+      const result = await service.open(TENANT, OPERATOR, 150.5);
+      expect(result.openingBalance).toBe(150.5);
+      expect(mockSessionRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({ openingBalance: 150.5 }),
+      );
+    });
+
+    it('should accept 0 as a valid openingBalance', async () => {
+      mockSessionRepo.findOne.mockResolvedValueOnce(null);
+      const newSession = {
+        id: 's2',
         openingBalance: 0,
         status: CashSessionStatus.OPEN,
       };
       mockSessionRepo.create.mockReturnValue(newSession);
       mockSessionRepo.save.mockResolvedValue(newSession);
 
-      const result = await service.open(TENANT, OPERATOR);
+      const result = await service.open(TENANT, OPERATOR, 0);
       expect(result.openingBalance).toBe(0);
+      expect(mockSessionRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({ openingBalance: 0 }),
+      );
     });
 
     it('should throw BadRequestException when session already open', async () => {
@@ -78,25 +95,9 @@ describe('CashRegisterService', () => {
         id: 's1',
         status: CashSessionStatus.OPEN,
       });
-      await expect(service.open(TENANT, OPERATOR)).rejects.toThrow(
+      await expect(service.open(TENANT, OPERATOR, 0)).rejects.toThrow(
         BadRequestException,
       );
-    });
-
-    it('should set opening_balance from last closed session closing_balance', async () => {
-      mockSessionRepo.findOne
-        .mockResolvedValueOnce(null)
-        .mockResolvedValueOnce({ closingBalance: 150.0 });
-      const newSession = {
-        id: 's2',
-        openingBalance: 150.0,
-        status: CashSessionStatus.OPEN,
-      };
-      mockSessionRepo.create.mockReturnValue(newSession);
-      mockSessionRepo.save.mockResolvedValue(newSession);
-
-      const result = await service.open(TENANT, OPERATOR);
-      expect(result.openingBalance).toBe(150.0);
     });
   });
 

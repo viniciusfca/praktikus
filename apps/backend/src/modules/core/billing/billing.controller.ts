@@ -8,6 +8,7 @@ import {
   HttpCode,
   HttpStatus,
   Logger,
+  NotFoundException,
   Param,
   Post,
   RawBodyRequest,
@@ -142,6 +143,52 @@ export class BillingController {
       req.user.tenantId,
       req.user.email,
     );
+  }
+
+  @Post('dev/simulate-card-checkout')
+  @HttpCode(HttpStatus.OK)
+  async devSimulateCardCheckout(
+    @Body() body: { tenantId: string },
+  ): Promise<{ ok: true }> {
+    if (this.config.get<string>('NODE_ENV') === 'production') {
+      throw new NotFoundException();
+    }
+    await this.billingService.syncCardFromWebhook({
+      event: 'CHECKOUT_PAID',
+      checkout: {
+        externalReference: `tenant_${body.tenantId}`,
+        subscription: { id: `mock_new_sub_${body.tenantId}_${Date.now()}` },
+        creditCard: {
+          creditCardNumber: '************1234',
+          creditCardBrand: 'VISA',
+          expirationDate: '12/29',
+        },
+      },
+    });
+    return { ok: true };
+  }
+
+  @Post('dev/simulate-invoice-checkout/:invoiceId')
+  @HttpCode(HttpStatus.OK)
+  async devSimulateInvoiceCheckout(
+    @Param('invoiceId') invoiceId: string,
+  ): Promise<{ ok: true }> {
+    if (this.config.get<string>('NODE_ENV') === 'production') {
+      throw new NotFoundException();
+    }
+    const invoice = await this.billingService.getInvoiceById(invoiceId);
+    if (!invoice) throw new NotFoundException();
+
+    await this.billingService.syncInvoiceFromWebhook({
+      event: 'PAYMENT_CONFIRMED',
+      payment: {
+        id: invoice.asaasPaymentId,
+        subscription: 'mock_sub',
+        status: 'CONFIRMED',
+        confirmedDate: new Date().toISOString(),
+      },
+    });
+    return { ok: true };
   }
 
   private verifyWebhookSignature(

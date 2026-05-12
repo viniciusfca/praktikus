@@ -149,10 +149,12 @@ describe('BillingService', () => {
       const ibgeResponse = [
         { resultados: [{ series: [{ serie: { '202303': '5.19' } }] }] },
       ];
-      const fetchSpy = jest.spyOn(globalThis, 'fetch' as any).mockResolvedValue({
-        ok: true,
-        json: async () => ibgeResponse,
-      } as any);
+      const fetchSpy = jest
+        .spyOn(globalThis, 'fetch' as any)
+        .mockResolvedValue({
+          ok: true,
+          json: async () => ibgeResponse,
+        } as any);
 
       const logSpy = jest.spyOn((service as any).logger, 'log');
 
@@ -177,10 +179,12 @@ describe('BillingService', () => {
       });
       mockAsaasClient.isMock = true;
 
-      const fetchSpy = jest.spyOn(globalThis, 'fetch' as any).mockResolvedValue({
-        ok: false,
-        status: 503,
-      } as any);
+      const fetchSpy = jest
+        .spyOn(globalThis, 'fetch' as any)
+        .mockResolvedValue({
+          ok: false,
+          status: 503,
+        } as any);
 
       const errorSpy = jest.spyOn((service as any).logger, 'error');
 
@@ -636,7 +640,7 @@ describe('BillingService', () => {
         't1',
         'a@b.com',
       );
-      expect(result.checkoutUrl).toMatch(/mock-checkout/);
+      expect(result.checkoutUrl).toMatch(/\/dev\/mock-checkout\?tenantId=/);
       expect(result.sessionId).toMatch(/^mock_chk_/);
     });
 
@@ -821,10 +825,10 @@ describe('BillingService', () => {
       expect(warnSpy).toHaveBeenCalledWith(
         expect.stringContaining('out-of-order'),
       );
-      // Status stays CONFIRMED (not regressed)
-      expect(mockInvoiceRepo.save).toHaveBeenCalledWith(
-        expect.objectContaining({ status: 'CONFIRMED' }),
-      );
+      // Save is skipped entirely — nothing changed.
+      expect(mockInvoiceRepo.save).not.toHaveBeenCalled();
+      // Existing invoice was not mutated.
+      expect(existing.status).toBe('CONFIRMED');
       warnSpy.mockRestore();
     });
 

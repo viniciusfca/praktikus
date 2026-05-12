@@ -17,6 +17,10 @@ import { RolesGuard } from '../../core/auth/roles.guard';
 import { Roles } from '../../core/auth/roles.decorator';
 import { UserRole } from '../../core/auth/user.entity';
 import { AuthUser } from '../../core/auth/jwt.strategy';
+import {
+  EmployeePermissionsGuard,
+  RequirePermission,
+} from '../employees/employee-permissions.guard';
 import { SuppliersService } from './suppliers.service';
 import { CreateSupplierDto } from './dto/create-supplier.dto';
 import { UpdateSupplierDto } from './dto/update-supplier.dto';
@@ -26,11 +30,12 @@ interface RequestWithUser extends Request {
 }
 
 @Controller('recycling/suppliers')
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, RolesGuard, EmployeePermissionsGuard)
 export class SuppliersController {
   constructor(private readonly suppliersService: SuppliersService) {}
 
   @Get()
+  @RequirePermission('canManageSuppliers')
   list(
     @Request() req: RequestWithUser,
     @Query('page') page = '1',
@@ -46,6 +51,7 @@ export class SuppliersController {
   }
 
   @Get(':id')
+  @RequirePermission('canManageSuppliers')
   getById(
     @Request() req: RequestWithUser,
     @Param('id', ParseUUIDPipe) id: string,
@@ -54,11 +60,13 @@ export class SuppliersController {
   }
 
   @Post()
+  @RequirePermission('canManageSuppliers')
   create(@Request() req: RequestWithUser, @Body() dto: CreateSupplierDto) {
     return this.suppliersService.create(req.user.tenantId, dto);
   }
 
   @Patch(':id')
+  @RequirePermission('canManageSuppliers')
   update(
     @Request() req: RequestWithUser,
     @Param('id', ParseUUIDPipe) id: string,
@@ -69,6 +77,7 @@ export class SuppliersController {
 
   @Delete(':id')
   @Roles(UserRole.OWNER)
+  @RequirePermission('canManageSuppliers')
   @HttpCode(204)
   delete(
     @Request() req: RequestWithUser,

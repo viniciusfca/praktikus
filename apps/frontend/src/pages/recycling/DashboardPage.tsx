@@ -22,8 +22,7 @@ import {
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
 import { useAuthStore } from '../../store/auth.store';
-import { useDashboardSummary, usePurchasesByPeriod, useTopMaterials } from '../../hooks/recycling/useReports';
-import { useUpcomingColetas } from '../../hooks/recycling/useColetas';
+import { useDashboardSummary, useDashboardStats, usePurchasesByPeriod, useTopMaterials } from '../../hooks/recycling/useReports';
 import { suppliersService } from '../../services/recycling/suppliers.service';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Filler, Tooltip, Legend);
@@ -424,9 +423,10 @@ export function RecyclingDashboardPage() {
   });
 
   const { summary, loading, error } = useDashboardSummary();
+  const { stats, loading: statsLoading } = useDashboardStats();
   const { rows, loading: chartLoading, fetch } = usePurchasesByPeriod();
   const { materials: topMaterials, loading: topLoading } = useTopMaterials(undefined, 5);
-  const { coletas: upcomingColetas, loading: coletasLoading } = useUpcomingColetas(4);
+  const upcomingColetas = stats?.upcomingColetas ?? [];
   const [period, setPeriod] = useState<Period>('30d');
 
   const [supplierMap, setSupplierMap] = useState<Record<string, { name: string; address: string | null }>>({});
@@ -554,17 +554,21 @@ export function RecyclingDashboardPage() {
         />
         <KpiCard
           label="Vendas (hoje)"
-          value="—"
-          sub="Métrica em breve"
+          value={statsLoading ? '—' : formatCurrency(stats?.salesToday ?? 0)}
+          sub={(stats?.salesToday ?? 0) > 0 ? 'Total faturado hoje' : 'Nenhuma venda registrada hoje'}
           icon={cilCart}
-          tone="muted"
+          tone={(stats?.salesToday ?? 0) > 0 ? 'success' : 'muted'}
         />
         <KpiCard
           label="Estoque"
-          value="—"
-          sub="Veja em Estoque"
+          value={
+            statsLoading
+              ? '—'
+              : `${(stats?.stockTotalKg ?? 0).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} kg`
+          }
+          sub="Veja em Estoque →"
           icon={cilListRich}
-          tone="muted"
+          tone={(stats?.stockTotalKg ?? 0) > 0 ? 'neutral' : 'muted'}
         />
       </div>
 
@@ -786,7 +790,7 @@ export function RecyclingDashboardPage() {
         />
         <UpcomingColetasCard
           coletas={upcomingColetas}
-          loading={coletasLoading}
+          loading={statsLoading}
           supplierMap={supplierMap}
           onSeeAll={() => navigate('/recycling/coletas')}
           onNew={() => navigate('/recycling/coletas')}

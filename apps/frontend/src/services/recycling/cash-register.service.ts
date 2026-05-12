@@ -22,8 +22,10 @@ export interface CashTransaction {
 }
 
 export const cashRegisterService = {
-  async open(): Promise<CashSession> {
-    const { data } = await api.post<CashSession>('/recycling/cash-register/open');
+  async open(openingBalance: number): Promise<CashSession> {
+    const { data } = await api.post<CashSession>('/recycling/cash-register/open', {
+      openingBalance,
+    });
     return data;
   },
 
