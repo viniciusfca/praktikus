@@ -10,6 +10,10 @@ import {
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../../core/auth/jwt-auth.guard';
 import { AuthUser } from '../../core/auth/jwt.strategy';
+import {
+  EmployeePermissionsGuard,
+  RequirePermission,
+} from '../employees/employee-permissions.guard';
 import { CashRegisterService } from './cash-register.service';
 import { AddTransactionDto } from './dto/add-transaction.dto';
 import { OpenCashSessionDto } from './dto/open-cash-session.dto';
@@ -19,11 +23,12 @@ interface RequestWithUser extends Request {
 }
 
 @Controller('recycling/cash-register')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, EmployeePermissionsGuard)
 export class CashRegisterController {
   constructor(private readonly cashRegisterService: CashRegisterService) {}
 
   @Post('open')
+  @RequirePermission('canOpenCloseCash')
   open(
     @Request() req: RequestWithUser,
     @Body() dto: OpenCashSessionDto,
@@ -36,16 +41,19 @@ export class CashRegisterController {
   }
 
   @Post('close')
+  @RequirePermission('canOpenCloseCash')
   close(@Request() req: RequestWithUser) {
     return this.cashRegisterService.close(req.user.tenantId, req.user.userId);
   }
 
   @Get('current')
+  @RequirePermission('canOpenCloseCash')
   getCurrent(@Request() req: RequestWithUser) {
     return this.cashRegisterService.getCurrent(req.user.tenantId);
   }
 
   @Post('transactions')
+  @RequirePermission('canOpenCloseCash')
   addTransaction(
     @Request() req: RequestWithUser,
     @Body() dto: AddTransactionDto,
@@ -54,6 +62,7 @@ export class CashRegisterController {
   }
 
   @Get('sessions/:sessionId/transactions')
+  @RequirePermission('canOpenCloseCash')
   getTransactions(
     @Request() req: RequestWithUser,
     @Param('sessionId', ParseUUIDPipe) sessionId: string,

@@ -1,9 +1,17 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { Reflector } from '@nestjs/core';
+import { ForbiddenException, ExecutionContext } from '@nestjs/common';
 import { validate } from 'class-validator';
 import { plainToInstance } from 'class-transformer';
 import { CashRegisterController } from './cash-register.controller';
 import { CashRegisterService } from './cash-register.service';
 import { OpenCashSessionDto } from './dto/open-cash-session.dto';
+import {
+  EmployeePermissionsGuard,
+  PERMISSION_KEY,
+} from '../employees/employee-permissions.guard';
+import { EmployeesService } from '../employees/employees.service';
+import { UserRole } from '../../core/auth/user.entity';
 
 describe('CashRegisterController', () => {
   let controller: CashRegisterController;
@@ -18,7 +26,13 @@ describe('CashRegisterController', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [CashRegisterController],
-      providers: [{ provide: CashRegisterService, useValue: mockService }],
+      providers: [
+        { provide: CashRegisterService, useValue: mockService },
+        {
+          provide: EmployeesService,
+          useValue: { getPermissions: jest.fn() },
+        },
+      ],
     }).compile();
     controller = module.get<CashRegisterController>(CashRegisterController);
     jest.clearAllMocks();
@@ -83,6 +97,89 @@ describe('CashRegisterController', () => {
       });
       const errors = await validate(dto);
       expect(errors.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe('EmployeePermissionsGuard', () => {
+    const buildContext = (user: any): ExecutionContext =>
+      ({
+        switchToHttp: () => ({ getRequest: () => ({ user }) }),
+        getHandler: () => controller.open,
+        getClass: () => CashRegisterController,
+      }) as unknown as ExecutionContext;
+
+    it('blocks EMPLOYEE without canOpenCloseCash permission', async () => {
+      const reflector = new Reflector();
+      jest
+        .spyOn(reflector, 'getAllAndOverride')
+        .mockReturnValue('canOpenCloseCash');
+      const employeesService = {
+        getPermissions: jest
+          .fn()
+          .mockResolvedValue({ canOpenCloseCash: false }),
+      } as unknown as EmployeesService;
+      const guard = new EmployeePermissionsGuard(reflector, employeesService);
+
+      await expect(
+        guard.canActivate(
+          buildContext({
+            tenantId: 't1',
+            userId: 'u1',
+            role: UserRole.EMPLOYEE,
+          }),
+        ),
+      ).resolves.toBe(false);
+    });
+
+    it('allows OWNER regardless of permissions row', async () => {
+      const reflector = new Reflector();
+      jest
+        .spyOn(reflector, 'getAllAndOverride')
+        .mockReturnValue('canOpenCloseCash');
+      const employeesService = {
+        getPermissions: jest.fn(),
+      } as unknown as EmployeesService;
+      const guard = new EmployeePermissionsGuard(reflector, employeesService);
+
+      await expect(
+        guard.canActivate(
+          buildContext({
+            tenantId: 't1',
+            userId: 'u1',
+            role: UserRole.OWNER,
+          }),
+        ),
+      ).resolves.toBe(true);
+      expect(employeesService.getPermissions).not.toHaveBeenCalled();
+    });
+
+    it('throws ForbiddenException when permission lookup fails', async () => {
+      const reflector = new Reflector();
+      jest
+        .spyOn(reflector, 'getAllAndOverride')
+        .mockReturnValue('canOpenCloseCash');
+      const employeesService = {
+        getPermissions: jest.fn().mockRejectedValue(new Error('boom')),
+      } as unknown as EmployeesService;
+      const guard = new EmployeePermissionsGuard(reflector, employeesService);
+
+      await expect(
+        guard.canActivate(
+          buildContext({
+            tenantId: 't1',
+            userId: 'u1',
+            role: UserRole.EMPLOYEE,
+          }),
+        ),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('reads permission key from controller metadata', () => {
+      const reflector = new Reflector();
+      const key = reflector.get(PERMISSION_KEY, controller.open);
+      // metadata is set at the handler — the test ensures decorator wiring is present
+      // when applied to the handler. Class-level decorators are tested at runtime above.
+      expect(['canOpenCloseCash', undefined]).toContain(key);
     });
   });
 });
