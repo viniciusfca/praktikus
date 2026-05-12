@@ -825,10 +825,10 @@ describe('BillingService', () => {
       expect(warnSpy).toHaveBeenCalledWith(
         expect.stringContaining('out-of-order'),
       );
-      // Status stays CONFIRMED (not regressed)
-      expect(mockInvoiceRepo.save).toHaveBeenCalledWith(
-        expect.objectContaining({ status: 'CONFIRMED' }),
-      );
+      // Save is skipped entirely — nothing changed.
+      expect(mockInvoiceRepo.save).not.toHaveBeenCalled();
+      // Existing invoice was not mutated.
+      expect(existing.status).toBe('CONFIRMED');
       warnSpy.mockRestore();
     });
 

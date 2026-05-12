@@ -537,52 +537,18 @@ export class BillingService {
     const payment = payload.payment;
     if (!payment?.id) return;
 
-    const subscriptionId =
-      payment.subscription ?? payload.subscription?.id ?? null;
-
-    let tenantId: string | null = null;
-    if (subscriptionId) {
-      tenantId = await this.findTenantIdBySubscriptionId(subscriptionId);
-    }
-    if (!tenantId) {
-      this.logger.warn(
-        `Webhook ${event} for payment ${payment.id} without resolvable tenant`,
-      );
-      return;
-    }
+    const tenantId = await this.resolveTenantIdFromPayload(event, payload);
+    if (!tenantId) return;
 
     const newStatus = this.mapPaymentStatus(event);
-    if (newStatus === null) {
-      return; // unmapped event already logged by mapPaymentStatus
-    }
+    if (newStatus === null) return; // unmapped event already logged
 
-    let invoice = await this.invoiceRepo.findOne({
-      where: { asaasPaymentId: payment.id },
-    });
-
-    if (invoice) {
-      // Guard de precedência contra webhooks fora de ordem (Asaas pode entregar PAYMENT_OVERDUE
-      // depois de PAYMENT_CONFIRMED por delay de fila). Só aceita transição se newStatus >= status atual.
-      if (
-        this.statusPrecedence(newStatus) >=
-        this.statusPrecedence(invoice.status)
-      ) {
-        invoice.status = newStatus;
-      } else {
-        this.logger.warn(
-          `Ignoring out-of-order webhook: ${invoice.status} → ${newStatus} for invoice ${invoice.asaasPaymentId}`,
-        );
-      }
-    } else {
-      invoice = this.invoiceRepo.create({
-        tenantId,
-        asaasPaymentId: payment.id,
-        value: String(payment.value ?? 0),
-        dueDate: payment.dueDate ? new Date(payment.dueDate) : new Date(),
-        status: newStatus,
-        billingType: (payment.billingType ?? 'UNDEFINED') as BillingType,
-      });
-    }
+    const invoice = await this.upsertInvoice(
+      tenantId,
+      payment,
+      newStatus,
+    );
+    if (!invoice) return; // out-of-order webhook ignored
 
     if (event === 'PAYMENT_CONFIRMED' || event === 'PAYMENT_RECEIVED') {
       invoice.paidAt = payment.confirmedDate
@@ -591,6 +557,59 @@ export class BillingService {
     }
 
     await this.invoiceRepo.save(invoice);
+  }
+
+  private async resolveTenantIdFromPayload(
+    event: string,
+    payload: any,
+  ): Promise<string | null> {
+    const subscriptionId =
+      payload.payment?.subscription ?? payload.subscription?.id ?? null;
+    let tenantId: string | null = null;
+    if (subscriptionId) {
+      tenantId = await this.findTenantIdBySubscriptionId(subscriptionId);
+    }
+    if (!tenantId) {
+      this.logger.warn(
+        `Webhook ${event} for payment ${payload.payment?.id} without resolvable tenant`,
+      );
+    }
+    return tenantId;
+  }
+
+  private async upsertInvoice(
+    tenantId: string,
+    payment: any,
+    newStatus: InvoiceStatus,
+  ): Promise<BillingInvoiceEntity | null> {
+    const existing = await this.invoiceRepo.findOne({
+      where: { asaasPaymentId: payment.id },
+    });
+
+    if (existing) {
+      // Guard de precedência contra webhooks fora de ordem (Asaas pode entregar PAYMENT_OVERDUE
+      // depois de PAYMENT_CONFIRMED por delay de fila). Só aceita transição se newStatus >= status atual.
+      if (
+        this.statusPrecedence(newStatus) >=
+        this.statusPrecedence(existing.status)
+      ) {
+        existing.status = newStatus;
+        return existing;
+      }
+      this.logger.warn(
+        `Ignoring out-of-order webhook: ${existing.status} → ${newStatus} for invoice ${existing.asaasPaymentId}`,
+      );
+      return null;
+    }
+
+    return this.invoiceRepo.create({
+      tenantId,
+      asaasPaymentId: payment.id,
+      value: String(payment.value ?? 0),
+      dueDate: payment.dueDate ? new Date(payment.dueDate) : new Date(),
+      status: newStatus,
+      billingType: (payment.billingType ?? 'UNDEFINED') as BillingType,
+    });
   }
 
   /**

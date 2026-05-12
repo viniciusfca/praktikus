@@ -531,7 +531,18 @@ function CloseCashSessionModal({
   };
 
   const difference = (countedBalance ?? 0) - expectedFinal;
-  const diffColor = difference === 0 ? 'var(--cui-secondary-color)' : difference > 0 ? '#15803d' : '#b91c1c';
+  let diffColor: string;
+  if (difference === 0) diffColor = 'var(--cui-secondary-color)';
+  else if (difference > 0) diffColor = '#15803d';
+  else diffColor = '#b91c1c';
+
+  let diffLabel: string;
+  if (difference === 0) {
+    diffLabel = 'Sem diferença — o valor contado bate com o esperado.';
+  } else {
+    const sign = difference > 0 ? '+' : '';
+    diffLabel = `Diferença: ${sign}${formatCurrency(difference)}`;
+  }
 
   return (
     <CModal visible={open} onClose={onClose} alignment="center" className="pk-modal-mobile">
@@ -605,9 +616,7 @@ function CloseCashSessionModal({
               fontVariantNumeric: 'tabular-nums',
             }}
           >
-            {difference === 0
-              ? 'Sem diferença — o valor contado bate com o esperado.'
-              : `Diferença: ${difference > 0 ? '+' : ''}${formatCurrency(difference)}`}
+            {diffLabel}
           </div>
         )}
 

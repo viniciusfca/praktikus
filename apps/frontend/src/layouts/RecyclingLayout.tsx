@@ -159,7 +159,9 @@ export function RecyclingLayout() {
   // manter o estado consistente caso o user troque de tenant/sessão.
   useEffect(() => {
     if (user?.sub && user.tenant_segment === 'RECYCLING') {
-      void fetchPermissions();
+      fetchPermissions().catch(() => {
+        // Falha silenciosa — store já zera estado em caso de erro.
+      });
     }
   }, [user?.sub, user?.tenant_segment, fetchPermissions]);
 
