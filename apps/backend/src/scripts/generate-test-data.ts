@@ -9,6 +9,7 @@ import { faker } from '@faker-js/faker/locale/pt_BR';
 
 function randomDigits(n: number): string {
   let out = '';
+  // NOSONAR(rule:S2245) — script de QA: gera dados fake (CNPJ/CPF/telefone) pra testes E2E, sem uso de segurança.
   for (let i = 0; i < n; i++) out += Math.floor(Math.random() * 10);
   return out;
 }
@@ -88,6 +89,7 @@ export function generateMailinatorEmail(phaseLabel: string, seq: number): string
 }
 
 export function generatePhoneBr(): string {
+  // NOSONAR(rule:S2245) — fake phone number generator for QA personas, sem uso de segurança.
   const ddd = String(11 + Math.floor(Math.random() * 90));
   return `${ddd.padStart(2, '0').slice(-2)}9${randomDigits(8)}`;
 }
